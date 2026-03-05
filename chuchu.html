@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🚀 Go Go Rocket!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --mars:#E8540A; --mars-dk:#B83A00;
+  --teal:#00D4AA; --teal-dk:#009977;
+  --red:#FF4060;  --red-dk:#CC1030;
+  --blue:#3A86FF; --blue-dk:#1A56BB;
+  --yellow:#FFD700; --purple:#B94FFF;
+  --bg:#1A0A2E;
+  --card:#2A1A4E;
+  --wall:#FF6B35;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;user-select:none;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Nunito',sans-serif;background:var(--bg);}
+
+/* ===== SCREENS ===== */
+.screen{display:none;width:100%;height:100dvh;flex-direction:column;position:relative;}
+.screen.active{display:flex;}
+
+/* ===== STARS BG ===== */
+.starfield{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.star{position:absolute;border-radius:50%;background:white;animation:twinkle var(--d,2s) ease-in-out infinite var(--dl,0s);}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(1);}50%{opacity:1;transform:scale(1.5);}}
+
+/* ===== TITLE ===== */
+#screen-title{
+  background:linear-gradient(180deg,#0A0520 0%,#1A0A3E 30%,#2A1020 60%,#3D1505 100%);
+  align-items:center;justify-content:center;gap:0;overflow:hidden;
+}
+/* Alien planets */
+.planet{position:absolute;border-radius:50%;filter:blur(1px);}
+.pl1{width:90px;height:90px;top:8%;right:8%;background:radial-gradient(circle at 35% 35%,#FF8C40,#CC2200);box-shadow:0 0 30px #FF6B3580;}
+.pl2{width:55px;height:55px;bottom:20%;left:5%;background:radial-gradient(circle at 35% 35%,#B94FFF,#5A00CC);box-shadow:0 0 20px #B94FFF60;filter:none;}
+.pl3{width:35px;height:35px;top:25%;left:10%;background:radial-gradient(circle at 35% 35%,#00D4AA,#007755);box-shadow:0 0 15px #00D4AA60;filter:none;}
+/* Mars surface */
+.surface{position:absolute;bottom:0;width:100%;height:28%;background:linear-gradient(180deg,#3D1505 0%,#5C2008 40%,#7A3010 100%);border-radius:50% 50% 0 0 / 20% 20% 0 0;}
+.crater{position:absolute;border-radius:50%;border:3px solid rgba(255,100,30,.3);background:rgba(0,0,0,.2);}
+.c1{width:60px;height:28px;bottom:6%;left:12%;}
+.c2{width:40px;height:18px;bottom:8%;right:20%;}
+.c3{width:25px;height:12px;bottom:4%;left:45%;}
+/* Dust particles */
+.dust{position:absolute;border-radius:50%;background:#FF6B35;opacity:0;animation:dustFloat var(--d,4s) ease-in-out infinite var(--dl,0s);}
+@keyframes dustFloat{0%,100%{opacity:0;transform:translateY(0) scale(1);}50%{opacity:.4;transform:translateY(-40px) scale(1.5);}}
+
+.title-content{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:-20px;}
+.mascots{display:flex;align-items:center;gap:16px;font-size:clamp(56px,13vw,88px);filter:drop-shadow(0 6px 18px rgba(0,0,0,.6));}
+.m1{animation:bounce-m 1.3s ease-in-out infinite;}
+.m2{animation:bounce-m 1.3s ease-in-out infinite .35s;}
+.m3{animation:bounce-m 1.3s ease-in-out infinite .7s;}
+@keyframes bounce-m{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-16px) scale(1.1);}}
+.t-logo{font-family:'Fredoka One',cursive;font-size:clamp(40px,10vw,78px);
+  background:linear-gradient(135deg,#FFD700 0%,#FF8C00 50%,#FF4060 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 4px 12px rgba(255,140,0,.5));letter-spacing:2px;line-height:1;}
+.t-sub{font-size:clamp(12px,2.8vw,16px);color:#C8B8FF;font-weight:700;text-align:center;
+  background:rgba(255,255,255,.08);padding:8px 20px;border-radius:20px;max-width:340px;
+  border:1px solid rgba(255,255,255,.12);}
+.t-btns{display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:4px;}
+.big-btn{font-family:'Fredoka One',cursive;font-size:clamp(16px,4vw,24px);letter-spacing:1px;
+  padding:14px 48px;border:none;border-radius:50px;cursor:pointer;
+  transition:transform .12s,box-shadow .12s;box-shadow:0 6px 0 rgba(0,0,0,.4);position:relative;top:0;}
+.big-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.4);top:4px;}
+.bb-play{background:linear-gradient(135deg,#FFD700,#FF8C00);color:#3D0F00;}
+.bb-how{background:linear-gradient(135deg,#00D4AA,#007755);color:#001A12;}
+.t-lang{display:flex;gap:8px;margin-top:4px;}
+.langbtn{font-family:'Fredoka One',cursive;font-size:14px;padding:6px 16px;border:2px solid rgba(255,255,255,.2);
+  border-radius:20px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);cursor:pointer;transition:all .15s;}
+.langbtn.on,.langbtn:hover{border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,.1);}
+
+/* ===== LEVELS ===== */
+#screen-levels{background:linear-gradient(180deg,#0A0520,#1A0A3E);overflow-y:auto;align-items:center;}
+.lvl-top{width:100%;max-width:700px;display:flex;align-items:center;gap:12px;padding:14px 16px 6px;
+  position:sticky;top:0;background:linear-gradient(180deg,#0A0520 80%,transparent);z-index:10;}
+.lvl-top h1{font-family:'Fredoka One',cursive;font-size:clamp(20px,4.5vw,30px);
+  background:linear-gradient(90deg,#FFD700,#FF8C00);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;flex:1;text-align:center;}
+.bk-btn{font-size:18px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);
+  border-radius:12px;padding:6px 12px;cursor:pointer;font-family:'Nunito',sans-serif;
+  font-weight:800;color:#C8B8FF;flex-shrink:0;}
+.bk-btn:active{transform:scale(.9);}
+.set-tabs{display:flex;gap:8px;width:100%;max-width:700px;padding:0 16px 10px;flex-wrap:wrap;justify-content:center;}
+.stab{font-family:'Fredoka One',cursive;font-size:14px;padding:9px 20px;border:2px solid rgba(255,255,255,.15);
+  border-radius:50px;background:rgba(255,255,255,.06);color:#9A8ABB;cursor:pointer;
+  transition:all .14s;box-shadow:0 3px 0 rgba(0,0,0,.3);}
+.stab:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.3);}
+.stab.on{background:linear-gradient(135deg,#FF8C00,#E8540A);border-color:var(--mars-dk);
+  color:white;box-shadow:0 3px 0 var(--mars-dk);}
+.lvl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;
+  width:100%;max-width:700px;padding:0 16px 28px;}
+.lcard{background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.12);border-radius:14px;
+  aspect-ratio:1;cursor:pointer;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;transition:transform .14s,box-shadow .14s;
+  box-shadow:0 4px 0 rgba(0,0,0,.4);position:relative;}
+.lcard:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.4);}
+.lcard:hover{transform:translateY(-3px) scale(1.04);border-color:rgba(255,215,0,.4);}
+.lcard .lcn{font-family:'Fredoka One',cursive;font-size:26px;color:#FFD700;line-height:1;}
+.lcard .lct{font-size:8px;font-weight:700;color:#7A6A9A;text-align:center;text-transform:uppercase;
+  letter-spacing:.5px;padding:0 4px;line-height:1.3;}
+.lcard.done{border-color:rgba(0,212,170,.4);background:rgba(0,212,170,.08);}
+.lcard.done .lcn{color:var(--teal);}
+.lcard.done::after{content:'⭐';position:absolute;top:-8px;right:-8px;font-size:18px;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));}
+
+/* ===== GAME ===== */
+#screen-game{background:var(--bg);}
+.g-top{background:linear-gradient(90deg,#1A0A3E,#2A0A5E,#1A0A3E);padding:6px 10px;display:flex;
+  align-items:center;justify-content:space-between;flex-shrink:0;gap:6px;
+  border-bottom:2px solid rgba(185,79,255,.3);box-shadow:0 3px 12px rgba(0,0,0,.4);}
+.g-top .gb{font-family:'Fredoka One',cursive;font-size:13px;padding:6px 12px;border:2px solid rgba(255,255,255,.15);
+  border-radius:18px;cursor:pointer;background:rgba(255,255,255,.08);color:#C8B8FF;
+  transition:all .1s;white-space:nowrap;flex-shrink:0;}
+.g-top .gb:active{transform:scale(.9);}
+.g-lvl-title{font-family:'Fredoka One',cursive;font-size:clamp(11px,2.8vw,17px);
+  color:#FFD700;text-align:center;flex:1;line-height:1.2;padding:0 4px;}
+
+/* PALETTE - compact for mobile */
+.palette{background:rgba(255,255,255,.04);border-bottom:2px solid rgba(255,255,255,.08);
+  padding:5px 8px;display:flex;align-items:center;gap:5px;flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;}
+.palette::-webkit-scrollbar{display:none;}
+.pal-lbl{font-family:'Fredoka One',cursive;font-size:11px;color:#5A4A7A;white-space:nowrap;flex-shrink:0;display:none;}
+.pal-pills{display:flex;gap:4px;flex-shrink:0;}
+.apill{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:46px;height:46px;border-radius:12px;border:2px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);cursor:pointer;transition:all .14s;gap:1px;flex-shrink:0;
+  box-shadow:0 3px 0 rgba(0,0,0,.4);}
+.apill:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.4);}
+.apill.sel{border-color:var(--blue);background:rgba(58,134,255,.2);box-shadow:0 3px 0 var(--blue-dk);}
+.apill.mpty{opacity:.28;cursor:not-allowed;}
+.apill .ai{font-size:20px;line-height:1;}
+.apill .ac{font-family:'Fredoka One',cursive;font-size:11px;color:#7A6A9A;line-height:1;}
+.apill.sel .ac{color:var(--blue);}
+.epill{width:46px;height:46px;border-radius:12px;border:2px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:20px;transition:all .14s;flex-shrink:0;box-shadow:0 3px 0 rgba(0,0,0,.4);}
+.epill:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.4);}
+.epill.sel{border-color:var(--red);background:rgba(255,64,96,.18);box-shadow:0 3px 0 var(--red-dk);}
+.pal-right{display:flex;gap:4px;margin-left:auto;flex-shrink:0;}
+.go-btn{font-family:'Fredoka One',cursive;font-size:14px;padding:9px 16px;border:none;border-radius:40px;
+  cursor:pointer;transition:transform .1s,box-shadow .1s;letter-spacing:.3px;white-space:nowrap;}
+.go-btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.4)!important;}
+.go{background:linear-gradient(135deg,#00D4AA,#007755);color:white;box-shadow:0 4px 0 #005533;}
+.stop{background:linear-gradient(135deg,#FF4060,#CC1030);color:white;display:none;box-shadow:0 4px 0 #880020;}
+.speed{background:linear-gradient(135deg,#B94FFF,#7A00CC);color:white;box-shadow:0 4px 0 #5A0099;display:none;}
+
+.game-area{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
+#gameCanvas{display:block;cursor:crosshair;}
+
+/* STATUS BAR - compact */
+.sbar{background:rgba(255,255,255,.04);border-top:2px solid rgba(255,255,255,.08);
+  padding:5px 10px;display:flex;gap:4px;align-items:center;flex-shrink:0;justify-content:space-around;}
+.si{display:flex;align-items:center;gap:4px;}
+.si .ico{font-size:18px;line-height:1;}
+.si .val{font-family:'Fredoka One',cursive;font-size:18px;line-height:1;}
+.vg{color:var(--teal);} .vr{color:var(--red);} .vb{color:var(--blue);} .vo{color:var(--yellow);}
+.si-lbl{font-size:8px;font-weight:700;color:#5A4A7A;text-transform:uppercase;letter-spacing:.4px;}
+
+/* ===== OVERLAYS ===== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;z-index:200;backdrop-filter:blur(8px);}
+.overlay.show{display:flex;}
+.ov-card{background:linear-gradient(160deg,#1E0E3E,#2A1050);border:2px solid rgba(185,79,255,.3);
+  border-radius:24px;padding:28px 34px;display:flex;flex-direction:column;
+  align-items:center;gap:12px;max-width:320px;width:90%;
+  box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.05);
+  animation:pop-in .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop-in{from{transform:scale(.4) rotate(-8deg);opacity:0;}to{transform:scale(1) rotate(0);opacity:1;}}
+.ov-emoji{font-size:68px;line-height:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4));}
+.ov-title{font-family:'Fredoka One',cursive;font-size:34px;text-align:center;line-height:1;}
+.ov-title.win{background:linear-gradient(90deg,#FFD700,#00D4AA);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;}
+.ov-title.lose{color:var(--red);}
+.ov-stars{font-size:38px;letter-spacing:5px;line-height:1;animation:stars-pop .5s .25s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes stars-pop{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
+.ov-msg{font-size:14px;color:#9A8ABB;font-weight:700;text-align:center;line-height:1.6;white-space:pre-line;}
+.ov-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px;}
+.ov-btn{font-family:'Fredoka One',cursive;font-size:15px;padding:11px 22px;border:none;border-radius:40px;
+  cursor:pointer;transition:transform .1s,box-shadow .1s;box-shadow:0 4px 0 rgba(0,0,0,.3);}
+.ov-btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.3);}
+.onext{background:linear-gradient(135deg,#00D4AA,#007755);color:white;box-shadow:0 4px 0 #004433;}
+.oretry{background:linear-gradient(135deg,#FF8C00,#CC5500);color:white;box-shadow:0 4px 0 #883300;}
+.olvls{background:rgba(255,255,255,.1);color:#C8B8FF;box-shadow:0 4px 0 rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);}
+
+/* howto */
+.htr{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;color:#C8B8FF;}
+.htr span:first-child{font-size:26px;width:40px;text-align:center;flex-shrink:0;}
+.htitle{font-family:'Fredoka One',cursive;font-size:28px;
+  background:linear-gradient(90deg,#FFD700,#FF8C00);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;}
+
+/* Flash */
+.flash{position:fixed;inset:0;pointer-events:none;z-index:150;opacity:0;transition:opacity .1s;}
+.flash.fr{background:rgba(255,30,60,.35);}
+.flash.fg{background:rgba(0,212,170,.28);}
+.flash.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- ===== TITLE ===== -->
+<div id="screen-title" class="screen active">
+  <div class="starfield" id="starfield"></div>
+  <div class="planet pl1"></div>
+  <div class="planet pl2"></div>
+  <div class="planet pl3"></div>
+  <div class="surface">
+    <div class="crater c1"></div>
+    <div class="crater c2"></div>
+    <div class="crater c3"></div>
+  </div>
+  <!-- Dust particles -->
+  <div class="dust" style="width:6px;height:6px;bottom:22%;left:15%;--d:3.5s;--dl:.2s"></div>
+  <div class="dust" style="width:4px;height:4px;bottom:25%;left:30%;--d:5s;--dl:1.2s"></div>
+  <div class="dust" style="width:5px;height:5px;bottom:20%;right:18%;--d:4s;--dl:.7s"></div>
+  <div class="dust" style="width:3px;height:3px;bottom:23%;right:35%;--d:6s;--dl:2s"></div>
+  <div class="title-content">
+    <div class="mascots"><span class="m1">👨‍🚀</span><span class="m2">🚀</span><span class="m3">👾</span></div>
+    <div class="t-logo">Go Go Rocket!</div>
+    <div class="t-sub" id="t-sub-text"></div>
+    <div class="t-btns">
+      <button class="big-btn bb-play" onclick="showLevels()" id="btn-play"></button>
+      <button class="big-btn bb-how"  onclick="showHowTo()" id="btn-how"></button>
+    </div>
+    <div class="t-lang">
+      <button class="langbtn" onclick="setLang('es')">🇪🇸 ES</button>
+      <button class="langbtn" onclick="setLang('en')">🇬🇧 EN</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LEVELS ===== -->
+<div id="screen-levels" class="screen">
+  <div class="starfield" id="starfield2"></div>
+  <div class="lvl-top">
+    <button class="bk-btn" onclick="showTitle()">← <span class="lstr-home"></span></button>
+    <h1 class="lstr-pick"></h1>
+    <div style="width:72px"></div>
+  </div>
+  <div class="set-tabs" id="setTabs"></div>
+  <div class="lvl-grid" id="lvlGrid"></div>
+</div>
+
+<!-- ===== GAME ===== -->
+<div id="screen-game" class="screen">
+  <div class="g-top">
+    <button class="gb" onclick="exitGame()">← <span class="lstr-exit"></span></button>
+    <div class="g-lvl-title" id="gTitle">Level</div>
+    <button class="gb" onclick="resetLevel()">↺ <span class="lstr-reset"></span></button>
+  </div>
+  <div class="palette">
+    <div class="pal-pills" id="palPills"></div>
+    <div class="epill" id="erasePill" onclick="selectErase()">🗑️</div>
+    <div class="pal-right">
+      <button class="go-btn go"    id="goBtn"   onclick="startSim()">▶ GO!</button>
+      <button class="go-btn stop"  id="stopBtn" onclick="stopSim()">■</button>
+      <button class="go-btn speed" id="speedBtn" onclick="toggleSpeed()">⚡ x1</button>
+    </div>
+  </div>
+  <div class="game-area"><canvas id="gameCanvas"></canvas></div>
+  <div class="sbar">
+    <div class="si"><span class="ico">👨‍🚀</span><div><div class="val vo" id="sc-mice">0</div><div class="si-lbl lstr-astro"></div></div></div>
+    <div class="si"><span class="ico">🚀</span><div><div class="val vg" id="sc-saved">0</div><div class="si-lbl lstr-saved"></div></div></div>
+    <div class="si"><span class="ico">💀</span><div><div class="val vr" id="sc-eaten">0</div><div class="si-lbl lstr-lost"></div></div></div>
+    <div class="si"><span class="ico">👾</span><div><div class="val vb" id="sc-cats">0</div><div class="si-lbl lstr-aliens"></div></div></div>
+  </div>
+</div>
+
+<!-- WIN -->
+<div class="overlay" id="winOv">
+  <div class="ov-card">
+    <div class="ov-emoji">🎇</div>
+    <div class="ov-title win lstr-win-title"></div>
+    <div class="ov-stars" id="winStars">⭐⭐⭐</div>
+    <div class="ov-msg" id="winMsg"></div>
+    <div class="ov-btns">
+      <button class="ov-btn onext"  onclick="nextLevel()" id="btn-next"></button>
+      <button class="ov-btn oretry" onclick="retryLevel()" id="btn-retry"></button>
+    </div>
+  </div>
+</div>
+
+<!-- LOSE -->
+<div class="overlay" id="loseOv">
+  <div class="ov-card">
+    <div class="ov-emoji">👾</div>
+    <div class="ov-title lose lstr-lose-title"></div>
+    <div class="ov-msg" id="loseMsg"></div>
+    <div class="ov-btns">
+      <button class="ov-btn oretry" onclick="retryLevel()" id="btn-retry2"></button>
+      <button class="ov-btn olvls"  onclick="exitGame()" id="btn-levels"></button>
+    </div>
+  </div>
+</div>
+
+<!-- HOWTO -->
+<div class="overlay" id="howOv">
+  <div class="ov-card">
+    <div class="htitle">How to Play</div>
+    <div style="display:flex;flex-direction:column;gap:8px;width:100%" id="howtoRows"></div>
+    <button class="ov-btn onext" onclick="document.getElementById('howOv').classList.remove('show')" id="btn-got-it"></button>
+  </div>
+</div>
+
+<div class="flash fr" id="fR"></div>
+<div class="flash fg" id="fG"></div>
+
+<script>
+// =============================================
+// I18N
+// =============================================
+const LANGS = {
+  es: {
+    sub: '¡Guía a los astronautas al cohete y escapa de los aliens!',
+    play: '▶ JUGAR',
+    how: '❓ Cómo jugar',
+    home: 'Inicio',
+    pick: '¡Elige un nivel!',
+    exit: 'Salir',
+    reset: 'Reset',
+    astro: 'astronautas',
+    saved: 'salvados',
+    lost: 'perdidos',
+    aliens: 'aliens',
+    'win-title': '¡GENIAL!',
+    'lose-title': '¡Oh, no!',
+    next: 'Siguiente →',
+    retry: '↺ De nuevo',
+    retry2: '↺ Intentar de nuevo',
+    levels: '🗺 Niveles',
+    'got-it': '¡Entendido!',
+    winMsg: (s,t,e)=>`¡${s} de ${t} astronautas salvados!`+(e>0?`\n${e} no lo lograron... 😔`:''),
+    loseMsg: (e)=>e>0?`¡Los aliens capturaron ${e} astronauta${e>1?'s':''}!\n¡Usa las flechas para evitarlos!`
+      :'¡Ningún astronauta llegó al cohete!\nInténtalo de nuevo con otras flechas.',
+    howRows: [
+      ['👨‍🚀','Los astronautas caminan solos'],
+      ['🚀','¡Mándalos al cohete para escapar!'],
+      ['⬆️','Coloca flechas para cambiar su dirección'],
+      ['👾','Los aliens los capturan — ¡evítalos!'],
+      ['☠️','Los hoyos son peligrosos para todos'],
+      ['▶','Pulsa GO! cuando estés listo'],
+    ],
+  },
+  en: {
+    sub: 'Guide the astronauts to the rocket and escape the aliens!',
+    play: '▶ PLAY',
+    how: '❓ How to play',
+    home: 'Home',
+    pick: 'Choose a level!',
+    exit: 'Exit',
+    reset: 'Reset',
+    astro: 'astronauts',
+    saved: 'rescued',
+    lost: 'lost',
+    aliens: 'aliens',
+    'win-title': 'AWESOME!',
+    'lose-title': 'Oh no!',
+    next: 'Next →',
+    retry: '↺ Again',
+    retry2: '↺ Try again',
+    levels: '🗺 Levels',
+    'got-it': 'Got it!',
+    winMsg: (s,t,e)=>`${s} of ${t} astronauts rescued!`+(e>0?`\n${e} didn't make it... 😔`:''),
+    loseMsg: (e)=>e>0?`Aliens captured ${e} astronaut${e>1?'s':''}!\nUse arrows to avoid them!`
+      :'No astronaut reached the rocket!\nTry again with different arrows.',
+    howRows: [
+      ['👨‍🚀','Astronauts walk on their own'],
+      ['🚀','Send them to the rocket to escape!'],
+      ['⬆️','Place arrows to change their direction'],
+      ['👾','Aliens will capture them — avoid them!'],
+      ['☠️','Pits are dangerous for everyone'],
+      ['▶','Press GO! when ready'],
+    ],
+  }
+};
+let lang = 'es';
+
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.langbtn').forEach(b=>b.classList.toggle('on',b.textContent.includes(l.toUpperCase())));
+  applyLang();
+}
+
+function applyLang() {
+  const L = LANGS[lang];
+  document.getElementById('t-sub-text').textContent = L.sub;
+  document.getElementById('btn-play').textContent = L.play;
+  document.getElementById('btn-how').textContent = L.how;
+  document.querySelectorAll('.lstr-home').forEach(e=>e.textContent=L.home);
+  document.querySelectorAll('.lstr-pick').forEach(e=>e.textContent=L.pick);
+  document.querySelectorAll('.lstr-exit').forEach(e=>e.textContent=L.exit);
+  document.querySelectorAll('.lstr-reset').forEach(e=>e.textContent=L.reset);
+  document.querySelectorAll('.lstr-astro').forEach(e=>e.textContent=L.astro);
+  document.querySelectorAll('.lstr-saved').forEach(e=>e.textContent=L.saved);
+  document.querySelectorAll('.lstr-lost').forEach(e=>e.textContent=L.lost);
+  document.querySelectorAll('.lstr-aliens').forEach(e=>e.textContent=L.aliens);
+  document.querySelectorAll('.lstr-win-title').forEach(e=>e.textContent=L['win-title']);
+  document.querySelectorAll('.lstr-lose-title').forEach(e=>e.textContent=L['lose-title']);
+  document.getElementById('btn-next').textContent = L.next;
+  document.getElementById('btn-retry').textContent = L.retry;
+  document.getElementById('btn-retry2').textContent = L.retry2;
+  document.getElementById('btn-levels').textContent = L.levels;
+  document.getElementById('btn-got-it').textContent = L['got-it'];
+  // howto rows
+  const hw = document.getElementById('howtoRows');
+  hw.innerHTML = '';
+  L.howRows.forEach(([ico,txt])=>{
+    const d=document.createElement('div');d.className='htr';
+    d.innerHTML=`<span>${ico}</span><span>${txt}</span>`;hw.appendChild(d);
+  });
+  document.querySelector('.htitle').textContent = lang==='es'?'Cómo Jugar':'How to Play';
+}
+
+// =============================================
+// STARFIELD
+// =============================================
+function makeStars(containerId, count=80){
+  const c=document.getElementById(containerId); if(!c)return;
+  for(let i=0;i<count;i++){
+    const s=document.createElement('div');s.className='star';
+    const sz=Math.random()*3+1;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;
+      --d:${1.5+Math.random()*3}s;--dl:${Math.random()*3}s;opacity:${.2+Math.random()*.4}`;
+    c.appendChild(s);
+  }
+}
+
+// =============================================
+// LEVELS
+// =============================================
+const SETS = [];
+function pstr(s){if(!s||!s.trim())return[];return s.trim().split(' ').map(p=>p.split(',').map(Number));}
+function AS(name){SETS.push({name,levels:[]});}
+function AL(si,name,vW,hW,pits,goals,mice,cats,arrows){SETS[si].levels.push({name,vW,hW,pits,goals,mice,cats,arrows});}
+
+AS('Normal');
+AL(0,"Where to go?","","0,1 11,1 0,2 11,3 0,4 11,5 0,6 11,7 0,8","","1,0 3,0 5,0 7,0 9,0 11,0","0,1,0 1,1,0 2,1,0 3,1,0 4,1,0 0,3,0 1,3,0 2,3,0 3,3,0 4,3,0 0,5,0 1,5,0 2,5,0 3,5,0 4,5,0 0,7,0 1,7,0 2,7,0 3,7,0 4,7,0 7,2,2 8,2,2 9,2,2 10,2,2 11,2,2 7,4,2 8,4,2 9,4,2 10,4,2 11,4,2 7,6,2 8,6,2 9,6,2 10,6,2 11,6,2 7,8,2 8,8,2 9,8,2 10,8,2 11,8,2","","0 0 0 1");
+AL(0,"Roundabout","6,8","","","4,7 7,7","5,0,1 6,0,1 5,1,1 6,1,1 5,2,1 6,2,1 5,3,1 6,3,1 5,4,1 6,4,1 5,5,1 6,5,1 5,6,1 6,6,1 5,7,1 6,7,1","","0 1 0 0");
+AL(0,"Zigzag","1,2 1,5 1,7 2,1 2,4 2,6 2,8 3,2 3,3 3,5 3,7 4,1 4,4 4,6 4,8 5,2 5,3 5,5 5,7 6,1 6,4 6,6 6,8 7,2 7,3 7,5 7,7 8,1 8,4 8,6 8,8 9,2 9,3 9,5 9,7 10,1 10,4 10,6 10,8 11,0 11,2 11,3 11,5 11,7","0,1 0,3 0,7 1,3 1,5 1,7 2,1 2,3 2,5 2,7 3,3 3,5 3,7 4,1 4,3 4,5 4,7 5,3 5,5 5,7 6,1 6,3 6,5 6,7 7,3 7,5 7,7 8,1 8,3 8,5 8,7 9,3 9,5 9,7 10,3 10,5 10,7 11,5","","0,7","0,2,3 0,1,0 1,1,1 1,2,0 2,2,3 2,1,0 3,1,1 3,2,0 4,2,3 4,1,0 5,1,1 5,2,0 6,2,3 6,1,0 7,1,1 7,2,0","","1 0 0 0");
+AL(0,"Bus","1,1 1,2 1,3 1,4 1,5 1,6 2,2 2,3 2,6 2,7 4,2 4,3 4,6 4,7 5,2 5,3 7,2 7,3 7,6 7,7 8,3 9,2 9,3 9,6 9,7 10,1 10,2 10,3 10,4 11,5 11,6","1,1 1,7 2,1 2,2 2,4 2,6 2,8 3,1 3,2 3,4 3,6 3,8 4,1 4,7 5,1 5,2 5,4 5,7 6,1 6,2 6,4 6,7 7,1 7,6 7,8 8,1 8,2 8,4 8,6 8,8 9,1 9,7 10,5 10,7","0,0 0,1 0,2 0,3 0,4 0,5 0,6 0,7 1,0 1,7 2,0 2,2 2,3 3,0 3,2 3,3 4,0 4,7 5,0 5,2 5,3 5,7 6,0 6,2 6,3 6,7 7,0 8,0 9,0 9,7 10,0 10,1 10,2 10,3 10,4 10,7 11,0 11,1 11,2 11,3 11,4 11,5 11,6 11,7","8,3","1,6,3","2,7,3 3,6,1 7,7,3 8,6,1","1 1 0 0");
+AL(0,"Use the walls","1,1 1,3 1,5 1,7 6,3 6,5 6,7 10,8 11,1 11,3 11,5 11,8","1,1 1,5 1,8 5,3 5,6 5,7 6,3 6,6 9,8 10,1 10,4","","10,8","11,8,3 11,7,3 11,6,3 11,5,3 11,4,3 11,3,3 11,2,3 11,1,3 11,0,2 10,0,2 9,0,2 8,0,2 7,0,2 6,0,2 5,0,2 4,0,2 3,0,2 2,0,2 1,0,2 0,0,1 0,1,1 0,2,1 0,3,1 0,4,1 0,5,1 0,6,1 0,7,1 0,8,1 1,8,0 2,8,0 3,8,0 4,8,0 5,8,0 6,8,0 7,8,0 8,8,0 9,8,0","","0 0 0 1");
+AL(0,"Maze","1,1 1,3 2,7 3,3 3,6 4,5 4,7 5,0 5,1 5,3 5,4 5,5 5,6 5,7 5,8 6,2 7,1 7,3 8,0 8,5 8,6 9,1 9,3 9,4 9,7 10,3 10,6 11,1","0,5 1,1 1,4 1,6 2,2 2,4 2,8 3,4 3,5 3,8 4,4 5,4 5,6 6,1 6,4 7,4 7,7 8,4 8,6 8,8 9,1 9,5 9,6 10,1 10,6 10,8 11,4 11,6","","6,7","0,8,0 1,8,0 2,8,0 3,8,0 4,8,3 4,7,3 4,6,3 4,5,3 4,4,2 3,4,2 2,4,2 1,4,2 0,4,3 0,5,1 0,6,1 0,7,1 1,7,3 1,6,0 2,6,1 2,7,0 3,7,3 3,6,3 3,5,2 2,5,2 1,5,2 0,3,3 0,2,3 0,1,3","","0 0 1 0");
+AL(0,"Japan","1,5 1,6 1,7 3,6 4,7 7,1 7,2 7,4 10,1 10,2 10,4 10,6 10,7","6,6 1,5 1,8 2,5 4,5 4,6 4,7 4,8 5,5 5,6 5,7 5,8 6,5 7,1 7,3 7,4 7,8 9,1 9,3 9,4 9,8","","8,5","11,8,2 11,7,1 11,6,1 11,5,1 11,4,1 10,8,2 9,8,2 8,8,2 7,8,2","6,6,2","0 0 0 1");
+AL(0,"Lots of mice","4,0 5,1 6,2 7,3 8,4 9,5 10,6 11,7","","0,8","11,6 10,5 9,4 8,3 7,2 6,1 5,0","0,0,0 1,0,0 2,0,0 0,1,0 1,1,0 2,1,0 3,1,0 0,2,0 1,2,0 2,2,0 3,2,0 4,2,0 0,3,0 1,3,0 2,3,0 3,3,0 4,3,0 5,3,0 0,4,0 1,4,0 2,4,0 3,4,0 4,4,0 5,4,0 6,4,0 0,5,0 1,5,0 2,5,0 3,5,0 4,5,0 5,5,0 6,5,0 7,5,0 0,6,0 1,6,0 2,6,0 3,6,0 4,6,0 5,6,0 6,6,0 7,6,0 8,6,0 0,7,0 1,7,0 2,7,0 3,7,0 4,7,0 5,7,0 6,7,0 7,7,0 8,7,0 9,7,0","","1 0 0 0");
+AL(0,"No way out","1,1 1,3 1,5 1,7 2,1 2,3 2,5 2,7 3,0 3,2 3,4 3,6 3,8 4,0 4,2 4,4 4,6 4,8 5,1 5,3 5,5 5,7 6,1 6,3 6,5 6,7 7,0 7,2 7,4 7,6 7,8 8,0 8,2 8,4 8,6 8,8 9,1 9,3 9,5 9,7 10,1 10,3 10,5 10,7 11,0 11,2 11,4 11,6 11,8","1,1 1,2 1,3 1,4 1,5 1,6 1,7 1,8 3,1 3,2 3,3 3,4 3,5 3,6 3,7 3,8 5,1 5,2 5,3 5,4 5,5 5,6 5,7 5,8 7,1 7,2 7,3 7,4 7,5 7,6 7,7 7,8 9,1 9,2 9,3 9,4 9,5 9,6 9,7 9,8 11,1 11,2 11,3 11,4 11,5 11,6 11,7 11,8","","0,8 0,6 0,4 0,2 0,0","11,1,2 11,3,2 11,5,2 11,7,2 9,8,2 9,6,2 9,4,2 9,2,2 9,0,2 7,1,2 7,3,2 7,5,2 7,7,2 5,8,2 5,6,2 5,4,2 5,2,2 5,0,2 3,1,2 3,3,2 3,5,2 3,7,2","","0 0 2 0");
+AL(0,"Head-on crash","10,3 11,1 11,3","0,2 0,5 0,6 9,8 10,8 11,3 11,7","","11,8","9,0,0","2,7,3 9,7,2 9,3,1 2,3,0","0 0 0 1");
+AL(0,"Here and there","6,1 6,2 6,3 6,5 6,6 6,7","0,5 1,5 2,5 3,5 4,5 5,5 6,4 7,4 8,4 9,4 10,4 11,4","","0,0 11,8","5,5,0 3,5,0 1,5,1 0,6,1 2,6,0 4,6,0 5,7,1 3,7,1 1,7,3 0,8,2 2,8,0 4,8,3 6,8,0 6,6,1 7,7,3 8,8,1 10,8,1 9,7,3 11,7,3 10,6,2 11,5,3 9,5,0 8,6,3 7,5,2 6,4,3 8,4,2 10,4,0 11,3,0 9,3,2 7,3,0 6,2,3 8,2,1 10,2,1 11,1,0 10,0,3 9,1,3 8,0,0 7,1,2 6,0,2 5,1,1 4,0,2 2,0,0 3,1,3 1,1,0 0,2,3 1,3,3 2,2,2 3,3,0 4,2,2 5,3,0 4,4,2 2,4,3 0,4,0","","1 0 1 0");
+AL(0,"Round and round","1,7 2,6 3,5 9,3 10,2 11,1","1,2 2,3 4,4 5,4 5,5 6,4 6,5 7,5 8,6 9,7 10,8","","4,4 5,4 6,4 7,4","0,0,0 1,0,0 2,0,0 3,0,0 4,0,0 5,0,0 6,0,0 7,0,0 8,0,0 9,0,0 10,0,0 11,0,0 1,1,0 2,1,0 3,1,0 4,1,0 5,1,0 6,1,0 7,1,0 8,1,0 9,1,0 10,1,0 0,2,0 1,2,0 2,2,0 3,2,0 4,2,0 5,2,0 6,2,0 7,2,0 8,2,0 9,2,0","0,1,0","0 0 0 1");
+AL(0,"Dream catch!","1,2 1,3 2,1 2,2 2,3 2,6 2,7 3,2 3,3 4,7 5,2 5,3 5,6 5,7 6,2 6,7 7,3 7,6 7,7 8,2 8,3 8,6 8,7 9,2 9,3 10,2 10,3 11,2 11,3","1,2 1,4 2,6 2,8 3,2 3,6 3,7 3,8 5,2 5,3 5,4 5,7 5,8 7,2 7,3 7,4 7,6 9,2 10,2","0,0 0,8 11,0 11,8","7,6","11,7,3 11,6,3 11,5,3 1,0,0 2,0,0 3,0,0","","0 1 1 1");
+AL(0,"Ready, go!","1,7 2,1 3,7 4,1 5,1 6,7 7,1 9,7 10,1 11,7","1,1 1,8 2,1 2,8 3,1 3,8 5,1 5,8 6,1 6,8 8,8 9,1 9,8 10,8","","10,1 1,1","5,8,2","6,8,0","0 1 0 0");
+AL(0,"Two on one","5,0 6,8 7,8","0,6 0,5 0,4 6,4 7,4 11,4","","1,1","6,8,3","0,5,0 0,4,0","0 0 2 0");
+AL(0,"Long journey","1,1 1,2 1,3 1,5 1,7 2,6 10,5 10,6 11,1 11,2 11,7","1,1 1,5 1,8 2,2 2,7 9,2 9,7 10,1 10,8","","9,2","0,4,0 1,4,0 2,4,0 3,4,0 4,4,0 5,4,0 6,4,0 7,4,0 8,4,0 9,4,0 10,4,0 11,4,1","","0 0 1 0");
+AL(0,"Go! Go! Twelve!","2,3 2,7 10,1 10,3 10,5 10,7 10,8","0,2 0,5 0,6 2,1 2,5 9,2 9,3 9,6 9,7 11,3 11,4 11,7","","0,5","1,0,0 2,0,0 3,0,0 11,2,2 10,2,2 9,2,2 11,6,2 10,6,2 9,6,2 0,4,0 1,4,0 2,4,0","5,8,3 6,0,1","0 0 2 0");
+AL(0,"Stay away!","","2,4 2,5 4,3 4,6 6,2 6,7 8,1 8,8","11,3 11,5","11,2 11,6","0,4,0","1,2,1 1,6,3 3,1,1 3,7,3 5,8,3 5,0,1 7,1,1 7,7,3 9,6,3 9,2,1","0 0 0 1");
+AL(0,"Chu chu!","1,0 1,8 3,8 4,1 4,4 4,5 4,6 5,0 5,3 5,7 6,2 6,7 6,8 7,0 7,1 7,8 8,7 9,0 9,1 9,2 9,3 9,6 9,7 10,0 10,5 10,8 11,1 11,2","0,7 3,8 4,1 4,2 4,4 4,7 5,2 5,3 6,2 6,7 7,2 7,7 7,8 8,2 8,7 9,3 9,4 9,6 9,8 10,1 10,3","4,1 5,0 5,1 5,3 5,4 6,0 6,1 7,3 7,4 9,0 9,1 9,2 10,1 10,2","11,6","1,0,1 1,1,1 1,2,1 1,3,1 1,4,1 1,5,1 1,6,1 1,7,1 1,8,0 2,8,0 2,7,3 2,6,3 2,5,3 2,4,3 2,3,3 2,2,3 2,1,3 2,0,2","","1 1 0 0");
+AL(0,"Which one?","3,0 3,8 9,0 9,8","0,3 0,6 11,3 11,6","","10,1 10,7 1,7 1,1 5,4 6,4","0,2,0 1,2,0 2,2,0 2,3,0 1,3,0 0,3,0 2,8,3 2,7,3 2,6,3 11,6,2 10,6,2 9,6,2 9,5,2 10,5,2 11,5,2 9,0,1 9,1,1 9,2,1","3,4,1 8,4,3","0 1 0 1");
+AL(0,"Cat!","3,4 3,5 3,7 4,2 4,3 4,5 4,7 4,8 5,1 5,5 5,7 6,1 6,5 6,7 7,5 7,7 8,1 8,5 8,7 9,1 9,4 9,7 10,2 10,4 10,5 10,6 10,8 11,3 11,4 11,5 11,6 11,7","3,4 3,6 3,7 3,8 4,2 4,5 4,8 5,1 5,6 5,7 6,2 6,5 6,8 7,2 7,6 7,7 8,1 8,5 8,8 9,2 9,4 9,7 10,3 10,8","5,2 5,3 8,2 8,3","0,0","8,6,2 7,6,2 6,6,2 5,6,2 4,6,2","11,6,3 11,0,2 11,3,3 8,0,2 5,0,2 2,0,2 0,3,1 1,3,1 0,5,1 0,8,0","0 1 1 1");
+AL(0,"Cat Patrol","1,2 2,7 5,1 6,2 6,6 7,7 10,1 11,6","2,6 4,3 7,6 9,3 11,5","","1,4","2,1,0 3,1,0 7,1,0 8,1,0 9,7,2 8,7,2 4,7,2 3,7,2","2,4,0 3,4,0","0 2 0 0");
+AL(0,"Run away!","1,1 1,2 1,5 1,6 1,7 1,8 2,7 4,5 5,5 5,8 6,0 6,2 6,4 6,5 6,7 7,1 7,2 11,1 11,2 11,5 11,6 11,7","0,4 1,1 1,3 1,4 1,5 2,1 2,3 2,4 2,5 2,6 3,1 3,3 3,4 3,5 3,8 4,1 4,3 4,4 5,3 5,4 6,5 6,8 7,1 7,3 7,4 7,5 7,8 8,1 8,3 8,4 8,5 8,8 9,1 9,3 9,4 9,5 9,8 10,1 10,6 10,8 11,4","","9,2","5,8,0 9,8,0","5,4,1","0 1 0 0");
+AL(0,"Catch up","1,1 2,0 2,5 3,8 4,0 8,0 8,1 8,2 8,3 8,5 8,6 8,7 8,8 9,5","0,2 0,6 1,1 1,6 9,5 9,6 10,5 10,6 11,5 11,6","","7,5","11,8,2 10,8,2 9,8,2","8,6,0 8,2,3 7,8,2 2,2,2","1 0 0 1");
+AL(0,"Gang of cats","10,0 10,8","","","11,4","1,4,0","11,3,2 11,5,2 9,4,2 10,6,2 8,7,2 9,8,2 10,2,2 8,1,2 9,0,2","1 0 0 1");
+
+AS('Hard');
+AL(1,"The Battlefield","","","","11,0","0,7,3 1,7,3 2,7,3 3,7,3 4,7,3 5,7,3 6,7,3 7,7,3 8,7,3 9,7,3 10,7,3 11,7,3","3,2,1 5,2,1 6,2,1 8,2,1","3 1 0 0");
+AL(1,"Sentries","1,1 1,7 2,7 3,1 4,7 5,1 6,1 6,7 7,3 7,5 10,3 10,5 11,3 11,4 11,5","1,1 2,1 2,8 3,1 3,8 4,1 4,8 5,8 7,3 7,6 8,3 8,6 9,3 9,6 10,3 10,6","","10,4","1,7,3","8,5,0 9,3,2","1 0 0 0");
+AL(1,"Sharp turns","1,1 2,2 3,5 10,2 10,5 11,1","1,1 2,2 9,2 9,6 10,1","","10,6","10,0,2 9,0,2 8,0,2 7,0,2 6,0,2 5,0,2 4,0,2 3,0,2 3,5,0 4,5,0 5,5,0 6,5,0 7,5,0 8,5,0","1,7,3","2 0 0 0");
+AL(1,"From behind","1,2 2,5 3,1 3,3 6,2 6,4 6,5 6,6 6,7 7,4 8,5 8,6 8,7 9,6 9,8 10,0 10,2 10,5","1,7 2,7 3,7 4,1 6,4 6,8 7,5 7,8 9,6 10,1 10,2 10,3 10,4 10,6 11,1 11,6","","8,2","1,0,0 2,0,0 3,0,0 0,3,3 0,2,3 0,1,3 3,8,2 2,8,2 1,8,2","5,8,3 5,6,3 5,4,2 3,4,2","1 0 0 0");
+AL(1,"Loopy","2,7 4,3 5,8 7,0 8,5 10,2","0,5 2,2 4,3 7,6 9,8 11,4","","1,1","0,7,1 4,6,3 7,2,1 11,1,3","3,2,0","0 0 0 1");
+AL(1,"Stairway","3,1 3,2 3,3 3,4 3,5 3,6 3,7 4,8 6,0 6,1 6,2 6,3 6,4 6,5 6,6 6,7 8,8 9,1 9,2 9,3 9,4 9,5 9,6 9,7","0,1 0,3 0,5 0,7 2,2 2,4 2,6 2,8 3,1 3,3 3,5 3,7 5,2 5,4 5,6 5,8 6,2 6,4 6,6 6,8 8,1 8,3 8,5 8,7 9,2 9,4 9,6 9,8 11,1 11,3 11,5 11,7","","0,0 11,0","11,8,2 10,8,2 0,8,0 1,8,0","1,0,0 10,0,2","1 1 0 0");
+AL(1,"Blockade","","0,2 0,3 0,6 0,7 11,3 11,2 11,6 11,7","","11,0","11,7,1 11,8,2 10,8,2 9,8,2 8,8,2 7,8,2 6,8,2 5,8,2 4,8,2 3,8,2 2,8,2 1,8,2","11,2,2 0,3,0 1,5,0 9,6,2 10,4,2","0 0 0 1");
+AL(1,"Mice crackers","10,0 11,0","0,1 11,2","","11,0","9,3,3 9,4,0 9,5,3 9,6,0 8,6,1 8,5,2 8,4,1 8,3,2 7,3,3 7,4,0 7,5,3 7,6,0 6,6,1 6,5,2 6,4,1 6,3,2 5,3,3 5,4,0 5,5,3 5,6,0 4,6,1 4,5,2 4,4,1 4,3,2 3,3,3 3,4,0 3,5,3 3,6,0 2,6,1 2,5,2 2,4,1 2,3,2","10,0,1","0 1 0 1");
+AL(1,"Go around","","","3,3 3,5 4,3 4,5 6,3 6,5 7,3 7,5","5,4","0,0,0 0,1,3 6,0,0 7,0,0 11,0,1 11,7,1 11,8,2 5,8,2 4,8,2 0,8,3","2,0,0 11,5,1 9,8,2 0,3,3","1 1 1 1");
+AL(1,"Trapped cat","6,1 6,7 7,1 7,7","6,1 6,8","","0,4","1,1,0 1,2,0 1,3,0 1,5,0 1,6,0 1,7,0 10,7,2 10,6,2 10,5,2 10,3,2 10,2,2 10,1,2","2,4,0","0 0 0 1");
+AL(1,"Get in line","1,0 1,8 2,8 3,0 4,8 5,0 6,8 7,0 8,8 9,0 10,8","0,2 0,4 0,6 11,1 11,3 11,5 11,7","","0,0","1,1,3 1,2,3 1,3,3 1,4,3 1,5,3 1,6,3 1,7,3 1,8,3 3,8,3 3,7,3 3,6,3 3,5,3 3,4,3 3,3,3 3,2,3 3,1,3 5,8,3 5,7,3 5,6,3 5,5,3 5,4,3 5,3,3 5,2,3 5,1,3 7,8,3 7,7,3 7,6,3 7,5,3 7,4,3 7,3,3 7,2,3 7,1,3 9,8,3 9,7,3 9,6,3 9,4,3 9,5,3 9,3,3 9,2,3 9,1,3","","0 1 0 0");
+AL(1,"Out for a walk","2,5 3,0 3,4 3,6 4,4 5,7 5,8 6,3 6,4 6,6 7,2 8,8 9,3 9,7 10,3 11,2","0,1 0,4 0,6 1,6 2,4 2,7 3,7 4,7 5,4 5,7 6,8 7,5 8,2 9,3 11,2","","9,3","0,8,0 1,8,0 2,8,0 3,8,0","","1 0 1 0");
+AL(1,"Delay tactic","3,1 3,3 4,1 4,3 5,3 5,7 6,3 6,7 7,1 7,3 8,1 8,3 9,3 9,7 10,3 10,7","3,1 3,3 3,5 5,3 5,5 5,8 7,1 7,3 7,5 9,3 9,5 9,8","","11,4","10,7,2 10,6,2 10,5,2 10,3,2 10,2,2 10,1,2 1,1,0 1,2,0 1,3,0 1,5,0 1,6,0 1,7,0","1,4,0","0 0 0 2");
+AL(1,"Cat in a box","1,1 2,5 3,5 4,6 5,6 6,3 9,4 10,4 11,7","10,7 1,1 1,2 2,6 4,7 6,3 6,4 9,4 10,8","","5,2","11,7,1 10,8,2 8,8,2 6,8,2 4,8,2 2,8,2 0,8,3 0,6,3 2,0,0 4,0,0 6,0,0 8,0,0","1,1,0 6,3,0 9,4,1 10,7,2 4,6,3 2,5,3","1 1 0 0");
+AL(1,"Runaround","4,0 4,1 4,2 4,6 4,7 4,8 8,0 8,1 8,2 8,6 8,7 8,8","0,4 0,5 1,4 1,5 2,4 2,5 5,4 6,5 9,4 9,5 10,4 10,5 11,4 11,5","","0,4 11,4","11,1,1 11,2,1 10,3,2 8,3,1 10,5,2 9,5,2 8,6,3 0,7,3 0,6,3 0,5,0 1,5,0 2,3,0 1,0,0","4,0,1 7,8,3","0 0 0 1");
+AL(1,"Prisoners","1,0 1,8 2,1 2,7 3,2 3,6 4,3 4,5 8,3 8,5 9,2 9,6 10,1 10,7 11,0 11,8","2,1 2,8 3,2 3,7 4,3 4,6 7,3 7,6 8,2 8,7 9,1 9,8","","11,0 0,8","7,5,2 6,5,2 5,5,2 4,5,3 4,4,3 4,3,0 5,3,0 6,3,0 7,3,1 7,4,1","7,6,2 6,6,2 6,7,2 5,7,2 4,1,0 5,1,0 6,0,0 7,0,0","0 1 1 0");
+AL(1,"Drop in","7,2 7,3","3,7 4,7 5,7 6,7 7,7 8,7","","6,6","1,0,0 3,0,0 10,0,0 11,2,1 4,4,0 7,4,0 6,8,2 3,8,2","10,8,2 10,7,3 0,2,3 1,2,1 3,4,0 8,0,0","1 1 1 0");
+AL(1,"Escape route","1,2 1,6 1,7 2,4 3,5 4,4 6,2 8,6 9,3 9,7 10,2 10,5","1,1 1,6 1,8 2,4 3,4 3,7 4,8 5,2 6,2 6,5 7,4 7,7 8,3 8,8 9,2 9,6","0,0 0,1 0,2 0,3 0,4 0,5 0,6 0,7 0,8 1,0 1,8 2,0 2,8 3,0 3,8 4,0 4,6 4,8 5,0 5,8 6,0 6,8 7,0 7,8 8,0 8,8 9,0 9,8 10,0 10,8 11,0 11,1 11,2 11,3 11,4 11,5 11,6 11,7 11,8","8,4","6,5,0 7,5,0 8,5,0 9,5,3 9,4,3 9,3,3 9,2,2 8,2,2 7,2,2 6,2,1 6,3,1 6,4,3","","0 1 0 1");
+AL(1,"Center line","3,0 3,3 3,5 5,3 5,5 6,8 7,3 7,5 9,3 9,5","0,4 0,5 1,4 1,5 3,4 3,5 4,5 5,4 5,5 6,4 7,4 7,5 9,3 9,4 9,5 9,6 10,3 10,4 10,5 10,6 11,3 11,4 11,5 11,6","","0,4 11,4","2,8,2 1,8,2 0,8,3 5,0,0 6,0,0 7,0,0","3,1,3 5,1,0 5,5,1 5,8,2","1 1 0 0");
+AL(1,"The Zone","1,1 3,7 4,6 5,5 6,4 7,3 8,2 9,1 11,7","1,1 2,1 2,8 3,1 3,7 3,8 4,1 4,6 4,8 5,1 5,5 5,8 6,1 6,4 6,8 7,1 7,3 7,8 8,1 8,2 8,8 9,1 9,8 10,1 10,8 11,1","","11,0 5,8","9,1,2 9,2,2 9,3,2 9,4,2 9,5,2 9,6,2 9,7,2 2,7,0 2,6,0 2,5,0 2,4,0 2,3,0 2,2,0 2,1,0","0,0,1 11,8,3","1 0 0 1");
+AL(1,"We're gonna get in!","1,1 1,2 1,3 1,4 1,5 1,6 1,7 2,6 2,7 3,2 4,2 4,4 4,6 6,3 6,5 6,7 7,3 8,2 8,6 10,1 10,2 11,1 11,2 11,3 11,4 11,5 11,6 11,7","1,1 1,6 1,8 2,1 2,2 2,8 3,6 3,8 4,1 4,7 4,8 5,1 5,2 5,3 6,3 6,8 7,1 7,2 7,8 8,1 8,2 8,7 8,8 9,1 10,1 10,3 10,8","","8,3 8,6","0,3,1 0,4,1 0,5,1 5,0,2 4,0,2 3,0,2","6,0,0 11,1,1","0 1 0 1");
+AL(1,"Launchpad","1,8 5,7 7,1 11,0","0,1 1,2 10,7","5,3 5,5 6,3 6,5","5,4 6,4","11,0,1 11,1,1 11,2,1 10,4,1 10,5,1 4,8,2 3,8,2 2,8,2 0,8,3 0,7,3 0,6,3","3,0,0 7,8,2","1 0 1 0");
+AL(1,"The tour","4,0 4,1 4,3 4,4 4,5 4,6 4,7 5,7 8,0 8,1 8,2 8,3 8,4 8,7 9,4","0,2 0,4 0,7 1,4 1,7 1,8 2,7 2,8 3,2 3,4 3,8 4,5 4,8 5,4 5,8 6,4 6,8 7,4 7,8 8,4 8,8 9,8 10,4 10,8 11,4 11,8","8,4 11,0 11,1 11,2 11,3","10,2 10,1","11,8,2 10,8,2 9,8,2 8,8,2 7,8,2 6,8,2 5,8,2 4,8,2 3,8,2 2,8,2 1,8,2","","0 2 3 1");
+AL(1,"Run for it","5,4 6,0 6,8 7,4","0,5 5,5 6,4 11,4","","5,4 6,4","5,8,0 11,4,3 6,0,2 0,4,1","2,8,0 3,8,0 4,8,0 0,0,1 0,2,1 0,3,1 9,0,2 8,0,2 7,0,2 11,7,3 11,6,3 11,5,3","0 1 0 1");
+AL(1,"Outnumbered","6,7 7,1 7,2 7,3 7,5 8,1 8,4 8,6 9,1 9,7 10,3 11,1 11,3 11,5 11,7","5,1 5,4 5,5 5,8 6,1 6,8 7,5 7,7 8,3 8,4 8,6 8,8 9,1 9,3 9,5 9,6 9,8 10,1 10,8","0,0 0,8","0,7 0,6 0,5 0,4 0,3 0,2 0,1","5,4,0","1,1,0 2,2,0 3,1,0 4,2,0 3,3,0 2,4,0 1,3,0 1,5,0 2,6,0 3,5,0 4,4,0 1,7,0 3,7,0 4,6,0","0 0 1 0");
+
+AS('Special');
+AL(2,"Chicken race","1,1 1,4 1,7 2,4 10,4 11,1 11,4 11,7","1,1 1,8 6,2 6,7 10,1 10,8","","10,4","6,7,2","1,1,1 6,1,2","0 1 0 0");
+AL(2,"Speed waltz","7,4 1,8 3,0 3,2 3,3 3,4 3,5 3,6 3,7 3,8 6,1 6,2 6,3 6,8 9,0 9,2 9,3 9,5 9,6 9,7 9,8 11,0","0,6 1,1 1,3 2,3 2,6 3,3 3,6 4,6 5,3 6,1 6,3 8,3 9,3 10,4 11,3","","11,8","1,6,3 1,5,3 0,5,3 2,5,2 2,4,1 2,3,1 1,3,0 0,3,3 1,4,3 0,4,3","11,1,2","1 1 1 0");
+AL(2,"Reflections","1,2 1,8 2,7 5,6 6,5 6,8 7,7 11,1 11,5","0,5 1,6 4,8 6,5 7,6 8,3 10,8 11,3","0,4 9,3 11,3","10,3","11,4,1 11,5,1 11,6,1 0,8,3 0,7,3 0,6,3","","1 0 1 0");
+AL(2,"SEGA Sonic","1,3 2,4 2,6 3,3 3,4 3,7 4,6 4,7 5,3 5,4 5,6 5,7 6,4 6,6 6,7 7,3 7,4 7,6 7,7 8,3 8,4 8,6 8,7 9,0 9,6 9,7","1,1 1,3 1,4 1,5 2,1 2,6 2,7 2,8 3,1 3,3 3,4 3,5 4,1 4,6 4,8 5,1 5,3 5,5 6,1 6,6 7,1 7,3 7,4 9,6 9,8","","9,1","4,0,0 5,0,0 6,0,0","1,0,2 2,0,2 3,0,2","0 0 0 1");
+AL(2,"Around the world","1,2 1,3 1,6 1,7 5,1 5,5 7,3 7,6 7,7 11,1 11,2 11,4 11,5 11,6","1,1 1,5 2,1 2,5 3,8 4,4 4,8 5,1 5,8 6,8 7,1 7,5 8,1 9,8 10,4 10,8","","2,6 3,6","10,1,1 10,5,1 7,7,3 7,3,3 4,1,1 1,3,3","1,5,0 4,5,1 3,7,2","0 1 2 0");
+AL(2,"No problem!","1,0 1,2 1,3 1,4 1,5 1,6 1,8 2,0 2,2 2,6 2,8 3,0 3,2 3,7 4,2 4,5 4,7 5,1 5,3 5,5 5,7 6,1 6,3 6,6 7,3 7,4 7,6 8,2 8,4 8,6 9,2 9,4","0,8 1,6 2,3 2,6 2,8 4,3 4,5 4,8 5,1 5,4 5,5 5,7 7,2 7,4 7,7 8,2 8,5 11,3 11,6 11,8","","11,2","0,1,0","2,1,3 5,1,1 8,3,3 7,5,3 4,6,3 1,8,3","0 1 0 0");
+AL(2,"Dead end","1,1 1,2 1,3 1,5 1,6 1,7 2,1 2,2 2,3 2,5 3,1 3,3 3,5 3,7 4,1 4,3 4,5 4,7 5,1 5,3 5,5 5,7 6,3 6,5 7,1 7,3 7,5 7,7 8,1 8,3 8,5 9,1 9,3 9,5 10,3 10,5 11,1 11,2 11,3 11,5 11,6 11,7","1,1 1,8 2,2 2,4 2,8 3,1 3,5 3,7 4,6 5,1 5,8 6,1 6,8 7,1 7,8 8,2 8,8 9,1 9,8 10,1 10,3 10,6 10,8","","4,4","5,4,0","0,2,3 6,1,1 6,7,3 2,8,2","0 1 0 0");
+AL(2,"Puzzle box","5,0 5,1 5,2 5,3 5,5 5,6 5,7 5,8 6,0 6,1 6,2 6,3 6,5 6,6 6,7 6,8","5,4 5,5 6,5","5,0 5,1 5,2 5,3 5,5 5,6 5,7 5,8","9,5 2,3","7,0,0 4,0,1 6,2,3 4,6,1 4,7,1 4,8,2","11,4,2 8,4,2 0,4,0 2,4,0 4,4,0 5,4,2","1 1 0 1");
+AL(2,"Lucky 210","1,1 1,4 1,7 2,2 2,3 2,5 2,6 3,1 3,4 3,6 3,7 4,1 4,3 4,6 4,7 5,1 5,6 5,7 6,1 6,3 6,4 6,6 6,7 7,1 7,3 7,4 7,6 7,7 8,1 8,3 8,4 8,6 8,7 9,1 9,2 9,3 9,5 9,7 10,1 10,2 10,3 10,5 10,7 11,1 11,2 11,3 11,4 11,5 11,6 11,7","1,1 1,2 1,4 1,5 1,7 1,8 2,1 2,8 3,2 3,3 3,4 3,5 3,6 4,1 4,8 5,2 5,6 6,1 6,8 7,2 7,3 7,5 7,6 8,1 8,8 9,4 9,5 9,6 9,7 10,1 10,8","0,1","0,0 1,1 8,1 6,1 1,4 1,7 4,7 6,7 10,7","0,2,1","10,1,1","0 0 1 0");
+AL(2,"Thrashed apartment","1,7 2,3 2,7 2,8 3,8 4,0 4,5 4,6 5,8 6,0 6,1 6,2 6,3 6,4 6,5 6,6 6,7 6,8 9,5 10,7 11,3","0,5 1,5 1,8 2,3 2,5 3,5 4,5 5,5 6,4 6,5 7,2 7,5 8,5 8,8 9,3 9,5 9,8 10,4 10,5 11,5","11,1","0,0 0,8 11,8 11,0","5,4,3 6,4,0 6,5,0 5,5,2","0,1,0 8,1,1 11,5,2 1,7,3","1 1 1 1");
+AL(2,"Red spiral","1,1 1,2 1,8 2,3 2,4 2,5 2,6 2,7 3,3 3,4 3,5 3,6 3,7 4,4 4,5 4,6 5,5 6,4 8,2 8,3 9,1 9,2 9,3 9,4 9,5 10,0 10,1 10,2 10,3 10,4 10,5 10,6 11,0 11,1 11,2 11,3 11,4 11,5 11,6 11,7","1,1 2,1 2,2 3,3 3,8 4,3 4,4 4,7 4,8 5,3 5,4 5,6 5,7 5,8 6,2 6,5 6,6 6,7 6,8 7,1 7,5 7,6 7,7 7,8 8,1 8,6 8,7 8,8 9,7 9,8 10,8","","10,0","0,8,3 1,8,3 1,7,3 0,7,3 0,6,3 1,6,3 1,5,3 0,5,3 0,4,3 1,4,3 1,3,3 0,3,3 0,2,3 1,2,3 0,1,3 11,0,1 11,1,1 11,2,1 11,3,1 11,4,1 11,5,1 11,6,1 11,7,1","","0 0 1 1");
+AL(2,"Mouse racing","5,0 5,1 7,7 7,8","0,5 1,5 2,5 9,4 10,4 11,4","","1,1","3,0,1 3,1,1 8,0,1 8,1,1 8,8,3 8,7,3 3,8,3 3,7,3","5,6,3","0 0 1 1");
+AL(2,"Long distance","9,4 1,0 1,1 2,7 2,8 3,6 5,4 5,5 5,6 5,7 8,1 8,2 8,3 8,4 8,5 8,6 8,7 9,0 10,3 10,6 11,0 11,8","0,2 0,5 1,4 1,5 2,4 2,5 2,8 3,1 3,4 3,8 4,1 4,4 4,8 5,1 5,8 6,1 6,8 7,1 7,8 8,2 8,8 9,2 9,3 9,8 10,2 10,3 11,1 11,3 11,6 11,8","1,7 1,8 3,5 3,6","2,8","0,8,3 0,7,3","","2 1 0 0");
+AL(2,"Cat lane","4,1 4,7 5,1 5,7 6,1 6,7 7,1 7,7 11,3 11,5","0,3 0,6 4,1 4,8 6,1 6,8 10,3 10,6","5,1 5,7","5,4","5,0,0 5,8,2","2,5,0 3,5,0 4,4,1 4,3,1 4,2,1 3,3,2 2,3,2 6,2,1 6,3,1 6,4,1 7,3,0 8,3,0 8,5,2 7,5,2 6,8,2","0 0 2 0");
+AL(2,"Guillotine","1,0 1,2 1,3 1,5 1,6 1,8 2,0 2,2 2,3 2,5 2,6 2,8 3,0 3,2 3,3 3,5 3,6 3,8 4,0 4,2 4,3 4,5 4,6 4,8 5,0 5,2 5,3 5,5 5,6 5,8 6,0 6,2 6,3 6,5 6,6 6,8 7,0 7,2 7,3 7,5 7,6 7,8 8,0 8,2 8,3 8,5 8,6 8,8 9,0 9,1 9,2 9,3 9,4 9,5 9,6 9,7","0,1 0,4 1,2 1,6 2,2 2,6 3,2 3,6 4,2 4,6 5,2 5,6 6,2 6,6 7,2 7,6 8,1 8,7 9,2 9,4 9,6 9,8 11,1 11,3 11,5 11,7","","0,3","10,0,2","7,7,3 6,8,3 5,7,3 4,7,3 3,8,3 2,7,3 1,7,3 1,4,3 2,4,3 3,5,3 4,5,3 6,5,3 7,4,3 5,4,3","0 1 0 0");
+AL(2,"Quick turn","1,4 8,5 9,3 10,6 11,1","0,5 1,5 2,2 7,6 8,3 8,5 9,7 10,1 10,5","0,0 0,2 0,4 0,6 0,8 2,0 4,0 6,0 8,0 10,0","6,2","1,3,0 0,5,0 5,1,0 7,8,0","1,2,1","2 0 0 1");
+AL(2,"Three point star","3,7 4,6 6,5 7,3 10,2 11,1","0,4 0,5 6,1 7,2 9,7 10,8","","5,2 4,1 3,0","11,3,2 10,3,2 9,3,2 11,4,2 10,4,2 9,4,2 9,5,2 8,4,2 7,4,2 6,5,2 6,4,2 5,4,2","2,4,0","0 0 1 1");
+AL(2,"The gang returns","","","1,4 1,8","11,8","0,8,3","11,0,2 10,1,2 11,2,2 10,3,2 10,5,2 11,6,2 10,7,2","1 1 0 0");
+AL(2,"Best couple","3,3 6,2 6,4 6,5 6,6 9,3","0,4 0,6 3,3 3,4 4,3 4,4 5,2 5,5 5,7 6,2 6,5 6,7 7,3 7,4 8,3 8,4 11,4 11,6","0,0 0,8 1,1 1,7 2,0 2,8 3,1 3,7 4,0 4,8 5,1 5,7 6,0 6,8 7,1 7,7 8,0 8,8 9,1 9,7 10,0 10,8 11,1 11,7","0,2 11,2","7,6,2 4,6,0","1,2,0 10,2,2","1 0 1 0");
+AL(2,"The zoo","3,0 3,2 3,3 3,5 3,6 3,8 6,0 6,2 6,3 6,5 6,6 6,8 9,0 9,2 9,3 9,5 9,6 9,8","0,3 0,6 2,3 2,6 3,3 3,6 5,3 5,6 6,3 6,6 7,6 8,3 8,6 9,3 9,6 10,6 11,3 11,6","","10,7","0,1,0","0,0,0 2,2,2 2,3,1 0,4,3 1,5,2 1,6,0 0,7,3 2,7,1 1,8,2 3,8,3 5,6,1 7,8,2 6,6,0 9,6,0 11,6,1 11,8,2 4,5,2 4,3,0 4,0,0 3,2,3 7,0,0 7,2,2 9,1,3 11,0,1 9,3,0 11,5,2 7,5,2 6,3,0 8,3,1","2 1 0 0");
+AL(2,"Which is faster?","1,1 1,4 1,7 2,1 2,5 2,8 3,2 3,7 4,3 4,6 4,8 5,3 5,7 6,1 6,4 6,8 7,1 7,3 7,6 7,7 8,3 8,5 8,6 8,8 9,5 9,7 10,2 10,8 11,4 11,7","1,2 1,4 1,5 1,7 2,5 2,6 2,7 3,2 3,3 3,7 4,4 4,6 4,7 5,4 5,5 5,7 6,2 6,7 7,4 7,7 8,6 8,7 9,2 9,3 9,7 10,4 10,5 10,7 11,7","4,6 5,4","11,7 3,2","11,0,2","1,0,2","0 2 0 0");
+AL(2,"Ouch!","1,8 3,3 3,4 6,3 9,3 9,4","0,5 0,6 1,5 2,5 2,6 4,3 4,6 5,3 5,6 6,3 6,6 7,3 7,6 8,3 8,6 9,6 10,6 11,6","","0,5 11,0","3,8,3 10,8,2","4,4,2 5,4,2","1 0 0 1");
+AL(2,"Empty heart","1,1 1,2 1,7 2,0 2,3 4,4 4,5 4,7 5,0 5,6 7,0 7,6 7,7 8,4 8,5 10,0 10,3 10,5 10,7 11,1 11,2 11,6","0,6 0,7 1,1 1,3 1,6 1,8 2,4 2,6 2,8 3,4 3,6 3,8 4,6 4,7 5,1 5,7 6,1 6,7 7,6 7,8 8,4 8,5 8,8 9,4 9,5 9,8 10,1 10,3 10,6 10,7","1,1 1,2 2,0 2,3 3,0 3,3 4,0 4,4 4,5 5,1 5,6 6,1 6,6 7,0 7,4 7,5 8,0 8,3 9,0 9,3 10,1 10,2","1,0 0,7","10,0,0 0,5,3","0,0,1 3,8,0","1 0 2 0");
+AL(2,"Rocket factory","8,4 1,0 1,8 2,7 3,2 3,3 3,5 3,6 4,2 4,3 4,6 5,2 5,3 5,6 6,2 6,3 6,6 7,2 7,3 7,6 8,2 8,3 8,6 9,1 10,0 11,0 11,8","2,1 3,2 3,7 4,2 4,7 5,2 5,7 6,2 6,7 7,2 7,7 8,6 9,8","","3,2 4,2 5,2 6,2 7,2 7,6 6,6 5,6 4,6 3,6","10,7,1 10,8,2 9,8,2 8,8,2 7,8,2 6,8,2 5,8,2 4,8,2 3,8,2 2,8,2 1,8,3 1,7,3 1,6,3 1,5,3 1,4,3 1,3,3 1,2,3 1,1,3 1,0,0 2,0,0 3,0,0 4,0,0 5,0,0 6,0,0 7,0,0 8,0,0 9,0,0 9,1,1","4,4,0","1 0 2 0");
+AL(2,"Haunted house","1,2 1,4 1,5 1,7 2,2 2,4 2,5 3,1 3,4 4,1 4,2 4,4 4,6 5,2 5,4 5,6 6,7 7,7 8,1 8,4 8,6 9,1 9,6 10,2 10,4 10,5 11,2 11,4 11,5 11,7","1,2 1,6 1,7 1,8 3,1 3,5 4,2 4,7 4,8 5,4 5,5 5,7 5,8 7,4 7,5 7,7 7,8 8,1 8,7 10,2 10,6 10,7 10,8","1,1 1,6 5,6 7,6 10,1","6,3","11,8,2 10,8,2 9,8,2","3,1,1 4,2,1 4,3,1 8,1,1 8,3,1 10,5,3 10,4,3 8,6,3 10,7,2 7,7,0 4,7,0 2,7,2 1,5,3 1,4,3 6,4,0","0 0 2 1");
+
+AS('Mania');
+AL(3,"Entrance","1,1 1,4 1,5 1,6 2,1 2,5 2,6 3,2 4,1 4,7 5,3 6,3 7,4 8,4 9,2 9,6 10,4 10,5 11,1 11,4 11,5","1,1 1,2 1,5 1,7 2,3 2,4 3,7 3,8 4,2 5,3 7,4 8,6 9,3 10,3 10,4 10,6","","6,6","0,0,0","2,5,1 3,5,3 4,5,1 6,5,3 7,5,1 8,5,3","1 0 1 0");
+AL(3,"Microwave","2,3 2,4 2,5 3,1 3,2 3,3 3,4 3,5 3,6 4,0 4,1 4,2 4,3 4,4 4,5 4,6 4,7 5,0 5,3 5,4 5,5 6,2 6,3 6,4 6,5 7,2 7,3 7,4 7,5 8,3 8,4 8,5 9,3 9,4 9,5 10,1 10,2 10,3 10,4 10,5 10,6 10,7 10,8 11,0 11,1 11,2 11,3 11,4 11,5 11,6 11,7","0,7 1,7 1,8 2,7 2,8 3,8","","8,3","2,3,1 2,4,1 2,5,1 3,3,1 3,4,1 3,5,1 4,3,1 4,4,1 4,5,1","6,3,1 6,4,1 6,5,1","0 0 1 1");
+AL(3,"In the dark","1,4 2,4 3,3 3,5 6,3 7,5 8,4 9,4 9,8 10,0 10,3 11,1 11,2 11,3 11,4 11,5 11,6 11,8","0,3 0,6 1,3 1,4 1,5 1,6 2,3 2,6 5,7 5,8 6,3 6,5 6,7 6,8 7,3 7,6 7,7 7,8 8,3 8,4 8,5 8,6 8,7 8,8 9,3 11,8","0,0 0,1 0,2 0,6 0,7 0,8 1,0 1,1 1,2 1,4 1,6 1,7 1,8 2,0 2,1 2,2 2,6 2,7 2,8 3,0 3,1 3,2 3,3 3,5 3,6 3,7 3,8 4,0 4,1 4,2 4,3 4,5 4,6 4,7 4,8 5,0 5,1 5,2 5,3 5,5 5,6 5,8 6,0 6,1 6,2 6,5 6,6 6,8 7,0 7,1 7,2 7,6 7,8 8,0 8,1 8,2 8,4 8,6 8,8 9,0 9,1 9,2 11,8","0,4","5,7,0 6,7,0 7,7,0","1,5,0 0,3,0","1 0 1 0");
+AL(3,"Cracked mirror","1,2 1,3 1,4 3,1 3,2 3,6 6,0 6,1 6,2 6,3 6,4 6,5 6,6 6,7 9,1 9,2 9,6 11,2 11,3 11,4","0,1 1,1 2,1 2,2 3,1 3,7 4,1 4,2 5,2 6,2 7,1 7,2 8,1 8,7 9,1 9,2 10,1 11,1","0,1 0,8 1,8 3,7 4,7 5,6 5,7 6,6 6,7 7,7 8,7 10,8 11,1 11,8","2,1 9,1","0,0,0 11,0,2","3,8,3 4,8,3 5,8,3 7,8,3 6,8,3 8,8,3","1 1 1 1");
+AL(3,"The gauntlet","1,1 1,2 1,4 1,5 1,7 1,8 2,1 2,2 2,4 2,5 2,7 2,8 3,1 3,2 3,4 3,5 3,7 3,8 4,1 4,2 4,4 4,5 4,7 4,8 5,1 5,2 5,4 5,5 5,7 5,8 6,1 6,2 6,4 6,5 6,7 6,8 7,1 7,2 7,4 7,5 7,7 7,8 8,1 8,2 8,4 8,5 8,7 8,8 9,1 9,2 9,4 9,5 9,7 9,8 10,1 10,2 10,4 10,5 10,7 10,8 11,1 11,2 11,3 11,4 11,5 11,6 11,7 11,8","0,3 1,1 2,1 3,1 4,1 5,1 6,1 7,1 8,1 9,1 10,1 10,8","10,1 10,2 10,4 10,5 10,6 10,7 10,8","1,8 2,8 3,8 5,8 4,8 6,8 7,8 8,8 9,8 10,3","9,6,2","1,1,1 2,1,1 4,1,1 5,1,1 6,1,1 7,1,1 8,1,1 9,3,1 3,6,1","0 0 0 9");
+AL(3,"Tenements","3,0 3,2 3,3 3,5 3,6 3,8 5,7 6,3 6,4 6,6 6,8 7,0 7,1 9,0 9,2 9,3 9,5 10,1","0,3 0,6 1,6 1,7 2,3 2,6 3,3 3,6 4,3 4,6 5,3 5,6 6,3 6,6 7,2 7,3 7,6 8,3 8,6 9,3 9,6 10,3 11,3 11,6","0,0 0,5 5,1 5,2 6,3 9,3 9,7","10,1","0,6,1 1,6,2 2,6,2","","3 3 2 4");
+AL(3,"Another maze","1,5 1,7 2,1 2,2 3,2 3,5 3,8 4,0 4,6 5,2 5,7 6,1 6,2 6,3 6,4 7,3 7,5 7,8 8,4 9,1 9,4 9,6 9,7 10,1 10,2 10,5 11,4 11,7","0,1 0,3 1,2 1,6 1,8 2,3 2,4 2,5 3,4 3,6 3,8 4,3 4,5 5,2 5,3 5,7 5,8 7,2 7,8 8,2 8,7 9,1 10,4 10,5 11,5","","7,8","11,0,1 11,2,1 11,1,1 11,3,1","","1 0 0 1");
+AL(3,"Asteroid belt","1,1 1,3 1,5 1,7 2,1 2,3 2,5 2,7 3,1 3,3 3,5 3,7 4,1 4,3 4,5 4,7 5,1 5,3 5,5 5,7 6,1 6,3 6,5 6,7","1,1 1,2 1,3 1,4 1,5 1,6 1,7 1,8 3,1 3,2 3,3 3,4 3,5 3,6 3,7 3,8 5,1 5,2 5,3 5,4 5,5 5,6 5,7 5,8 11,5","1,1 1,3 1,5 1,7 3,1 3,3 3,5 3,7 5,1 5,3 5,5 5,7","7,3 7,4 7,5","0,4,0","2,3,1 4,3,1 4,8,3 2,8,3 11,8,2 11,0,2","1 1 0 0");
+AL(3,"Square dance","1,1 1,2 1,3 1,5 1,6 1,7 2,6 10,2 11,1 11,2 11,3 11,5 11,6 11,7","1,1 1,4 1,5 1,8 2,1 2,2 2,8 3,1 3,8 4,1 4,8 5,1 5,8 6,1 6,8 7,1 7,8 8,1 8,8 9,1 9,7 9,8 10,1 10,4 10,5 10,8","","1,2 2,1 5,4 6,4 1,6 2,7 9,7 10,6 10,2 9,1","0,3,3 11,5,1","2,2,0 4,2,0 5,2,0 6,2,0 7,2,0 8,2,0 9,2,1 9,3,1 9,4,1 9,5,1 9,6,2 7,6,2 6,6,2 5,6,2 4,6,2 3,6,2 2,6,3 2,5,3 2,4,3 2,3,3","1 1 0 1");
+AL(3,"Turn right!","1,1 1,5 2,3 2,6 3,5 4,3 4,5 5,0 5,3 5,5 5,7 5,8 6,0 6,1 6,3 6,5 6,7 6,8 7,3 7,5 8,5 8,7 9,3 10,1 11,3","1,7 2,3 2,4 2,5 2,6 2,7 4,1 4,4 4,5 4,7 4,8 6,4 6,5 7,8 8,3 8,4 8,5 8,6 9,5 10,3 10,4 10,8","1,8 2,3 2,5 4,0 4,3 4,5 4,7 5,8 6,3 6,5 8,5 10,1 10,3 10,7 11,5","8,3","11,0,2 10,0,2 9,0,2 8,0,2 7,0,2","","7 0 0 0");
+AL(3,"Intersection","1,1 1,2 1,7 1,8 2,0 2,1 2,2 2,4 2,5 2,7 2,8 3,0 3,1 3,2 3,4 3,5 3,7 3,8 4,0 4,1 4,2 4,4 4,5 4,7 4,8 5,0 5,1 5,2 5,4 5,5 5,7 5,8 6,0 6,1 6,2 6,4 6,5 6,7 6,8 7,0 7,1 7,2 7,4 7,5 7,7 7,8 8,0 8,1 8,2 8,4 8,5 8,7 8,8 9,0 9,1 9,2 9,4 9,5 9,7 9,8 10,0 10,1 10,2 10,4 10,5 10,7 10,8 11,0 11,1 11,2 11,4 11,5 11,7 11,8","0,1 0,4 0,6 1,3 1,4 1,6 1,7 3,3 3,4 3,6 3,7 5,3 5,4 5,6 5,7 7,3 7,4 7,6 7,7 9,3 9,4 9,6 9,7 11,3 11,4 11,6 11,7","","11,6 11,3","0,8,3 0,7,3 0,6,0 1,6,0 2,8,3 2,7,3 0,1,1 0,2,1 0,3,0 1,3,0 2,0,1 2,1,1 2,2,1 6,0,1 6,1,1 6,2,1","4,8,3 6,8,3 8,8,3 10,8,3","2 0 4 1");
+AL(3,"Sprinter","","1,1 1,2 1,3 1,4 1,5 1,6 1,7 1,8 2,1 2,2 2,3 2,4 2,5 2,6 2,7 2,8 3,1 3,2 3,3 3,4 3,5 3,6 3,7 3,8 4,1 4,2 4,3 4,4 4,5 4,6 4,7 4,8 5,1 5,2 5,3 5,4 5,5 5,6 5,7 5,8 6,1 6,2 6,3 6,4 6,5 6,6 6,7 6,8 7,1 7,2 7,3 7,4 7,5 7,6 7,7 7,8 8,1 8,2 8,3 8,4 8,5 8,6 8,7 8,8 9,1 9,2 9,3 9,4 9,5 9,6 9,7 9,8 10,1 10,2 10,3 10,4 10,5 10,6 10,7 10,8 11,1 11,2 11,3 11,4 11,5 11,6 11,7 11,8","","0,0 4,7","1,0,0 2,0,0 3,0,0 2,1,0 3,1,0 4,1,0 3,2,0 5,2,0 4,2,0 4,3,0 5,3,0 6,3,0 5,4,0 6,4,0 7,4,0 6,5,0 7,5,0 8,5,0 7,6,0 8,6,0 9,6,0 8,7,0 9,7,0 10,7,0 9,8,0 10,8,0 11,8,0","0,7,0","1 0 2 0");
+AL(3,"Grid system","1,1 1,3 1,5 1,7 2,1 2,3 2,5 2,7 3,1 3,3 3,5 3,7 4,1 4,3 4,5 4,7 5,1 5,3 5,5 5,7 6,1 6,3 6,5 6,7 7,1 7,3 7,5 7,7 8,1 8,3 8,5 8,7 9,1 9,3 9,5 9,7 10,1 10,3 10,5 10,7 11,1 11,3 11,5 11,7","0,3 0,4 0,7 0,8 1,1 1,2 1,5 1,6 2,3 2,4 2,7 2,8 3,1 3,2 3,5 3,6 4,3 4,4 4,7 4,8 5,1 5,2 5,5 5,6 6,3 6,4 6,7 6,8 7,1 7,2 7,5 7,6 8,3 8,4 8,7 8,8 9,1 9,2 9,5 9,6 10,3 10,4 10,7 10,8 11,1 11,2 11,5 11,6","","0,8 11,0","1,6,1 3,6,1 5,6,1 8,4,1 9,2,1 11,2,1 10,0,1 6,0,1 4,0,1 2,0,1 0,0,1","3,8,0","0 0 0 3");
+AL(3,"Trap!","1,1 1,2 1,3 1,4 4,7 4,8 5,1 5,3 10,8 11,1 11,2 11,3 11,4 11,5 11,6 11,7","1,1 1,4 2,1 3,1 4,1 4,4 4,8 5,1 6,1 7,1 8,1 9,1 10,1 10,8","1,1 1,3","2,2 3,2 10,3 9,8 4,8","10,8,0 11,8,0 11,7,3 11,6,3 11,3,3 11,2,3 11,1,3 11,0,3 8,0,2 7,0,2 6,0,2 5,0,2","2,3,0 2,1,0 0,5,1","2 1 0 1");
+AL(3,"Crazy Beat","1,1 1,3 1,6 2,5 3,3 3,4 7,8 8,0 8,2 8,5 9,0","0,8 1,1 1,7 2,2 3,3 3,5 4,4 5,3 5,5 7,6 8,1 9,3 9,5 10,4 11,8","","0,8","11,4,1 11,5,1 10,5,2 9,5,2 8,5,3 9,7,2 8,7,2 7,7,2 6,7,2 5,7,2 4,7,2 2,7,2 3,7,2 1,7,2 0,7,3 0,6,3 0,5,3 0,4,3 0,3,3 0,2,3 9,0,0 10,0,0 11,0,0","3,1,0 10,1,2 5,6,0 10,6,2","0 1 1 0");
+AL(3,"Empty","1,1 1,8 2,0 2,8 3,8 4,8 5,8 6,8 7,8 8,8 9,8 10,8 11,8","0,3 11,4","","0,8","3,1,2 4,1,2 5,1,2 6,1,2 7,1,2 8,1,2","1,7,3 2,6,3 3,5,3 4,4,3 5,5,3 6,6,3 7,7,3 8,6,3 9,5,3 10,6,3","0 6 0 0");
+AL(3,"Inner circle","1,1 1,2 1,3 1,5 1,6 1,7 2,2 2,3 2,4 2,5 2,6 3,3 3,5 9,3 9,5 10,2 10,3 10,4 10,5 10,6 11,1 11,2 11,3 11,5 11,6 11,7","1,1 1,8 2,1 2,2 2,7 2,8 3,1 3,2 3,3 3,6 3,7 3,8 4,1 4,2 4,3 4,6 4,7 4,8 5,2 5,6 5,8 6,1 6,3 6,7 7,1 7,2 7,3 7,6 7,7 7,8 8,1 8,2 8,3 8,6 8,7 8,8 9,1 9,2 9,7 9,8 10,1 10,8","","5,4 6,4","0,8,3","1,7,3 8,5,3 9,2,2","1 1 2 1");
+AL(3,"Cats'Den!","1,2 1,3 1,4 1,5 1,6 1,7 1,8 6,4 6,6 7,4 11,2 11,3 11,4 11,6 11,7 11,8","0,1 1,1 1,2 2,1 2,2 3,1 3,2 4,1 4,2 5,1 5,2 7,1 7,2 8,1 8,2 8,6 9,1 9,2 10,1 10,2 11,1","0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10,0 11,0","11,8 1,5 2,4 3,3 4,2 5,2 7,2 8,2 9,3 10,4 10,6 9,7 8,8 2,6 3,7 4,8 5,8 6,8 7,8","0,8,3 0,7,1 0,5,3 0,6,3 0,4,3 0,3,3 0,2,3 0,1,0 1,1,0 3,1,0 2,1,0 5,1,0 4,1,0 6,1,0 7,1,0 8,1,0 9,1,0 10,1,0 11,1,1 11,2,1 11,4,1 11,3,1 11,5,1 11,6,1 11,7,1","2,5,0 3,4,1 3,6,3 4,5,2 4,3,1 5,4,2 4,7,0 5,6,1 7,6,0 9,6,2 6,7,2 8,7,3 8,3,1 7,4,0 9,4,2 10,5,2 8,5,3","3 1 1 2");
+AL(3,"Route 94","1,1 1,7 2,6 3,3 5,0 5,6 6,0 7,2 7,6 8,3 8,4 9,0 9,3 9,4 9,5 10,2 10,3 10,5 11,1 11,2 11,3 11,5 11,6 11,7","0,3 0,6 1,1 1,8 2,3 2,7 2,8 3,1 3,2 3,3 3,6 3,8 4,4 4,7 4,8 5,1 5,2 5,4 5,5 5,7 6,3 6,5 6,8 7,1 7,2 7,7 8,6 8,8 9,2 9,3 9,7 9,8 10,1 10,8","","4,4 5,4 6,4","0,8,0 1,8,0 9,0,0 10,0,0","1,7,0 1,1,1 10,1,2 10,6,3","1 0 1 1");
+AL(3,"Love?","1,1 1,2 1,3 1,4 1,5 1,6 1,7 2,1 2,2 2,3 2,4 2,5 2,6 3,1 3,2 3,3 3,4 3,5 3,6 3,7 4,2 4,3 4,4 4,5 4,6 5,2 5,3 5,4 5,5 5,6 6,1 6,2 6,3 6,4 6,5 6,6 6,7 7,1 7,2 7,3 7,4 7,5 7,7 8,1 8,2 8,3 8,4 8,5 8,7 9,1 9,2 9,3 9,4 9,5 9,6 9,7 10,2 10,3 10,5 10,6 11,1 11,4 11,7","1,1 1,8 2,7 2,8 3,1 3,8 4,1 4,2 4,7 4,8 5,1 5,8 6,1 6,7 7,6 7,8 8,1 8,7 9,1 9,8 10,1 10,2 10,4 10,5 10,7 10,8","","11,0","0,3,3 0,4,3","4,3,1 1,1,1 3,1,1 5,1,1 6,1,1 8,1,1 9,1,1 10,0,2 11,1,1","1 0 2 0");
+AL(3,"Cat Ballad","1,1 1,6 3,7 7,4 7,6 8,5 11,1 11,3 11,6 11,8","1,1 1,3 2,2 2,4 3,3 3,6 4,2 5,3 6,2 6,4 6,7 7,3 7,8 8,2 8,4 9,3 10,1 10,4 10,6","0,0 0,1 0,2 0,3 0,4 0,5 0,6 0,7 0,8 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10,0 11,0 11,1 11,2 11,3 11,4 11,5 11,6 11,7 11,8","1,1","1,8,0 3,8,0 5,8,0 7,8,0 9,8,0","2,1,0 4,1,0 6,1,0 8,1,0 10,1,1 10,3,2 8,3,2 6,3,2 4,3,2 2,3,2","1 0 0 1");
+AL(3,"Get together!!","4,0 4,6 4,7 5,1 5,2 6,8 7,7 8,6 9,1 9,2 9,3 9,4 9,5 9,6 9,7 10,2 10,8 11,0 11,2 11,5 11,8","1,4 2,4 3,2 5,7 6,5 6,8 7,5 7,7 8,4 8,6 9,1 10,3 10,4 10,5 11,1","0,0 0,1 0,2 0,6 0,7 0,8 1,0 1,1 1,7 1,8 2,0 2,8 7,1 8,1 8,2","10,2 11,8","11,5,1 8,5,3 9,3,3 8,3,2 7,2,2 6,1,1 5,0,2 3,0,1 4,1,2 2,1,1 1,2,0 3,2,2 0,3,1 2,3,3 4,3,2 6,3,3 7,4,3 5,4,1 3,4,3 1,4,2 0,5,3 1,6,0 2,5,1 2,7,3 3,6,2 3,8,0 4,7,1 5,8,2 6,7,2 5,6,3 7,6,2 6,5,2 4,5,0 5,2,0","10,3,2 11,3,2 11,4,2 10,4,2 9,4,3 9,5,3 10,5,1 11,6,2 10,6,2 9,6,3 9,7,3 8,6,1 8,7,1 7,7,2 7,8,0 8,8,0 9,8,3 10,8,3 10,7,1 11,7,2","3 3 0 4");
+AL(3,"Rhapsody","2,2 2,3 3,4 3,5 4,3 6,1 7,4 7,6 7,7 7,8 8,5 10,4 11,0 11,1 11,2 11,3 11,4 11,5 11,6 11,7","1,1 2,1 3,1 3,3 4,1 4,2 4,3 5,2 5,4 6,1 6,2 6,4 7,1 7,2 7,5 8,1 8,2 8,4 9,1 9,2 9,4 9,6 10,7 10,8","0,0 0,1 0,2 0,3 0,4 0,5 0,6 0,7 0,8 1,0 2,0 3,0 4,0 6,0 7,0 8,0 9,0 10,0","1,8 5,0 11,0","9,8,2 10,8,2 11,8,2 11,7,1 11,6,1 11,5,1 11,4,1 11,3,1 11,2,1 11,1,1","6,5,2 7,5,2 7,7,3 7,8,3","0 0 0 6");
+AL(3,"!?","1,1 1,7 2,2 2,6 3,3 3,6 3,7 4,2 4,3 4,4 4,5 4,7 5,2 5,3 5,4 5,5 5,7 6,1 6,2 7,4 7,5 7,7 8,3 8,4 8,5 8,7 9,2 9,3 9,5 9,6 10,1 10,5 10,7 11,1 11,7","0,4 1,2 2,1 2,3 2,5 2,8 3,1 3,5 3,6 4,2 4,6 4,7 4,8 5,6 6,1 6,2 6,3 6,7 7,1 7,2 7,3 7,4 7,6 7,7 7,8 8,1 8,2 8,4 9,8 10,3 10,6 11,3 11,4 11,7","4,2 4,3 4,4 4,5 4,7 6,2 7,2 7,4 7,5 7,7 8,2 8,3","10,7","11,8,2 10,8,2 8,8,2 9,8,2 7,8,2 6,8,2 5,8,2","","1 2 0 0");
+AL(3,"Panic!!","4,0 4,6 5,1 5,2 5,7 5,8 6,7 7,1 7,7 8,2 8,6 8,8 9,1 9,2 9,3 9,4 9,5 9,7 10,2 10,3 10,4 10,8 11,0 11,2 11,3 11,4 11,7","3,2 5,7 6,1 6,8 7,2 7,7 8,3 8,6 8,7 9,1 9,6 9,7 10,5 10,6 10,7 11,1 11,6","0,0 0,1 0,2 0,6 0,7 0,8 1,0 1,1 1,7 1,8 2,0 2,8","5,7 10,4","8,3,1 7,2,2 6,1,1 5,2,0 4,1,2 3,0,1 2,1,0 1,2,0 3,2,2 0,3,1 2,3,3 4,3,2 6,3,3 7,4,0 8,5,3 5,4,1 3,4,3 1,4,2 0,5,3 1,6,0 2,5,1 4,5,0 6,5,2 7,6,2 5,6,3 3,6,2 2,7,3 4,7,1 3,8,0 9,6,0 10,6,0","8,6,0 9,5,3 9,4,3 9,3,3 9,2,3 10,1,0 11,2,1 11,3,1 11,4,1 11,5,2 10,5,2","3 2 1 4");
+
+// =============================================
+// GAME ENGINE
+// =============================================
+const GW=12, GH=9;
+// dir: 0=right, 1=down, 2=left, 3=up
+// SPRITES DEFAULT ORIENTATION = facing RIGHT (dir=0)
+// so rotation for dir=0 → 0°, dir=1 → 90°, dir=2 → 180°, dir=3 → 270°
+const DX=[1,0,-1,0], DY=[0,1,0,-1];
+
+let curSet=0, curLvl=0, selTool=-1;
+let placed={}, alloc=[0,0,0,0], used=[0,0,0,0];
+
+let running=false, pausing=false, pauseTmr=null, rafId=null;
+let lastTick=0;
+let speedMult=1;
+const TICK_BASE=360;
+function curTick(){return Math.floor(TICK_BASE/speedMult);}
+
+let lMice=[], lCats=[];
+let vMice=[], vCats=[];
+let deathFX=[];
+
+let saved=0, eaten=0, totMice=0, totCats=0;
+let vWalls=null, hWalls=null, pitsG=null, goalsG=null, lvlMice=[], lvlCats=[];
+
+let canvas, ctx, cs=60;
+
+const P=()=>{try{return JSON.parse(localStorage.getItem('ggr2')||'{}');}catch{return{};}};
+const SP=(si,li)=>{const p=P();if(!p[si])p[si]={};p[si][li]=1;localStorage.setItem('ggr2',JSON.stringify(p));};
+const IC=(si,li)=>{const p=P();return!!(p[si]&&p[si][li]);};
+
+// ---- Screens ----
+function showSc(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showTitle(){stopSim();hideOvs();showSc('screen-title');}
+function showLevels(){stopSim();hideOvs();showSc('screen-levels');buildLvlUI();}
+function showHowTo(){document.getElementById('howOv').classList.add('show');}
+function exitGame(){showLevels();}
+function hideOvs(){['winOv','loseOv','howOv'].forEach(id=>document.getElementById(id).classList.remove('show'));}
+
+function buildLvlUI(){
+  const tabs=document.getElementById('setTabs');tabs.innerHTML='';
+  SETS.forEach((s,i)=>{
+    const b=document.createElement('button');b.className='stab'+(i===curSet?' on':'');b.textContent=s.name;
+    b.onclick=()=>{curSet=i;buildLvlUI();};tabs.appendChild(b);
+  });
+  const grid=document.getElementById('lvlGrid');grid.innerHTML='';
+  SETS[curSet].levels.forEach((lvl,i)=>{
+    const c=document.createElement('div');c.className='lcard'+(IC(curSet,i)?' done':'');
+    c.innerHTML=`<div class="lcn">${i+1}</div><div class="lct">${lvl.name}</div>`;
+    c.onclick=()=>startLevel(curSet,i);grid.appendChild(c);
+  });
+}
+
+// ---- Level loading ----
+function startLevel(si,li){
+  curSet=si;curLvl=li;hideOvs();showSc('screen-game');
+  speedMult=1; // RESET SPEED on each level
+  document.getElementById('speedBtn').textContent='⚡ x1';
+  const lvl=SETS[si].levels[li];
+  document.getElementById('gTitle').textContent=`${lvl.name} — ${SETS[si].name} ${li+1}/${SETS[si].levels.length}`;
+  loadData(lvl);
+  placed={};used=[0,0,0,0];
+  stopSim();resizeCv();draw(0);buildPillsUI();updateScore();
+}
+
+function loadData(lvl){
+  vWalls=Array.from({length:GW+1},()=>Array(GH).fill(false));
+  hWalls=Array.from({length:GW},()=>Array(GH+1).fill(false));
+  for(let y=0;y<GH;y++){vWalls[0][y]=vWalls[GW][y]=true;}
+  for(let x=0;x<GW;x++){hWalls[x][0]=hWalls[x][GH]=true;}
+  pstr(lvl.vW).forEach(([x,y])=>{if(x>=0&&x<=GW&&y>=0&&y<GH)vWalls[x][y]=true;});
+  pstr(lvl.hW).forEach(([x,y])=>{if(x>=0&&x<GW&&y>=0&&y<=GH)hWalls[x][y]=true;});
+  pitsG={};goalsG={};
+  pstr(lvl.pits).forEach(([x,y])=>{pitsG[x+','+y]=1;});
+  pstr(lvl.goals).forEach(([x,y])=>{goalsG[x+','+y]=1;});
+  lvlMice=pstr(lvl.mice).map(([x,y,f])=>({x,y,dir:f||0}));
+  lvlCats=pstr(lvl.cats).map(([x,y,f])=>({x,y,dir:f||0}));
+  totMice=lvlMice.length;totCats=lvlCats.length;
+  const a=lvl.arrows.split(' ').map(Number);
+  alloc=[a[0]||0,a[1]||0,a[2]||0,a[3]||0];
+}
+
+function resetLevel(){startLevel(curSet,curLvl);}
+
+// ---- Canvas ----
+function setupCanvas(){
+  canvas=document.getElementById('gameCanvas');ctx=canvas.getContext('2d');
+  canvas.addEventListener('click',onCvClick);
+  canvas.addEventListener('touchend',onCvTouch,{passive:false});
+}
+
+function resizeCv(){
+  if(!canvas)return;
+  const area=document.querySelector('.game-area');
+  const maxW=Math.floor((area.clientWidth-4)/GW);
+  const maxH=Math.floor((area.clientHeight-4)/GH);
+  cs=Math.min(maxW,maxH,80);cs=Math.max(cs,28);
+  canvas.width=GW*cs;canvas.height=GH*cs;
+}
+
+// ---- Input ----
+function cellAt(cx,cy){
+  const r=canvas.getBoundingClientRect();
+  return{x:Math.floor((cx-r.left)/(r.width/GW)),y:Math.floor((cy-r.top)/(r.height/GH))};
+}
+function onCvClick(e){if(running)return;const{x,y}=cellAt(e.clientX,e.clientY);if(x<0||x>=GW||y<0||y>=GH)return;doCell(x,y);}
+function onCvTouch(e){e.preventDefault();if(running)return;const t=e.changedTouches[0];const{x,y}=cellAt(t.clientX,t.clientY);if(x<0||x>=GW||y<0||y>=GH)return;doCell(x,y);}
+
+function doCell(x,y){
+  const k=x+','+y;
+  if(selTool===4){if(placed[k]!==undefined){used[placed[k]]--;delete placed[k];}buildPillsUI();draw(0);return;}
+  if(selTool>=0&&selTool<=3){
+    const d=selTool;
+    if(placed[k]===d){used[d]--;delete placed[k];buildPillsUI();draw(0);return;}
+    if(placed[k]!==undefined)used[placed[k]]--;
+    if(alloc[d]-used[d]>0){placed[k]=d;used[d]++;}
+    buildPillsUI();draw(0);return;
+  }
+  if(placed[k]!==undefined){used[placed[k]]--;delete placed[k];buildPillsUI();draw(0);}
+}
+
+// ---- Arrow UI ----
+function buildPillsUI(){
+  const icons=['➡️','⬇️','⬅️','⬆️'];
+  const c=document.getElementById('palPills');c.innerHTML='';
+  icons.forEach((icon,i)=>{
+    const rem=alloc[i]-used[i];
+    const el=document.createElement('div');
+    el.className='apill'+(selTool===i?' sel':'')+(rem<=0?' mpty':'');
+    el.innerHTML=`<div class="ai">${icon}</div><div class="ac">${rem}</div>`;
+    el.onclick=()=>{
+      if(running)return;
+      if(rem<=0&&selTool!==i)return;
+      selTool=(selTool===i)?-1:i;buildPillsUI();
+    };
+    c.appendChild(el);
+  });
+  document.getElementById('erasePill').className='epill'+(selTool===4?' sel':'');
+}
+function selectErase(){if(running)return;selTool=(selTool===4)?-1:4;buildPillsUI();}
+
+// ---- DRAW ----
+// Mars-themed alien cell colors
+const CELL_COLORS=[
+  '#1E0D35','#220E38','#1A0A2E','#1C0C32','#200F3A','#1B0B30'
+];
+// Subtle alien grid tones
+const CELL_SURFACE=[
+  '#2A1040','#250D3A','#1F0B35','#221040','#1D0B30','#280F3C'
+];
+
+function drawCell(x, y){
+  const px=x*cs, py=y*cs;
+  // alternating subtle alien colors
+  ctx.fillStyle = CELL_SURFACE[(x+y*3)%CELL_SURFACE.length];
+  ctx.fillRect(px,py,cs,cs);
+  // subtle grid lines
+  ctx.strokeStyle='rgba(185,79,255,.07)';
+  ctx.lineWidth=1;
+  ctx.strokeRect(px+.5,py+.5,cs-1,cs-1);
+}
+
+function draw(t){
+  if(!ctx||!pitsG||!goalsG||!vWalls||!hWalls)return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  for(let x=0;x<GW;x++){
+    for(let y=0;y<GH;y++){
+      const k=x+','+y;
+      const px=x*cs, py=y*cs;
+
+      if(pitsG[k]){
+        // Void / black hole
+        ctx.fillStyle='#0A0010';ctx.fillRect(px,py,cs,cs);
+        const grd=ctx.createRadialGradient(px+cs/2,py+cs/2,0,px+cs/2,py+cs/2,cs*.55);
+        grd.addColorStop(0,'rgba(120,0,255,.6)');grd.addColorStop(.6,'rgba(60,0,120,.3)');grd.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=grd;ctx.fillRect(px,py,cs,cs);
+        drawEmoji(px+cs/2,py+cs/2,'🕳️',cs*.52);
+      } else if(goalsG[k]){
+        // Rocket launch pad - glowing
+        ctx.fillStyle='#0A2010';ctx.fillRect(px,py,cs,cs);
+        const grd=ctx.createRadialGradient(px+cs/2,py+cs/2,0,px+cs/2,py+cs/2,cs*.6);
+        grd.addColorStop(0,'rgba(0,212,170,.5)');grd.addColorStop(1,'rgba(0,212,170,0)');
+        ctx.fillStyle=grd;ctx.fillRect(px,py,cs,cs);
+        ctx.strokeStyle='#00D4AA';ctx.lineWidth=2;ctx.strokeRect(px+2,py+2,cs-4,cs-4);
+        drawEmoji(px+cs/2,py+cs/2,'🚀',cs*.55);
+      } else {
+        drawCell(x,y);
+      }
+    }
+  }
+
+  // placed arrows
+  for(const[k,d]of Object.entries(placed)){
+    const[ax,ay]=k.split(',').map(Number);
+    drawArrow(ax,ay,d);
+  }
+
+  drawAllWalls();
+
+  // entities
+  if(running){
+    vMice.forEach(m=>{
+      const rx=lerp(m.px,m.x,t),ry=lerp(m.py,m.y,t);
+      drawSprite(rx,ry,'👨‍🚀',m.dir,cs,'rgba(0,212,170,.35)');
+    });
+    vCats.forEach(c=>{
+      const rx=lerp(c.px,c.x,t),ry=lerp(c.py,c.y,t);
+      drawSprite(rx,ry,'👾',c.dir,cs,'rgba(185,79,255,.35)');
+    });
+  } else {
+    lvlMice.forEach(m=>drawSprite(m.x,m.y,'👨‍🚀',m.dir,cs,'rgba(0,212,170,.35)'));
+    lvlCats.forEach(c=>drawSprite(c.x,c.y,'👾',c.dir,cs,'rgba(185,79,255,.35)'));
+  }
+
+  // death FX
+  deathFX=deathFX.filter(fx=>{
+    fx.t++;
+    const p=fx.t/fx.maxT;if(p>=1)return false;
+    const ex=fx.x*cs+cs/2,ey=fx.y*cs+cs/2-p*cs*1.6;
+    ctx.save();ctx.globalAlpha=1-p;
+    ctx.font=`${cs*(0.5+p*.5)}px Arial`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(fx.emoji,ex,ey);ctx.restore();
+    return true;
+  });
+}
+
+function lerp(a,b,t){return a+(b-a)*t;}
+
+function drawEmoji(cx,cy,em,sz){
+  ctx.font=`${sz}px Arial`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(em,cx,cy);
+}
+
+function drawArrow(gx,gy,dir){
+  const px=gx*cs,py=gy*cs,cx=px+cs/2,cy=py+cs/2;
+  ctx.fillStyle='rgba(58,134,255,.18)';
+  rrect(ctx,px+3,py+3,cs-6,cs-6,8);ctx.fill();
+
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(dir*Math.PI/2);
+  const r=cs*.26;
+  ctx.fillStyle='#3A86FF';ctx.strokeStyle='#1A56BB';ctx.lineWidth=2;ctx.lineJoin='round';
+  ctx.beginPath();
+  ctx.moveTo(r,0);ctx.lineTo(r*.1,-r*.55);ctx.lineTo(r*.1,-r*.26);
+  ctx.lineTo(-r*.62,-r*.26);ctx.lineTo(-r*.62,r*.26);ctx.lineTo(r*.1,r*.26);
+  ctx.lineTo(r*.1,r*.55);ctx.closePath();
+  ctx.fill();ctx.stroke();ctx.restore();
+}
+
+function drawSprite(gx,gy,em,dir,cs,glowColor){
+  // Sprites default face RIGHT (dir=0 = 0 rotation)
+  // dir=0 right→ 0°, dir=1 down→ 90°, dir=2 left→ 180°, dir=3 up→ 270°
+  const px=gx*cs+cs/2,py=gy*cs+cs/2,sz=cs*.68;
+  ctx.save();
+  ctx.translate(px,py);
+  ctx.rotate(dir*Math.PI/2);
+  // glow bg
+  ctx.fillStyle=glowColor;
+  ctx.beginPath();ctx.arc(0,1,sz*.44,0,Math.PI*2);ctx.fill();
+  // emoji — no rotation flip needed since we handle it with the canvas rotation above
+  ctx.font=`${sz}px Arial`;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(em,0,1);
+  ctx.restore();
+}
+
+function drawAllWalls(){
+  const thick=Math.max(4,Math.floor(cs*.09));
+  for(let x=0;x<=GW;x++)for(let y=0;y<GH;y++){
+    if(vWalls[x]&&vWalls[x][y]){
+      const brd=(x===0||x===GW);
+      wSeg(x*cs-thick/2,y*cs,thick,cs,brd);
+    }
+  }
+  for(let x=0;x<GW;x++)for(let y=0;y<=GH;y++){
+    if(hWalls[x]&&hWalls[x][y]){
+      const brd=(y===0||y===GH);
+      wSeg(x*cs,y*cs-thick/2,cs,thick,brd);
+    }
+  }
+}
+
+function wSeg(x,y,w,h,brd){
+  ctx.save();
+  if(!brd){ctx.shadowColor='#B94FFF';ctx.shadowBlur=10;}
+  ctx.fillStyle=brd?'#3A1A5A':'#B94FFF';ctx.fillRect(x,y,w,h);
+  if(!brd){
+    ctx.fillStyle='#E090FF';
+    ctx.fillRect(x,y,w,Math.min(2,h));
+    ctx.fillRect(x,y,Math.min(2,w),h);
+  }
+  ctx.restore();
+}
+
+function rrect(c,x,y,w,h,r){
+  c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);
+  c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath();
+}
+
+// ---- SIM ----
+function toggleSpeed(){
+  if(speedMult===1)speedMult=2;
+  else if(speedMult===2)speedMult=4;
+  else speedMult=1;
+  document.getElementById('speedBtn').textContent=`⚡ x${speedMult}`;
+}
+
+function startSim(){
+  if(running)return;
+  running=true;pausing=false;saved=0;eaten=0;deathFX=[];
+  let eid=0;
+  lMice=lvlMice.map(m=>({...m,id:eid++}));
+  lCats=lvlCats.map(c=>({...c,id:eid++}));
+  totMice=lMice.length;totCats=lCats.length;
+  vMice=lMice.map(m=>({...m,px:m.x,py:m.y}));
+  vCats=lCats.map(c=>({...c,px:c.x,py:c.y}));
+  document.getElementById('goBtn').style.display='none';
+  document.getElementById('stopBtn').style.display='block';
+  document.getElementById('speedBtn').style.display='block';
+  updateScore();lastTick=performance.now();
+  rafId=requestAnimationFrame(loop);
+}
+
+function stopSim(){
+  running=false;pausing=false;
+  if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+  if(pauseTmr){clearTimeout(pauseTmr);pauseTmr=null;}
+  document.getElementById('goBtn').style.display='block';
+  document.getElementById('stopBtn').style.display='none';
+  document.getElementById('speedBtn').style.display='none';
+  draw(0);
+}
+
+function loop(now){
+  if(!running)return;
+  if(!pausing){
+    const el=now-lastTick;
+    const tk=curTick();
+    if(el>=tk){lastTick=now;tick();}
+    else{draw(Math.min(el/tk,1));}
+  } else {
+    draw(1);
+  }
+  rafId=requestAnimationFrame(loop);
+}
+
+function canGo(x,y,dir){
+  if(dir===0)return!(vWalls[x+1]&&vWalls[x+1][y]);
+  if(dir===1)return!(hWalls[x]&&hWalls[x][y+1]);
+  if(dir===2)return!(vWalls[x]&&vWalls[x][y]);
+  if(dir===3)return!(hWalls[x]&&hWalls[x][y]);
+  return true;
+}
+
+function moveEnt(e){
+  if(canGo(e.x,e.y,e.dir)){e.x+=DX[e.dir];e.y+=DY[e.dir];}
+  else{
+    for(const t of[1,-1,2]){
+      const nd=((e.dir+t)+4)%4;
+      if(canGo(e.x,e.y,nd)){e.dir=nd;e.x+=DX[nd];e.y+=DY[nd];return;}
+    }
+    e.dir=(e.dir+2)%4;
+  }
+}
+
+function applyArrow(e){const k=e.x+','+e.y;if(placed[k]!==undefined)e.dir=placed[k];}
+
+function flashScreen(type){
+  const el=document.getElementById(type==='r'?'fR':'fG');
+  el.classList.add('show');setTimeout(()=>el.classList.remove('show'),160);
+}
+
+function tick(){
+  vMice.forEach(v=>{v.px=v.x;v.py=v.y;});
+  vCats.forEach(v=>{v.px=v.x;v.py=v.y;});
+
+  let anyDeath=false;
+
+  const survivingMice=[];
+  for(const m of lMice){
+    applyArrow(m);moveEnt(m);
+    const k=m.x+','+m.y;
+    if(m.x<0||m.x>=GW||m.y<0||m.y>=GH){
+      saved++;flashScreen('g');
+      const vi=vMice.findIndex(v=>v.id===m.id);if(vi>=0)vMice.splice(vi,1);
+    } else if(pitsG[k]){
+      eaten++;deathFX.push({x:m.x,y:m.y,t:0,maxT:20,emoji:'💥'});flashScreen('r');anyDeath=true;
+      const vi=vMice.findIndex(v=>v.id===m.id);if(vi>=0)vMice.splice(vi,1);
+    } else if(goalsG[k]){
+      saved++;flashScreen('g');deathFX.push({x:m.x,y:m.y,t:0,maxT:14,emoji:'⭐'});
+      const vi=vMice.findIndex(v=>v.id===m.id);if(vi>=0)vMice.splice(vi,1);
+    } else {
+      const v=vMice.find(v=>v.id===m.id);
+      if(v){v.x=m.x;v.y=m.y;v.dir=m.dir;}
+      survivingMice.push(m);
+    }
+  }
+  lMice=survivingMice;
+
+  const survivingCats=[];
+  for(const c of lCats){
+    applyArrow(c);moveEnt(c);
+    const k=c.x+','+c.y;
+    if(c.x<0||c.x>=GW||c.y<0||c.y>=GH){
+      const vi=vCats.findIndex(v=>v.id===c.id);if(vi>=0)vCats.splice(vi,1);
+    } else if(pitsG[k]){
+      deathFX.push({x:c.x,y:c.y,t:0,maxT:20,emoji:'💥'});anyDeath=true;
+      const vi=vCats.findIndex(v=>v.id===c.id);if(vi>=0)vCats.splice(vi,1);
+    } else if(goalsG[k]){
+      const vi=vCats.findIndex(v=>v.id===c.id);if(vi>=0)vCats.splice(vi,1);
+    } else {
+      const v=vCats.find(v=>v.id===c.id);
+      if(v){v.x=c.x;v.y=c.y;v.dir=c.dir;}
+      survivingCats.push(c);
+    }
+  }
+  lCats=survivingCats;
+
+  const safeMice=[];
+  for(const m of lMice){
+    if(lCats.some(c=>c.x===m.x&&c.y===m.y)){
+      eaten++;deathFX.push({x:m.x,y:m.y,t:0,maxT:24,emoji:'😱'});flashScreen('r');anyDeath=true;
+      const vi=vMice.findIndex(v=>v.id===m.id);if(vi>=0)vMice.splice(vi,1);
+    } else {
+      safeMice.push(m);
+    }
+  }
+  lMice=safeMice;
+
+  updateScore();
+  draw(0);
+
+  if(anyDeath){
+    const pauseMs=Math.max(80,Math.floor(450/speedMult));
+    pausing=true;
+    if(pauseTmr)clearTimeout(pauseTmr);
+    pauseTmr=setTimeout(()=>{
+      pausing=false;lastTick=performance.now();
+      if(lMice.length===0)endGame();
+    },pauseMs);
+  } else if(lMice.length===0){
+    setTimeout(()=>endGame(),80);
+  }
+}
+
+function endGame(){
+  setTimeout(()=>{stopSim();if(saved>0)showWin();else showLose();},350);
+}
+
+function updateScore(){
+  document.getElementById('sc-mice').textContent=running?lMice.length:totMice;
+  document.getElementById('sc-saved').textContent=saved;
+  document.getElementById('sc-eaten').textContent=eaten;
+  document.getElementById('sc-cats').textContent=running?lCats.length:totCats;
+}
+
+// ---- Win / Lose ----
+function showWin(){
+  SP(curSet,curLvl);
+  const pct=totMice>0?saved/totMice:1;
+  const stars=pct>=1?'⭐⭐⭐':pct>=.67?'⭐⭐':'⭐';
+  document.getElementById('winStars').textContent=stars;
+  document.getElementById('winMsg').textContent=LANGS[lang].winMsg(saved,totMice,eaten);
+  document.getElementById('winOv').classList.add('show');
+}
+function showLose(){
+  document.getElementById('loseMsg').textContent=LANGS[lang].loseMsg(eaten);
+  document.getElementById('loseOv').classList.add('show');
+}
+function retryLevel(){hideOvs();startLevel(curSet,curLvl);}
+function nextLevel(){
+  hideOvs();
+  const set=SETS[curSet];
+  if(curLvl+1<set.levels.length)startLevel(curSet,curLvl+1);
+  else if(curSet+1<SETS.length)startLevel(curSet+1,0);
+  else showLevels();
+}
+
+// ---- Resize ----
+window.addEventListener('resize',()=>{
+  if(document.getElementById('screen-game').classList.contains('active')){resizeCv();draw(0);}
+});
+
+// ---- Init ----
+window.addEventListener('load',()=>{
+  setupCanvas();
+  makeStars('starfield',100);
+  makeStars('starfield2',60);
+  setLang('es');
+  document.querySelector('.langbtn').classList.add('on');
+  showSc('screen-title');
+});
+</script>
+</body>
+</html>
