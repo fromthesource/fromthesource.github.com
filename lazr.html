@@ -1,0 +1,3143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>LAZR — Laser Puzzle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080c12;
+  --surface: #0d1520;
+  --surface2: #111d2e;
+  --border: #1a2d44;
+  --accent: #00e5ff;
+  --accent2: #ff3366;
+  --accent3: #7c3aed;
+  --text: #e2e8f0;
+  --text-muted: #64748b;
+  --laser: #ff2200;
+  --gold: #fbbf24;
+  --success: #10b981;
+  --header-h: 56px;
+  --panel-w: 260px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html, body {
+  height: 100%; width: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== SCREENS ===== */
+.screen {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+  z-index: 10;
+}
+.screen.hidden {
+  opacity: 0; pointer-events: none; transform: scale(0.97);
+}
+
+/* ===== STAR BG ===== */
+.stars {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  overflow: hidden;
+}
+.star {
+  position: absolute; border-radius: 50%;
+  background: #fff;
+  animation: twinkle var(--dur, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes twinkle {
+  0%, 100% { opacity: var(--min-op, 0.1); }
+  50% { opacity: var(--max-op, 0.6); }
+}
+
+/* ===== GRID BG PATTERN ===== */
+.grid-bg {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ===== MENU SCREEN ===== */
+#screen-menu {
+  gap: 32px;
+}
+.logo {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.logo-title {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(48px, 12vw, 96px);
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-shadow: 0 0 40px rgba(0,229,255,0.5), 0 0 80px rgba(0,229,255,0.2);
+  animation: pulse-glow 3s ease-in-out infinite;
+  line-height: 1;
+}
+.logo-sub {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(10px, 2vw, 14px);
+  letter-spacing: 0.4em;
+  color: var(--text-muted);
+  margin-top: 8px;
+  text-transform: uppercase;
+}
+@keyframes pulse-glow {
+  0%, 100% { text-shadow: 0 0 40px rgba(0,229,255,0.5), 0 0 80px rgba(0,229,255,0.2); }
+  50% { text-shadow: 0 0 60px rgba(0,229,255,0.8), 0 0 120px rgba(0,229,255,0.4); }
+}
+
+.menu-laser-preview {
+  width: min(320px, 80vw);
+  height: 180px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0,229,255,0.05), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.menu-laser-preview canvas {
+  width: 100%; height: 100%;
+}
+
+.menu-buttons {
+  display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%;
+  max-width: 280px; z-index: 1;
+}
+.btn {
+  width: 100%; padding: 14px 24px;
+  border: none; border-radius: 8px; cursor: pointer;
+  font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  transition: all 0.2s var(--ease);
+  position: relative; overflow: hidden;
+}
+.btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(255,255,255,0.1);
+  opacity: 0; transition: opacity 0.2s;
+}
+.btn:hover::after { opacity: 1; }
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+  box-shadow: 0 0 20px rgba(0,229,255,0.3), 0 4px 12px rgba(0,0,0,0.3);
+}
+.btn-primary:hover {
+  box-shadow: 0 0 30px rgba(0,229,255,0.5), 0 4px 16px rgba(0,0,0,0.4);
+}
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger {
+  background: transparent;
+  color: var(--accent2);
+  border: 1px solid rgba(255,51,102,0.3);
+}
+.btn-danger:hover { border-color: var(--accent2); background: rgba(255,51,102,0.1); }
+
+/* ===== LEVEL SELECT ===== */
+#screen-levels {
+  justify-content: flex-start;
+  overflow-y: auto;
+  padding: 24px 16px;
+  align-items: stretch;
+  gap: 0;
+}
+.levels-header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 0 24px;
+  position: sticky; top: 0;
+  background: linear-gradient(var(--bg) 80%, transparent);
+  z-index: 5;
+  padding-top: 8px;
+}
+.levels-header h1 {
+  font-family: 'Orbitron', monospace; font-size: 20px; font-weight: 700;
+  color: var(--accent); letter-spacing: 0.1em;
+}
+.back-btn {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); cursor: pointer; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.level-groups { width: 100%; max-width: 600px; margin: 0 auto; }
+.level-group { margin-bottom: 24px; }
+.level-group-header {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.level-group-name {
+  font-family: 'Orbitron', monospace; font-size: 15px; font-weight: 700;
+  color: var(--text);
+}
+.level-group-diff {
+  font-size: 11px; color: var(--text-muted); letter-spacing: 0.05em;
+}
+.level-group-progress {
+  margin-left: auto; font-size: 11px;
+  color: var(--text-muted); font-variant-numeric: tabular-nums;
+}
+
+.level-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 8px;
+}
+.level-btn {
+  aspect-ratio: 1; border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s var(--ease);
+  position: relative;
+}
+.level-btn.unlocked {
+  color: var(--text); border-color: var(--border);
+}
+.level-btn.unlocked:hover {
+  border-color: var(--accent); color: var(--accent);
+  background: rgba(0,229,255,0.05);
+  box-shadow: 0 0 16px rgba(0,229,255,0.15);
+  transform: scale(1.05);
+}
+.level-btn.completed {
+  border-color: var(--success); color: var(--success);
+  background: rgba(16,185,129,0.08);
+}
+.level-btn.completed::after {
+  content: '✓'; position: absolute; top: 2px; right: 4px;
+  font-size: 8px; color: var(--success);
+}
+.level-btn.locked {
+  opacity: 0.3; cursor: default; pointer-events: none;
+}
+.level-btn.current {
+  border-color: var(--accent); color: var(--accent);
+  background: rgba(0,229,255,0.1);
+  box-shadow: 0 0 16px rgba(0,229,255,0.2);
+}
+
+/* ===== GAME SCREEN ===== */
+#screen-game {
+  justify-content: flex-start;
+  padding: 0;
+}
+
+/* ===== HEADER ===== */
+.game-header {
+  width: 100%; height: var(--header-h);
+  background: rgba(8,12,18,0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 12px; gap: 8px;
+  position: relative; z-index: 20; flex-shrink: 0;
+}
+.header-btn {
+  height: 36px; padding: 0 12px;
+  border-radius: 6px; background: transparent;
+  border: 1px solid var(--border); color: var(--text-muted);
+  cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif;
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.2s; white-space: nowrap;
+}
+.header-btn:hover { border-color: var(--accent); color: var(--accent); }
+.header-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+.header-level {
+  flex: 1; text-align: center;
+}
+.header-level-name {
+  font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700;
+  color: var(--text); letter-spacing: 0.05em;
+}
+.header-level-sub {
+  font-size: 10px; color: var(--text-muted); margin-top: 1px;
+}
+
+.header-nav {
+  display: flex; gap: 4px;
+}
+.nav-arrow {
+  width: 32px; height: 32px; border-radius: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text-muted); cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.nav-arrow:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ===== CANVAS AREA ===== */
+.game-area {
+  flex: 1; width: 100%;
+  position: relative; overflow: hidden;
+}
+#game-main {
+  position: absolute; top: 0; left: 0;
+}
+.game-canvas-layer {
+  position: absolute; top: 0; left: 0; pointer-events: none;
+}
+
+/* ===== OVERLAY PANELS ===== */
+.overlay-panel {
+  position: fixed; z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  padding: 20px;
+  min-width: 220px;
+  display: none;
+  animation: panel-in 0.2s var(--ease);
+}
+.overlay-panel.show { display: block; }
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.overlay-panel h3 {
+  font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.15em; color: var(--accent);
+  text-transform: uppercase; margin-bottom: 16px;
+}
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid var(--border); gap: 12px;
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-row label {
+  font-size: 13px; color: var(--text); cursor: pointer;
+}
+/* Toggle switch */
+.toggle {
+  position: relative; width: 40px; height: 22px; flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; border-radius: 22px;
+  background: var(--surface2); border: 1px solid var(--border);
+  cursor: pointer; transition: 0.2s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--text-muted);
+  top: 2px; left: 2px;
+  transition: 0.2s;
+}
+.toggle input:checked + .toggle-slider { background: rgba(0,229,255,0.2); border-color: var(--accent); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(18px); background: var(--accent); }
+
+.solution-link {
+  display: block; padding: 8px 0; color: var(--accent);
+  font-size: 13px; cursor: pointer; text-decoration: none;
+  transition: opacity 0.2s;
+}
+.solution-link:hover { opacity: 0.7; }
+
+.settings-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+.settings-info { font-size: 11px; color: var(--text-muted); line-height: 1.6; }
+
+/* ===== VICTORY SCREEN ===== */
+#victory-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(8,12,18,0.8); backdrop-filter: blur(8px);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s var(--ease);
+}
+#victory-overlay.show {
+  opacity: 1; pointer-events: auto;
+}
+.victory-card {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 40px 48px;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(0,229,255,0.2), 0 20px 60px rgba(0,0,0,0.5);
+  animation: victory-pop 0.5s var(--ease);
+}
+@keyframes victory-pop {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.victory-icon {
+  font-size: 56px; line-height: 1; margin-bottom: 16px;
+  animation: spin-once 0.6s var(--ease);
+}
+@keyframes spin-once {
+  from { transform: rotate(-180deg) scale(0); }
+  to { transform: rotate(0) scale(1); }
+}
+.victory-title {
+  font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 900;
+  color: var(--accent); letter-spacing: 0.1em;
+  text-shadow: 0 0 30px rgba(0,229,255,0.5);
+  margin-bottom: 8px;
+}
+.victory-sub { color: var(--text-muted); margin-bottom: 28px; font-size: 14px; }
+.victory-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.victory-btn {
+  padding: 12px 24px; border-radius: 8px; cursor: pointer;
+  font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.1em; border: none; transition: all 0.2s;
+}
+.victory-btn-next { background: var(--accent); color: var(--bg); }
+.victory-btn-next:hover { box-shadow: 0 0 20px rgba(0,229,255,0.4); }
+.victory-btn-menu { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.victory-btn-menu:hover { border-color: var(--text); }
+
+/* ===== LANG SWITCHER ===== */
+.lang-row {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.lang-btn {
+  padding: 4px 10px; border-radius: 4px; font-size: 11px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+.lang-btn.active, .lang-btn:hover {
+  border-color: var(--accent); color: var(--accent);
+  background: rgba(0,229,255,0.05);
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar {
+  height: 3px; background: var(--border); border-radius: 2px;
+  overflow: hidden; margin-top: 6px;
+}
+.progress-fill {
+  height: 100%; background: var(--accent);
+  border-radius: 2px; transition: width 0.5s var(--ease);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* ===== DIFF BADGE ===== */
+.diff-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 10px; letter-spacing: 0.05em; font-weight: 500;
+}
+.diff-easy { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+.diff-medium { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+.diff-hard { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+
+/* ===== TOOLTIP LEGEND ===== */
+.legend {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 6px; font-size: 11px;
+  color: var(--text-muted);
+}
+.legend-dot {
+  width: 10px; height: 10px; border-radius: 2px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+  :root { --header-h: 50px; }
+  .header-btn span { display: none; }
+  .victory-card { padding: 28px 24px; }
+  .victory-title { font-size: 22px; }
+}
+
+
+/* ===== ENHANCED GAME ANIMATIONS ===== */
+
+/* Canvas layer for game gets a subtle glow border when solving */
+.game-area {
+  position: relative;
+}
+.game-area::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 60px rgba(0,0,0,0.6);
+  z-index: 1;
+}
+
+/* Level transition label pulse */
+@keyframes level-label-glow {
+  0%, 100% { text-shadow: 0 0 30px rgba(0,229,255,0.8), 0 0 60px rgba(0,229,255,0.4); }
+  50% { text-shadow: 0 0 50px rgba(0,229,255,1), 0 0 100px rgba(0,229,255,0.6); }
+}
+
+/* Victory card sparkle */
+.victory-card {
+  animation: victory-pop 0.5s cubic-bezier(0.16,1,0.3,1), victory-glow 2s ease-in-out 0.5s infinite;
+}
+@keyframes victory-glow {
+  0%, 100% { box-shadow: 0 0 60px rgba(0,229,255,0.2), 0 20px 60px rgba(0,0,0,0.5); }
+  50% { box-shadow: 0 0 80px rgba(0,229,255,0.4), 0 20px 80px rgba(0,0,0,0.6); }
+}
+
+/* Victory icon bounce */
+.victory-icon {
+  animation: spin-once 0.6s cubic-bezier(0.16,1,0.3,1), icon-bounce 1.5s ease-in-out 1s infinite;
+}
+@keyframes icon-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.1); }
+}
+
+/* Header level name flash on change */
+@keyframes flash-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.flash-anim {
+  animation: flash-in 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* Logo scanline effect on menu */
+.logo-title {
+  position: relative;
+}
+.logo-title::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(0,229,255,0.6), transparent);
+  animation: logo-scan 3s ease-in-out infinite;
+  top: 0;
+}
+@keyframes logo-scan {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* Level button hover pulse */
+.level-btn.unlocked:hover {
+  animation: level-btn-pulse 0.6s ease-in-out;
+}
+@keyframes level-btn-pulse {
+  0% { box-shadow: 0 0 0 rgba(0,229,255,0); }
+  50% { box-shadow: 0 0 20px rgba(0,229,255,0.4); }
+  100% { box-shadow: 0 0 16px rgba(0,229,255,0.15); }
+}
+
+/* Ripple animation fix */
+@keyframes cell-ripple {
+  from { width:10px;height:10px;margin-left:0;margin-top:0;opacity:1; border-color: rgba(0,229,255,0.9); }
+  to { width:90px;height:90px;margin-left:-40px;margin-top:-40px;opacity:0; border-color: rgba(0,229,255,0); }
+}
+
+/* Canvas cursor */
+#game-main { cursor: grab; }
+#game-main:active { cursor: grabbing; }
+
+/* Game area vignette */
+#screen-game {
+  background: radial-gradient(ellipse at 50% 50%, rgba(0,10,30,0.3) 0%, rgba(0,0,0,0.8) 100%);
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ===== LASER LINE GLOW ===== */
+canvas { image-rendering: crisp-edges; }
+
+/* ===== SCAN LINE EFFECT ===== */
+#screen-menu::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.01) 2px, rgba(0,229,255,0.01) 4px);
+  z-index: 0;
+}
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND -->
+<div class="grid-bg"></div>
+<div class="stars" id="stars"></div>
+
+<!-- ===== MENU SCREEN ===== -->
+<div class="screen" id="screen-menu">
+  <div class="logo">
+    <div class="logo-title">LAZR</div>
+    <div class="logo-sub">Laser Puzzle Game</div>
+  </div>
+  <canvas id="menu-preview" width="320" height="180" style="width:min(320px,80vw);height:min(180px,45vw);border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:0 0 40px rgba(0,229,255,0.05);position:relative;z-index:1;"></canvas>
+  <div class="menu-buttons">
+    <button class="btn btn-primary" onclick="showLevelSelect()" id="btn-play">▶ PLAY</button>
+    <button class="btn btn-secondary" onclick="showSettings()">⚙ SETTINGS</button>
+  </div>
+  <div style="position:relative;z-index:1;text-align:center;color:var(--text-muted);font-size:11px;margin-top:8px;" id="menu-progress-label"></div>
+</div>
+
+<!-- ===== LEVEL SELECT ===== -->
+<div class="screen hidden" id="screen-levels">
+  <div style="width:100%;max-width:600px;margin:0 auto;">
+    <div class="levels-header">
+      <button class="back-btn" onclick="showMenu()">←</button>
+      <h1 id="levels-title">SELECT LEVEL</h1>
+    </div>
+    <div class="level-groups" id="level-groups"></div>
+  </div>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div class="screen hidden" id="screen-game">
+  <div class="game-header">
+    <button class="header-btn" onclick="showMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      <span id="i18n-menu">Menu</span>
+    </button>
+    <button class="header-btn" onclick="showLevelSelect()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span id="i18n-levels">Levels</span>
+    </button>
+    <div class="header-level">
+      <div class="header-level-name" id="header-level-name">–</div>
+      <div class="header-level-sub" id="header-level-sub"></div>
+    </div>
+    <div class="header-nav">
+      <button class="nav-arrow" onclick="navLevel(-1)" title="Previous">‹</button>
+      <button class="nav-arrow" onclick="navLevel(1)" title="Next">›</button>
+    </div>
+    <button class="header-btn" onclick="toggleSolutionPanel()" id="hint-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span id="i18n-hint">Hint</span>
+    </button>
+  </div>
+  <div class="game-area" id="game-area">
+    <canvas id="game-main" height="600" width="600"></canvas>
+  </div>
+</div>
+
+<!-- ===== SOLUTION PANEL ===== -->
+<div class="overlay-panel" id="solution-panel" style="top:64px;right:12px;">
+  <h3 id="i18n-hint-title">HINT</h3>
+  <a class="solution-link" onclick="showSolution();toggleSolutionPanel();" id="i18n-show-solution">Show solution</a>
+</div>
+
+<!-- ===== SETTINGS MODAL ===== -->
+<div id="settings-modal" style="position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(8,12,18,0.7);backdrop-filter:blur(8px);">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:min(340px,90vw);box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 style="font-family:Orbitron,monospace;font-size:13px;font-weight:700;letter-spacing:0.15em;color:var(--accent);" id="i18n-settings">SETTINGS</h3>
+      <button onclick="closeSettings()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;line-height:1;">×</button>
+    </div>
+    <div class="setting-row">
+      <label for="toggle-resize" id="i18n-resize">Enable Resize</label>
+      <label class="toggle"><input type="checkbox" id="toggle-resize"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <label for="toggle-audio" id="i18n-audio">Enable Sound</label>
+      <label class="toggle"><input type="checkbox" id="toggle-audio"><span class="toggle-slider"></span></label>
+    </div>
+    <hr class="settings-divider">
+    <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+      <label id="i18n-language">Language</label>
+      <div class="lang-row" id="lang-row"></div>
+    </div>
+    <hr class="settings-divider">
+    <button class="btn btn-danger" onclick="resetProgress()" style="width:100%;margin-top:4px;" id="i18n-reset">Reset Progress</button>
+    <hr class="settings-divider">
+    <p class="settings-info" id="i18n-about">Laser Puzzle — A canvas-based puzzle game inspired by Lazors. Drag pieces to redirect the laser beam to hit all targets.</p>
+  </div>
+</div>
+
+<!-- ===== VICTORY OVERLAY ===== -->
+<div id="victory-overlay">
+  <div class="victory-card">
+    <div class="victory-icon">⚡</div>
+    <div class="victory-title" id="i18n-congrats">SOLVED!</div>
+    <div class="victory-sub" id="victory-sub">Level completed</div>
+    <div class="victory-actions">
+      <button class="victory-btn victory-btn-next" onclick="nextLevelFromVictory()" id="i18n-next-level">Next Level ›</button>
+      <button class="victory-btn victory-btn-menu" onclick="victoryToLevels()" id="i18n-level-select">Level Select</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STARS =====
+(function() {
+  var s = document.getElementById('stars');
+  for (var i = 0; i < 120; i++) {
+    var el = document.createElement('div');
+    el.className = 'star';
+    var sz = Math.random() * 2 + 0.5;
+    el.style.cssText = [
+      'width:' + sz + 'px',
+      'height:' + sz + 'px',
+      'left:' + Math.random() * 100 + '%',
+      'top:' + Math.random() * 100 + '%',
+      '--dur:' + (Math.random() * 4 + 2) + 's',
+      '--delay:' + (-Math.random() * 6) + 's',
+      '--min-op:' + (Math.random() * 0.1 + 0.05),
+      '--max-op:' + (Math.random() * 0.5 + 0.3),
+    ].join(';');
+    s.appendChild(el);
+  }
+})();
+</script>
+
+<script>
+// Polyfill for CanvasRenderingContext2D.roundRect
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    if (w < 2*r) r = w/2;
+    if (h < 2*r) r = h/2;
+    this.beginPath();
+    this.moveTo(x+r, y);
+    this.arcTo(x+w, y, x+w, y+h, r);
+    this.arcTo(x+w, y+h, x, y+h, r);
+    this.arcTo(x, y+h, x, y, r);
+    this.arcTo(x, y, x+w, y, r);
+    this.closePath();
+    return this;
+  };
+}
+</script>
+<script>
+// ===== UTILS =====
+var $ = document.querySelectorAll.bind(document);
+var $$ = document.querySelector.bind(document);
+Element.prototype.on = Element.prototype.addEventListener;
+function hasClass(ele,cls){if(ele){return ele.className.match(new RegExp('(\\s|^)'+cls+'(\\s|$)'));}}
+function addClass(ele,cls){if(ele){if(!hasClass(ele,cls))ele.className+=" "+cls;}}
+function removeClass(ele,cls){if(ele){if(hasClass(ele,cls)){var reg=new RegExp('(\\s|^)'+cls+'(\\s|$)');ele.className=ele.className.replace(reg,'');}}}
+function hexToRgb(hex){var reg,res,result;if(hex.length===7){reg=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;result=reg.exec(hex);}else if(hex.length===4){reg=/^#?([a-f\d]{1})([a-f\d]{1})([a-f\d]{1})$/i;res=reg.exec(hex);result=[];for(var i=1;i<=res.length;i++){result[i]=res[i]+res[i];}}else{return false;}return result?{r:parseInt(result[1],16),g:parseInt(result[2],16),b:parseInt(result[3],16)}:false;}
+function rgba(hex,a){var res=hexToRgb(hex),color='';if(res){color='rgba('+res.r+', '+res.g+', '+res.b+', '+a+')';} return color;}
+function rgb(hex){var res=hexToRgb(hex),color='';if(res){color='rgb('+res.r+', '+res.g+', '+res.b+')';} return color;}
+function isEven(n){return n%2===0;}
+function prev(e){if(e.preventDefault){e.preventDefault();}else{e.returnValue=false;}}
+function mouseTarget(e){var targ;if(!e)var e=window.event;if(e.target)targ=e.target;else if(e.srcElement)targ=e.srcElement;if(targ.nodeType==3)targ=targ.parentNode;return targ;}
+function mousePositionDocument(e){var posx=0,posy=0;if(!e){var e=window.event;}if(e.changedTouches){var touches=e.changedTouches;posx=touches[0].pageX;posy=touches[0].pageY;}else if(e.pageX||e.pageY){posx=e.pageX;posy=e.pageY;}else if(e.clientX||e.clientY){posx=e.clientX+document.body.scrollLeft+document.documentElement.scrollLeft;posy=e.clientY+document.body.scrollTop+document.documentElement.scrollTop;}return{x:posx,y:posy};}
+function findPos(obj){var curleft=0,curtop=0;if(obj.offsetParent){do{curleft+=obj.offsetLeft;curtop+=obj.offsetTop;}while(obj=obj.offsetParent);}return{left:curleft,top:curtop};}
+function mousePositionElement(e){var mousePosDoc=mousePositionDocument(e);var target=mouseTarget(e);var targetPos=findPos(target);return{x:mousePosDoc.x-targetPos.left,y:mousePosDoc.y-targetPos.top};}
+window.playSound=function(){};
+</script>
+
+<script>
+// ===== I18N =====
+var TRANSLATIONS = {
+  en: {
+    play: "▶ PLAY", settings: "⚙ SETTINGS", menu: "Menu", levels: "Levels",
+    hint: "Hint", "hint-title": "HINT", "show-solution": "Show solution",
+    "settings-title": "SETTINGS", resize: "Enable Resize", audio: "Enable Sound",
+    language: "Language", reset: "Reset Progress", congrats: "SOLVED!",
+    "next-level": "Next Level ›", "level-select": "Level Select",
+    about: "Laser Puzzle — Drag pieces to redirect the laser beam to hit all targets.",
+    "select-levels": "SELECT LEVEL",
+    "level-completed": "Level completed!"
+  },
+  es: {
+    play: "▶ JUGAR", settings: "⚙ OPCIONES", menu: "Menú", levels: "Niveles",
+    hint: "Pista", "hint-title": "PISTA", "show-solution": "Ver solución",
+    "settings-title": "CONFIGURACIÓN", resize: "Activar Redimensión", audio: "Activar Sonido",
+    language: "Idioma", reset: "Reiniciar Progreso", congrats: "¡RESUELTO!",
+    "next-level": "Siguiente ›", "level-select": "Niveles",
+    about: "Laser Puzzle — Arrastra las piezas para redirigir el láser y alcanzar todos los objetivos.",
+    "select-levels": "SELECCIONAR NIVEL",
+    "level-completed": "¡Nivel completado!"
+  },
+  fr: {
+    play: "▶ JOUER", settings: "⚙ PARAMÈTRES", menu: "Menu", levels: "Niveaux",
+    hint: "Aide", "hint-title": "AIDE", "show-solution": "Voir la solution",
+    "settings-title": "PARAMÈTRES", resize: "Activer Redim.", audio: "Activer Son",
+    language: "Langue", reset: "Réinitialiser", congrats: "RÉSOLU !",
+    "next-level": "Suivant ›", "level-select": "Niveaux",
+    about: "Laser Puzzle — Faites glisser les pièces pour rediriger le laser vers toutes les cibles.",
+    "select-levels": "CHOISIR NIVEAU",
+    "level-completed": "Niveau complété !"
+  },
+  de: {
+    play: "▶ SPIELEN", settings: "⚙ EINSTELLUNGEN", menu: "Menü", levels: "Level",
+    hint: "Tipp", "hint-title": "TIPP", "show-solution": "Lösung zeigen",
+    "settings-title": "EINSTELLUNGEN", resize: "Größenanp.", audio: "Ton aktivieren",
+    language: "Sprache", reset: "Fortschritt zurücksetzen", congrats: "GELÖST!",
+    "next-level": "Weiter ›", "level-select": "Level wählen",
+    about: "Laser Puzzle — Verschiebe Teile, um den Laserstrahl auf alle Ziele zu lenken.",
+    "select-levels": "LEVEL WÄHLEN",
+    "level-completed": "Level abgeschlossen!"
+  },
+  it: {
+    play: "▶ GIOCA", settings: "⚙ IMPOSTAZIONI", menu: "Menu", levels: "Livelli",
+    hint: "Aiuto", "hint-title": "AIUTO", "show-solution": "Mostra soluzione",
+    "settings-title": "IMPOSTAZIONI", resize: "Abilita Ridimensionamento", audio: "Abilita Suono",
+    language: "Lingua", reset: "Azzera Progressi", congrats: "RISOLTO!",
+    "next-level": "Avanti ›", "level-select": "Scegli Livello",
+    about: "Laser Puzzle — Trascina i pezzi per dirigere il laser verso tutti i bersagli.",
+    "select-levels": "SELEZIONA LIVELLO",
+    "level-completed": "Livello completato!"
+  },
+  ja: {
+    play: "▶ プレイ", settings: "⚙ 設定", menu: "メニュー", levels: "レベル",
+    hint: "ヒント", "hint-title": "ヒント", "show-solution": "解答を表示",
+    "settings-title": "設定", resize: "リサイズを有効", audio: "音を有効",
+    language: "言語", reset: "進捗をリセット", congrats: "クリア！",
+    "next-level": "次へ ›", "level-select": "レベル選択",
+    about: "レーザーパズル — ピースをドラッグしてレーザーをすべてのターゲットに当てよう。",
+    "select-levels": "レベル選択",
+    "level-completed": "レベルクリア！"
+  }
+};
+
+var currentLang = localStorage.lazr_lang || navigator.language.split('-')[0] || 'en';
+if (!TRANSLATIONS[currentLang]) currentLang = 'en';
+
+function t(key) { return (TRANSLATIONS[currentLang] || TRANSLATIONS['en'])[key] || key; }
+
+function applyLang() {
+  var map = {
+    'btn-play': 'play',
+    'i18n-menu': 'menu', 'i18n-levels': 'levels',
+    'i18n-hint': 'hint', 'i18n-hint-title': 'hint-title',
+    'i18n-show-solution': 'show-solution',
+    'i18n-settings': 'settings-title',
+    'i18n-resize': 'resize', 'i18n-audio': 'audio',
+    'i18n-language': 'language', 'i18n-reset': 'reset',
+    'i18n-congrats': 'congrats', 'i18n-next-level': 'next-level',
+    'i18n-level-select': 'level-select', 'i18n-about': 'about',
+    'levels-title': 'select-levels'
+  };
+  for (var id in map) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = t(map[id]);
+  }
+  // lang buttons
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.lang === currentLang);
+  });
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.lazr_lang = lang;
+  applyLang();
+  buildLevelSelect(); // rebuild level select with new lang
+}
+
+// Build lang buttons
+window.addEventListener('DOMContentLoaded', function() {
+  var row = document.getElementById('lang-row');
+  var langs = {en:'EN', es:'ES', fr:'FR', de:'DE', it:'IT', ja:'日本語'};
+  for (var code in langs) {
+    (function(c, label) {
+      var b = document.createElement('button');
+      b.className = 'lang-btn' + (c === currentLang ? ' active' : '');
+      b.textContent = label;
+      b.dataset.lang = c;
+      b.onclick = function() { setLang(c); };
+      row.appendChild(b);
+    })(code, langs[code]);
+  }
+});
+</script>
+
+<script>
+// ===== CONFIG =====
+var DEBUG = false;
+var GAME_OPTS = { canvasId: 'game-main', canvasClass: 'game-canvas-layer layer-' };
+var ALPHA = 1;
+var COLORS = {
+  laser: '#ff3300',
+  grid: '#FF0',
+  text: '#000',
+  stroke: 'rgba(0,230,255,0.25)',
+  empty_stroke: 'rgba(0,180,255,0.12)',
+  none: 'transparent',
+  empty: 'rgba(10,20,40,0.7)',
+  mirror: '#d0e8ff',
+  blackhole: '#050818',
+  glass: '#b8f0ff',
+  prism: '#c8b8ff',
+  mirror_stuck: '#a0b8cc',
+  blackhole_stuck: '#0a0520',
+  glass_stuck: '#88c8dd'
+};
+var LAYOUT = {
+  padding: 1, line: 2, empty_line: 1,
+  maxWidth: document.documentElement.clientWidth,
+  maxHeight: document.documentElement.clientHeight
+};
+</script>
+
+<script>
+// ===== LEVELS DATA =====
+var levelsName = [{"a":"Tutorial","b":"Easy"},{"a":"Friendly","b":"Easy"},{"a":"Vertices","b":"Easy"},{"a":"Tricky","b":"Medium"},{"a":"Braid","b":"Medium"},{"a":"Mad","b":"Hard"},{"a":"Yarn","b":"Hard"},{"a":"Tiny","b":"Easy - Medium"},{"a":"Showstopper","b":"Easy - Medium"},{"a":"Diagonal","b":"Easy - Hard"},{"a":"Numbered","b":"Easy - Hard"},{"a":"Darkroom","b":"Medium - Hard"},{"a":"Crossed","b":"Medium - Hard"},{"a":"Grande","b":"Medium - Hard"},{"a":"Crystal","b":"Easy"},{"a":"Prismatic","b":"Medium"},{"a":"Diamond","b":"Hard"},{"a":"Tinier","b":"Easy - Medium"},{"a":"Glassware","b":"Easy - Hard"},{"a":"Elementary","b":"Medium - Hard"}];
+var levels =
+[[{"l1":1,"l2":1,"rows":3,"columns":3,"none":[1,2,3,4,6,7,8],"lasers":[{"cell":1,"side":"n","dir":"se"}],"targets":[{"cell":3,"side":"n"}],"cells":[{"type":"mirror","arr":[9]}],"solution":[{"type":"mirror","arr":[5]}]},{"l1":1,"l2":2,"rows":3,"columns":3,"none":[3,5,7],"lasers":[{"cell":7,"side":"s","dir":"ne"}],"targets":[{"cell":4,"side":"e"}],"cells":[{"type":"mirror","arr":[1,9]}],"solution":[{"type":"mirror","arr":[2,6]}]},{"l1":1,"l2":3,"rows":3,"columns":3,"none":[3],"lasers":[{"cell":3,"side":"n","dir":"sw"}],"targets":[{"cell":8,"side":"s"}],"cells":[{"type":"mirror","arr":[1,6]}],"solution":[{"type":"mirror","arr":[4,9]}]},{"l1":1,"l2":4,"rows":3,"columns":3,"none":[4,6],"lasers":[{"cell":4,"side":"w","dir":"se"}],"targets":[{"cell":6,"side":"e"}],"cells":[{"type":"mirror","arr":[1,5,9]}],"solution":[{"type":"mirror","arr":[2,7,9]}]},{"l1":1,"l2":5,"rows":3,"columns":3,"none":[5,7,9],"lasers":[{"cell":7,"side":"s","dir":"ne"}],"targets":[{"cell":9,"side":"s"}],"cells":[{"type":"mirror","arr":[1,3,8]}],"solution":[{"type":"mirror","arr":[1,4,6]}]},{"l1":1,"l2":6,"rows":6,"columns":4,"none":[3,4,5,6,7,8,10,11,12,14,16,17,18,19,22,24],"lasers":[{"cell":4,"side":"s","dir":"sw"}],"targets":[{"cell":3,"side":"s"}],"cells":[{"type":"mirror","arr":[2,9,15,21]}],"solution":[{"type":"mirror","arr":[9,13,20,23]}]},{"l1":1,"l2":7,"rows":5,"columns":3,"none":[1,2,5,7,11,13,14],"lasers":[{"cell":14,"side":"s","dir":"ne"}],"targets":[{"cell":2,"side":"n"},{"cell":5,"side":"n"},{"cell":8,"side":"n"},{"cell":11,"side":"n"},{"cell":14,"side":"n"}],"cells":[{"type":"mirror","arr":[4,6,8,10,12]}],"solution":[{"type":"mirror","arr":[3,4,9,10,15]}]},{"l1":1,"l2":8,"rows":3,"columns":3,"none":[1,2,6,9],"lasers":[{"cell":1,"side":"w","dir":"se"}],"targets":[{"cell":9,"side":"s"}],"cells":[{"type":"blackhole","arr":[5,8]}],"solution":[{"type":"blackhole","arr":[3,7]}]},{"l1":1,"l2":9,"rows":5,"columns":3,"none":[1,2,3,5,9,10,13,14,15],"lasers":[{"cell":15,"side":"e","dir":"nw"}],"targets":[{"cell":3,"side":"e"},{"cell":9,"side":"e"}],"cells":[{"type":"mirror","arr":[4]},{"type":"glass","arr":[6]}],"solution":[{"type":"mirror","arr":[7]},{"type":"glass","arr":[11]}]},{"l1":1,"l2":10,"rows":3,"columns":3,"none":[3,8],"lasers":[{"cell":8,"side":"s","dir":"nw"}],"targets":[{"cell":4,"side":"w"}],"cells":[{"type":"mirror","arr":[1,9]},{"type":"mirror_stuck","arr":[7]}],"solution":[{"type":"mirror","arr":[2,6]},{"type":"mirror_stuck","arr":[7]}]}],[{"l1":2,"l2":1,"rows":4,"columns":4,"none":[4,6,10,12,13,16],"lasers":[{"cell":13,"side":"s","dir":"ne"}],"targets":[{"cell":14,"side":"e"}],"cells":[{"type":"mirror","arr":[2,5,15]}],"solution":[{"type":"mirror","arr":[3,8,9]}]},{"l1":2,"l2":2,"rows":3,"columns":3,"none":[5],"lasers":[{"cell":2,"side":"n","dir":"se"}],"targets":[{"cell":1,"side":"e"}],"cells":[{"type":"mirror","arr":[1,6,7,8]}],"solution":[{"type":"mirror","arr":[3,4,6,8]}]},{"l1":2,"l2":3,"rows":5,"columns":4,"none":[4,14,17],"lasers":[{"cell":10,"side":"s","dir":"sw"}],"targets":[{"cell":5,"side":"e"}],"cells":[{"type":"mirror","arr":[8,9,15,20]}],"solution":[{"type":"mirror","arr":[2,12,13,18]}]},{"l1":2,"l2":4,"rows":5,"columns":4,"none":[4,9,20],"lasers":[{"cell":9,"side":"w","dir":"se"}],"targets":[{"cell":5,"side":"s"},{"cell":6,"side":"e"},{"cell":11,"side":"s"},{"cell":13,"side":"e"}],"cells":[{"type":"mirror","arr":[7,10,16]}],"solution":[{"type":"mirror","arr":[2,12,18]}]},{"l1":2,"l2":5,"rows":6,"columns":4,"none":[1],"lasers":[{"cell":1,"side":"w","dir":"se"}],"targets":[{"cell":20,"side":"e"}],"cells":[{"type":"mirror","arr":[3,10,12,22]},{"type":"blackhole_stuck","arr":[15]}],"solution":[{"type":"mirror","arr":[11,13,16,23]},{"type":"blackhole_stuck","arr":[15]}]},{"l1":2,"l2":6,"rows":6,"columns":4,"none":[7,9,11,24],"lasers":[{"cell":11,"side":"s","dir":"nw"}],"targets":[{"cell":18,"side":"s"}],"cells":[{"type":"mirror","arr":[2,4,19,20]}],"solution":[{"type":"mirror","arr":[2,5,12,17]}]},{"l1":2,"l2":7,"rows":5,"columns":4,"none":[],"lasers":[{"cell":1,"side":"w","dir":"se"}],"targets":[{"cell":14,"side":"s"}],"cells":[{"type":"mirror","arr":[5,7,11,16,18]},{"type":"mirror_stuck","arr":[10]}],"solution":[{"type":"mirror","arr":[3,8,13,16,19]},{"type":"mirror_stuck","arr":[10]}]},{"l1":2,"l2":8,"rows":6,"columns":4,"none":[4,5,15,23],"lasers":[{"cell":4,"side":"n","dir":"sw"}],"targets":[{"cell":14,"side":"s"},{"cell":18,"side":"s"}],"cells":[{"type":"mirror","arr":[12,21,24]}],"solution":[{"type":"mirror","arr":[6,12,17]}]},{"l1":2,"l2":9,"rows":4,"columns":4,"none":[4,14],"lasers":[{"cell":14,"side":"e","dir":"nw"}],"targets":[{"cell":5,"side":"s"},{"cell":7,"side":"e"}],"cells":[{"type":"mirror","arr":[1,3,11,13,16]}],"solution":[{"type":"mirror","arr":[2,3,8,9,11]}]},{"l1":2,"l2":10,"rows":5,"columns":4,"none":[4,17,18],"lasers":[{"cell":18,"side":"e","dir":"nw"}],"targets":[{"cell":2,"side":"e"},{"cell":11,"side":"e"}],"cells":[{"type":"mirror","arr":[1,6,8,15,20]}],"solution":[{"type":"mirror","arr":[5,7,12,13,15]}]}],[{"l1":3,"l2":1,"rows":5,"columns":4,"none":[],"lasers":[{"cell":9,"side":"w","dir":"se"}],"targets":[{"cell":6,"side":"s"}],"cells":[{"type":"mirror","arr":[1,4,17,20]},{"type":"blackhole_stuck","arr":[10]}],"solution":[{"type":"mirror","arr":[2,5,12,18]},{"type":"blackhole_stuck","arr":[10]}]},{"l1":3,"l2":2,"rows":4,"columns":4,"none":[],"lasers":[{"cell":3,"side":"n","dir":"sw"}],"targets":[{"cell":6,"side":"s"},{"cell":7,"side":"s"},{"cell":10,"side":"s"},{"cell":11,"side":"s"}],"cells":[{"type":"mirror","arr":[1,4,13,16]}],"solution":[{"type":"mirror","arr":[5,7,12,15]}]},{"l1":3,"l2":3,"rows":3,"columns":4,"none":[],"lasers":[{"cell":2,"side":"n","dir":"se"}],"targets":[{"cell":2,"side":"e"},{"cell":5,"side":"e"},{"cell":6,"side":"e"},{"cell":7,"side":"e"},{"cell":10,"side":"e"}],"cells":[{"type":"mirror","arr":[1,4,9,12]}],"solution":[{"type":"mirror","arr":[3,5,8,10]}]},{"l1":3,"l2":4,"rows":3,"columns":4,"none":[],"lasers":[{"cell":4,"side":"n","dir":"sw"}],"targets":[{"cell":5,"side":"e"},{"cell":6,"side":"e"},{"cell":7,"side":"e"}],"cells":[{"type":"mirror","arr":[1,4,9,12]}],"solution":[{"type":"mirror","arr":[2,5,10,11]}]},{"l1":3,"l2":5,"rows":5,"columns":3,"none":[],"lasers":[{"cell":2,"side":"e","dir":"sw"}],"targets":[{"cell":14,"side":"s"}],"cells":[{"type":"mirror","arr":[1,3,13,15]}],"solution":[{"type":"mirror","arr":[4,9,10,15]}]},{"l1":3,"l2":6,"rows":5,"columns":4,"none":[8,9,19],"lasers":[{"cell":9,"side":"w","dir":"se"}],"targets":[{"cell":6,"side":"e"},{"cell":10,"side":"e"},{"cell":14,"side":"e"}],"cells":[{"type":"mirror","arr":[1,4,17,20]}],"solution":[{"type":"mirror","arr":[2,5,12,18]}]},{"l1":3,"l2":7,"rows":5,"columns":4,"none":[5,9,12,19],"lasers":[{"cell":9,"side":"w","dir":"se"}],"targets":[{"cell":6,"side":"e"},{"cell":10,"side":"e"},{"cell":14,"side":"e"}],"cells":[{"type":"mirror","arr":[1,4,17,20]}],"solution":[{"type":"mirror","arr":[3,8,13,18]}]},{"l1":3,"l2":8,"rows":5,"columns":4,"none":[],"lasers":[{"cell":1,"side":"s","dir":"se"}],"targets":[{"cell":5,"side":"w"},{"cell":11,"side":"s"}],"cells":[{"type":"mirror","arr":[1,4,17,20]},{"type":"mirror_stuck","arr":[9]},{"type":"blackhole_stuck","arr":[12]}],"solution":[{"type":"mirror","arr":[2,7,16,19]},{"type":"mirror_stuck","arr":[9]},{"type":"blackhole_stuck","arr":[12]}]},{"l1":3,"l2":9,"rows":5,"columns":4,"none":[],"lasers":[{"cell":5,"side":"w","dir":"se"}],"targets":[{"cell":5,"side":"e"},{"cell":11,"side":"e"},{"cell":13,"side":"e"}],"cells":[{"type":"mirror","arr":[1,4,17,20]}],"solution":[{"type":"mirror","arr":[2,9,12,18]}]},{"l1":3,"l2":10,"rows":4,"columns":4,"none":[],"lasers":[{"cell":4,"side":"s","dir":"sw"},{"cell":5,"side":"w","dir":"se"}],"targets":[{"cell":6,"side":"s"},{"cell":7,"side":"s"},{"cell":9,"side":"s"},{"cell":12,"side":"e"}],"cells":[{"type":"mirror","arr":[1,4,13,16]}],"solution":[{"type":"mirror","arr":[3,6,11,14]}]}],[{"l1":4,"l2":1,"rows":6,"columns":4,"none":[3,10,11,21],"lasers":[{"cell":16,"side":"e","dir":"sw"}],"targets":[{"cell":1,"side":"s"},{"cell":7,"side":"e"}],"cells":[{"type":"mirror","arr":[8,18]},{"type":"glass","arr":[9]}],"solution":[{"type":"mirror","arr":[13,25]},{"type":"glass","arr":[20]}]},{"l1":4,"l2":2,"rows":6,"columns":4,"none":[1,4,7,11,14,21,24],"lasers":[{"cell":24,"side":"e","dir":"nw"}],"targets":[{"cell":5,"side":"e"}],"cells":[{"type":"mirror","arr":[8,16,17,22,23]}],"solution":[{"type":"mirror","arr":[2,10,12,13,18]}]},{"l1":4,"l2":3,"rows":6,"columns":4,"none":[2,5,8,11,13,14,19,21,24],"lasers":[{"cell":3,"side":"n","dir":"se"}],"targets":[{"cell":23,"side":"s"}],"cells":[{"type":"mirror","arr":[6,7,9,10,12,15,16,17,18,22]}],"solution":[{"type":"mirror","arr":[1,4,6,9,12,15,16,17,20,22]}]},{"l1":4,"l2":4,"rows":6,"columns":4,"none":[1,2,4],"lasers":[{"cell":1,"side":"e","dir":"se"}],"targets":[{"cell":17,"side":"s"},{"cell":18,"side":"s"},{"cell":19,"side":"s"},{"cell":20,"side":"s"}],"cells":[{"type":"mirror","arr":[22]},{"type":"glass","arr":[3,9,15]}],"solution":[{"type":"mirror","arr":[12]},{"type":"glass","arr":[14,17,20]}]},{"l1":4,"l2":5,"rows":5,"columns":5,"none":[3,23],"lasers":[{"cell":11,"side":"w","dir":"se"}],"targets":[{"cell":6,"side":"e"},{"cell":14,"side":"e"}],"cells":[{"type":"mirror","arr":[1,5,13,21,25]}],"solution":[{"type":"mirror","arr":[2,9,15,19,22]}]},{"l1":4,"l2":6,"rows":6,"columns":4,"none":[1,2,8,14,21],"lasers":[{"cell":6,"side":"e","dir":"se"}],"targets":[{"cell":14,"side":"e"},{"cell":19,"side":"e"}],"cells":[{"type":"mirror","arr":[5,22]}],"solution":[{"type":"mirror","arr":[7,9]}]},{"l1":4,"l2":7,"rows":6,"columns":4,"none":[4,11,13,24],"lasers":[{"cell":1,"side":"e","dir":"se"}],"targets":[{"cell":7,"side":"e"},{"cell":18,"side":"s"}],"cells":[{"type":"mirror","arr":[9,14,23]},{"type":"glass","arr":[3]}],"solution":[{"type":"mirror","arr":[10,12,17]},{"type":"glass","arr":[15]}]},{"l1":4,"l2":8,"rows":5,"columns":3,"none":[],"lasers":[{"cell":8,"side":"s","dir":"ne"}],"targets":[{"cell":1,"side":"w"},{"cell":13,"side":"s"},{"cell":15,"side":"e"}],"cells":[{"type":"glass","arr":[3,10,14]}],"solution":[{"type":"glass","arr":[8,9,12]}]},{"l1":4,"l2":9,"rows":5,"columns":5,"none":[1,5,14,21,25],"lasers":[{"cell":9,"side":"s","dir":"sw"}],"targets":[{"cell":7,"side":"e"},{"cell":7,"side":"s"},{"cell":8,"side":"e"},{"cell":12,"side":"s"},{"cell":14,"side":"s"},{"cell":17,"side":"e"},{"cell":18,"side":"e"}],"cells":[{"type":"mirror","arr":[13,16,20,22,24]}],"solution":[{"type":"mirror","arr":[3,11,15,17,23]}]},{"l1":4,"l2":10,"rows":5,"columns":4,"none":[4,7],"lasers":[{"cell":11,"side":"e","dir":"nw"}],"targets":[{"cell":7,"side":"s"},{"cell":10,"side":"s"},{"cell":14,"side":"e"}],"cells":[{"type":"mirror","arr":[2,5,14,17]},{"type":"blackhole_stuck","arr":[16,20]},{"type":"glass_stuck","arr":[8]}],"solution":[{"type":"mirror","arr":[3,6,13,18]},{"type":"blackhole_stuck","arr":[16,20]},{"type":"glass_stuck","arr":[8]}]}],[{"l1":5,"l2":1,"rows":4,"columns":3,"none":[],"lasers":[{"cell":4,"side":"s","dir":"se"},{"cell":7,"side":"s","dir":"ne"}],"targets":[{"cell":7,"side":"w"},{"cell":9,"side":"e"}],"cells":[{"type":"mirror","arr":[2,5,11]}],"solution":[{"type":"mirror","arr":[2,6,11]}]},{"l1":5,"l2":2,"rows":5,"columns":4,"none":[8,17],"lasers":[{"cell":6,"side":"s","dir":"se"},{"cell":10,"side":"s","dir":"ne"}],"targets":[{"cell":6,"side":"e"},{"cell":14,"side":"e"}],"cells":[{"type":"mirror","arr":[7,15,18]}],"solution":[{"type":"mirror","arr":[9,16,19]}]},{"l1":5,"l2":3,"rows":4,"columns":3,"none":[],"lasers":[{"cell":1,"side":"e","dir":"se"},{"cell":2,"side":"e","dir":"sw"}],"targets":[{"cell":10,"side":"e"},{"cell":11,"side":"e"}],"cells":[{"type":"mirror","arr":[3,4,9,11]}],"solution":[{"type":"mirror","arr":[4,6,7,9]}]},{"l1":5,"l2":4,"rows":5,"columns":4,"none":[3,19],"lasers":[{"cell":5,"side":"s","dir":"se"},{"cell":9,"side":"s","dir":"ne"}],"targets":[{"cell":2,"side":"n"},{"cell":10,"side":"e"},{"cell":18,"side":"s"}],"cells":[{"type":"mirror","arr":[5,6,12,17]}],"solution":[{"type":"mirror","arr":[6,8,14,16]}]},{"l1":5,"l2":5,"rows":5,"columns":4,"none":[10,11,17,18],"lasers":[{"cell":6,"side":"s","dir":"se"},{"cell":10,"side":"s","dir":"ne"}],"targets":[{"cell":3,"side":"n"},{"cell":19,"side":"s"}],"cells":[{"type":"mirror","arr":[2,4,5,9,16]}],"solution":[{"type":"mirror","arr":[5,7,12,13,15]}]},{"l1":5,"l2":6,"rows":5,"columns":4,"none":[6,9,17],"lasers":[{"cell":5,"side":"s","dir":"se"},{"cell":9,"side":"s","dir":"ne"}],"targets":[{"cell":2,"side":"n"},{"cell":18,"side":"s"}],"cells":[{"type":"mirror","arr":[3,4,7,12,14,20]}],"solution":[{"type":"mirror","arr":[3,5,8,13,16,19]}]},{"l1":5,"l2":7,"rows":5,"columns":4,"none":[4,10,17,20],"lasers":[{"cell":5,"side":"s","dir":"se"},{"cell":9,"side":"s","dir":"ne"}],"targets":[{"cell":5,"side":"w"},{"cell":11,"side":"e"},{"cell":13,"side":"w"}],"cells":[{"type":"mirror","arr":[6,7,14,15]}],"solution":[{"type":"mirror","arr":[2,9,12,18]}]},{"l1":5,"l2":8,"rows":6,"columns":4,"none":[2],"lasers":[{"cell":1,"side":"e","dir":"se"},{"cell":2,"side":"e","dir":"sw"}],"targets":[{"cell":3,"side":"s"},{"cell":7,"side":"s"},{"cell":11,"side":"s"},{"cell":15,"side":"s"},{"cell":19,"side":"s"}],"cells":[{"type":"mirror","arr":[3,8,10,16,18]}],"solution":[{"type":"mirror","arr":[5,10,12,14,20]}]},{"l1":5,"l2":9,"rows":3,"columns":4,"none":[7],"lasers":[{"cell":1,"side":"s","dir":"se"},{"cell":5,"side":"s","dir":"ne"}],"targets":[{"cell":3,"side":"n"},{"cell":10,"side":"s"}],"cells":[{"type":"mirror","arr":[1,9,12]},{"type":"blackhole","arr":[2,4,8,11]}],"solution":[{"type":"mirror","arr":[2,8,11]},{"type":"blackhole","arr":[1,4,9,12]}]},{"l1":5,"l2":10,"rows":5,"columns":4,"none":[1,10,12,20],"lasers":[{"cell":1,"side":"s","dir":"se"},{"cell":5,"side":"s","dir":"ne"}],"targets":[{"cell":7,"side":"e"},{"cell":9,"side":"s"},{"cell":16,"side":"s"}],"cells":[{"type":"mirror","arr":[3,4,14,15,17,19]}],"solution":[{"type":"mirror","arr":[2,3,8,11,13,18]}]}],[{"l1":6,"l2":1,"rows":4,"columns":4,"none":[],"lasers":[{"cell":13,"side":"e","dir":"ne"}],"targets":[{"cell":2,"side":"n"},{"cell":6,"side":"e"},{"cell":9,"side":"e"},{"cell":14,"side":"e"}],"cells":[{"type":"mirror","arr":[4,15]},{"type":"glass","arr":[12]}],"solution":[{"type":"mirror","arr":[8,9]},{"type":"glass","arr":[3]}]},{"l1":6,"l2":2,"rows":4,"columns":4,"none":[9,12],"lasers":[{"cell":13,"side":"e","dir":"ne"}],"targets":[{"cell":2,"side":"n"},{"cell":6,"side":"e"},{"cell":9,"side":"e"},{"cell":14,"side":"e"}],"cells":[{"type":"mirror","arr":[1,4,15]},{"type":"glass","arr":[11]}],"solution":[{"type":"mirror","arr":[3,5,8]},{"type":"glass","arr":[10]}]},{"l1":6,"l2":3,"rows":6,"columns":4,"none":[4,16,21],"lasers":[{"cell":9,"side":"w","dir":"se"}],"targets":[{"cell":7,"side":"s"},{"cell":10,"side":"e"},{"cell":11,"side":"e"},{"cell":11,"side":"s"},{"cell":19,"side":"s"}],"cells":[{"type":"mirror","arr":[7,10,11,12,15]}],"solution":[{"type":"mirror","arr":[6,7,12,13,15]}]},{"l1":6,"l2":4,"rows":5,"columns":4,"none":[],"lasers":[{"cell":4,"side":"s","dir":"sw"}],"targets":[{"cell":6,"side":"s"},{"cell":8,"side":"s"},{"cell":15,"side":"s"}],"cells":[{"type":"mirror","arr":[1,3,5,18,20]}],"solution":[{"type":"mirror","arr":[6,9,14,16,19]}]},{"l1":6,"l2":5,"rows":6,"columns":4,"none":[],"lasers":[{"cell":12,"side":"s","dir":"nw"},{"cell":24,"side":"e","dir":"nw"}],"targets":[{"cell":3,"side":"e"},{"cell":6,"side":"s"},{"cell":8,"side":"e"},{"cell":13,"side":"s"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[2,18]},{"type":"glass","arr":[23]}],"solution":[{"type":"mirror","arr":[6,9]},{"type":"glass","arr":[11]}]},{"l1":6,"l2":6,"rows":5,"columns":5,"none":[1,5,13,21,25],"lasers":[{"cell":1,"side":"e","dir":"se"},{"cell":10,"side":"s","dir":"sw"}],"targets":[{"cell":8,"side":"e"},{"cell":13,"side":"e"},{"cell":15,"side":"s"},{"cell":18,"side":"e"},{"cell":21,"side":"e"}],"cells":[{"type":"mirror","arr":[3,6,12,16,24]}],"solution":[{"type":"mirror","arr":[4,12,14,15,24]}]},{"l1":6,"l2":7,"rows":5,"columns":5,"none":[15],"lasers":[{"cell":1,"side":"e","dir":"se"},{"cell":10,"side":"s","dir":"sw"}],"targets":[{"cell":8,"side":"e"},{"cell":13,"side":"e"},{"cell":15,"side":"s"},{"cell":18,"side":"e"},{"cell":21,"side":"e"}],"cells":[{"type":"mirror","arr":[3,5,6,12,16,24]}],"solution":[{"type":"mirror","arr":[3,9,11,13,19,23]}]},{"l1":6,"l2":8,"rows":5,"columns":5,"none":[1,5,21,25],"lasers":[{"cell":5,"side":"e","dir":"sw"}],"targets":[{"cell":7,"side":"e"},{"cell":7,"side":"s"},{"cell":8,"side":"e"},{"cell":12,"side":"s"},{"cell":14,"side":"s"},{"cell":17,"side":"e"},{"cell":18,"side":"e"}],"cells":[{"type":"mirror","arr":[16,20,22,24]},{"type":"glass_stuck","arr":[13]}],"solution":[{"type":"mirror","arr":[3,11,14,23]},{"type":"glass_stuck","arr":[13]}]},{"l1":6,"l2":9,"rows":6,"columns":4,"none":[],"lasers":[{"cell":4,"side":"n","dir":"sw"}],"targets":[{"cell":1,"side":"s"},{"cell":9,"side":"e"},{"cell":11,"side":"s"},{"cell":18,"side":"s"}],"cells":[{"type":"mirror","arr":[2,6,8,13,19,21,24]}],"solution":[{"type":"mirror","arr":[9,11,13,16,17,19,22]}]},{"l1":6,"l2":10,"rows":6,"columns":6,"none":[3,6,11,13,15,23,27,28],"lasers":[{"cell":7,"side":"e","dir":"se"}],"targets":[{"cell":8,"side":"e"},{"cell":9,"side":"e"},{"cell":10,"side":"e"}],"cells":[{"type":"mirror","arr":[2,5,12,19,22,30,32,35]}],"solution":[{"type":"mirror","arr":[4,16,18,19,26,30,33,35]}]}],[{"l1":7,"l2":1,"rows":6,"columns":4,"none":[1,6,7,11,13,16,19,23],"lasers":[{"cell":10,"side":"e","dir":"ne"}],"targets":[{"cell":11,"side":"e"}],"cells":[{"type":"mirror","arr":[2,9,18,20,21]}],"solution":[{"type":"mirror","arr":[2,3,5,8,10]}]},{"l1":7,"l2":2,"rows":5,"columns":5,"none":[1,5,7,9,17],"lasers":[{"cell":1,"side":"w","dir":"se"}],"targets":[{"cell":3,"side":"s"},{"cell":16,"side":"e"},{"cell":24,"side":"e"}],"cells":[{"type":"mirror","arr":[2,4,6,10,13,20]},{"type":"mirror_stuck","arr":[11]}],"solution":[{"type":"mirror","arr":[3,13,15,16,18,22]},{"type":"mirror_stuck","arr":[11]}]},{"l1":7,"l2":3,"rows":5,"columns":5,"none":[2,12,16,19,20,22,23,24],"lasers":[{"cell":13,"side":"s","dir":"se"},{"cell":24,"side":"e","dir":"ne"}],"targets":[{"cell":5,"side":"s"},{"cell":8,"side":"e"},{"cell":12,"side":"e"},{"cell":12,"side":"s"}],"cells":[{"type":"mirror","arr":[4,7,11,14,21]},{"type":"mirror_stuck","arr":[15]}],"solution":[{"type":"mirror","arr":[3,11,17,18,25]},{"type":"mirror_stuck","arr":[15]}]},{"l1":7,"l2":4,"rows":6,"columns":5,"none":[1,11,12,24,27],"lasers":[{"cell":9,"side":"e","dir":"se"}],"targets":[{"cell":4,"side":"n"},{"cell":4,"side":"s"},{"cell":18,"side":"s"}],"cells":[{"type":"mirror","arr":[3,7,15,16,19,29]}],"solution":[{"type":"mirror","arr":[5,8,10,15,17,23]}]},{"l1":7,"l2":5,"rows":6,"columns":5,"none":[3,12,17,20,23,24,28],"lasers":[{"cell":2,"side":"e","dir":"se"}],"targets":[{"cell":5,"side":"s"},{"cell":23,"side":"e"}],"cells":[{"type":"mirror","arr":[1,10,11,13,19,22,25,29]},{"type":"blackhole_stuck","arr":[2,26]}],"solution":[{"type":"mirror","arr":[7,11,15,18,21,25,27,29]},{"type":"blackhole_stuck","arr":[2,26]}]},{"l1":7,"l2":6,"rows":5,"columns":4,"none":[4,5,7,10,11,17,18,20],"lasers":[{"cell":9,"side":"s","dir":"ne"}],"targets":[{"cell":9,"side":"w"},{"cell":10,"side":"e"}],"cells":[{"type":"mirror","arr":[1,12,14]},{"type":"glass","arr":[15]}],"solution":[{"type":"mirror","arr":[2,12,15]},{"type":"glass","arr":[6]}]},{"l1":7,"l2":7,"rows":5,"columns":4,"none":[9,12,20],"lasers":[{"cell":12,"side":"e","dir":"sw"},{"cell":14,"side":"e","dir":"se"}],"targets":[{"cell":1,"side":"s"},{"cell":6,"side":"e"},{"cell":7,"side":"e"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[2,4,5,11,17]}],"solution":[{"type":"mirror","arr":[3,8,10,16,19]}]},{"l1":7,"l2":8,"rows":6,"columns":5,"none":[18,25],"lasers":[{"cell":18,"side":"s","dir":"se"}],"targets":[{"cell":9,"side":"s"},{"cell":12,"side":"s"},{"cell":21,"side":"w"}],"cells":[{"type":"mirror","arr":[2,5,8,16,20,27]}],"solution":[{"type":"mirror","arr":[4,10,16,24,26,28]}]},{"l1":7,"l2":9,"rows":7,"columns":5,"none":[6,12,13,16,23,30],"lasers":[{"cell":6,"side":"e","dir":"se"}],"targets":[{"cell":5,"side":"s"},{"cell":7,"side":"s"},{"cell":14,"side":"e"}],"cells":[{"type":"mirror","arr":[1,4,17,26,28,34]},{"type":"mirror_stuck","arr":[15]}],"solution":[{"type":"mirror","arr":[3,11,21,25,27,29]},{"type":"mirror_stuck","arr":[15]}]},{"l1":7,"l2":10,"rows":6,"columns":4,"none":[10,15,20,21,23],"lasers":[{"cell":8,"side":"s","dir":"nw"}],"targets":[{"cell":8,"side":"e"},{"cell":11,"side":"e"},{"cell":14,"side":"e"},{"cell":15,"side":"s"}],"cells":[{"type":"mirror","arr":[5,6,11,14,16,17,19,22]},{"type":"mirror_stuck","arr":[2]}],"solution":[{"type":"mirror","arr":[3,4,6,9,12,14,16,19]},{"type":"mirror_stuck","arr":[2]}]}],[{"l1":8,"l2":1,"rows":3,"columns":3,"none":[],"lasers":[{"cell":6,"side":"s","dir":"sw"}],"targets":[{"cell":6,"side":"e"}],"cells":[{"type":"mirror","arr":[1,3,5]}],"solution":[{"type":"mirror","arr":[3,5,9]}]},{"l1":8,"l2":2,"rows":3,"columns":3,"none":[],"lasers":[{"cell":6,"side":"e","dir":"sw"},{"cell":8,"side":"s","dir":"ne"}],"targets":[{"cell":2,"side":"n"},{"cell":4,"side":"w"}],"cells":[{"type":"mirror","arr":[3,7]}],"solution":[{"type":"mirror","arr":[1,9]}]},{"l1":8,"l2":3,"rows":3,"columns":3,"none":[],"lasers":[{"cell":4,"side":"e","dir":"ne"}],"targets":[{"cell":5,"side":"e"},{"cell":7,"side":"e"},{"cell":9,"side":"e"}],"cells":[{"type":"mirror","arr":[4]},{"type":"glass","arr":[3]}],"solution":[{"type":"mirror","arr":[2]},{"type":"glass","arr":[6]}]},{"l1":8,"l2":4,"rows":3,"columns":3,"none":[],"lasers":[{"cell":7,"side":"w","dir":"ne"},{"cell":8,"side":"e","dir":"nw"}],"targets":[{"cell":2,"side":"e"},{"cell":7,"side":"e"}],"cells":[{"type":"mirror","arr":[2,4,5,7]},{"type":"blackhole_stuck","arr":[9]}],"solution":[{"type":"mirror","arr":[1,3,4,6]},{"type":"blackhole_stuck","arr":[9]}]},{"l1":8,"l2":5,"rows":3,"columns":3,"none":[],"lasers":[{"cell":8,"side":"e","dir":"nw"}],"targets":[{"cell":1,"side":"s"},{"cell":6,"side":"e"}],"cells":[{"type":"mirror","arr":[3,5,9]},{"type":"glass","arr":[4]},{"type":"blackhole_stuck","arr":[2]}],"solution":[{"type":"mirror","arr":[1,3,7]},{"type":"glass","arr":[8]},{"type":"blackhole_stuck","arr":[2]}]},{"l1":8,"l2":6,"rows":3,"columns":3,"none":[],"lasers":[{"cell":1,"side":"e","dir":"sw"},{"cell":6,"side":"e","dir":"sw"}],"targets":[{"cell":1,"side":"w"},{"cell":2,"side":"s"},{"cell":4,"side":"e"}],"cells":[{"type":"glass","arr":[3,5,7]},{"type":"blackhole_stuck","arr":[8]}],"solution":[{"type":"mirror","arr":[2,4,9]},{"type":"glass","arr":[8]},{"type":"blackhole_stuck","arr":[8]}]},{"l1":8,"l2":7,"rows":3,"columns":3,"none":[],"lasers":[{"cell":3,"side":"s","dir":"sw"},{"cell":6,"side":"s","dir":"nw"}],"targets":[{"cell":1,"side":"n"},{"cell":2,"side":"n"}],"cells":[{"type":"mirror","arr":[1,7,9]}],"solution":[{"type":"mirror","arr":[3,4,8]}]},{"l1":8,"l2":8,"rows":3,"columns":3,"none":[],"lasers":[{"cell":6,"side":"e","dir":"nw"},{"cell":9,"side":"s","dir":"nw"}],"targets":[{"cell":4,"side":"w"},{"cell":4,"side":"e"},{"cell":5,"side":"e"},{"cell":7,"side":"e"}],"cells":[{"type":"mirror","arr":[2,7]}],"solution":[{"type":"mirror","arr":[1,3]}]},{"l1":8,"l2":9,"rows":3,"columns":3,"none":[],"lasers":[{"cell":3,"side":"n","dir":"sw"},{"cell":9,"side":"s","dir":"nw"}],"targets":[{"cell":2,"side":"e"},{"cell":4,"side":"w"}],"cells":[{"type":"mirror","arr":[5,8,9]},{"type":"blackhole_stuck","arr":[7]}],"solution":[{"type":"mirror","arr":[1,2,6]},{"type":"blackhole_stuck","arr":[7]}]},{"l1":8,"l2":10,"rows":3,"columns":3,"none":[],"lasers":[{"cell":4,"side":"w","dir":"ne"}],"targets":[{"cell":6,"side":"e"}],"cells":[{"type":"mirror","arr":[1,3,4,5,6,7]}],"solution":[{"type":"mirror","arr":[1,2,3,7,8,9]}]}],[{"l1":9,"l2":1,"rows":3,"columns":3,"none":[],"lasers":[{"cell":1,"side":"n","dir":"se"}],"targets":[{"cell":3,"side":"n"}],"cells":[{"type":"mirror","arr":[4]},{"type":"blackhole","arr":[2,5,6]},{"type":"blackhole_stuck","arr":[7,9]}],"solution":[{"type":"mirror","arr":[5]},{"type":"blackhole","arr":[4,6]},{"type":"blackhole_stuck","arr":[7,9]}]},{"l1":9,"l2":2,"rows":3,"columns":3,"none":[],"lasers":[{"cell":7,"side":"s","dir":"ne"}],"targets":[{"cell":4,"side":"e"}],"cells":[{"type":"mirror","arr":[4,6]},{"type":"blackhole","arr":[1,8,9]},{"type":"blackhole_stuck","arr":[3]}],"solution":[{"type":"mirror","arr":[2,6]},{"type":"blackhole","arr":[1,4,9]},{"type":"blackhole_stuck","arr":[3]}]},{"l1":9,"l2":3,"rows":3,"columns":3,"none":[],"lasers":[{"cell":9,"side":"e","dir":"nw"}],"targets":[{"cell":4,"side":"w"}],"cells":[{"type":"mirror","arr":[2,8]},{"type":"blackhole","arr":[1,6,7]}],"solution":[{"type":"mirror","arr":[2,7]},{"type":"blackhole","arr":[1,3,8]}]},{"l1":9,"l2":4,"rows":3,"columns":3,"none":[],"lasers":[{"cell":8,"side":"s","dir":"nw"}],"targets":[{"cell":4,"side":"e"}],"cells":[{"type":"mirror","arr":[3,5,9]},{"type":"blackhole","arr":[2,6,7]},{"type":"blackhole_stuck","arr":[1]}],"solution":[{"type":"mirror","arr":[2,6,7]},{"type":"blackhole","arr":[3,4,9]},{"type":"blackhole_stuck","arr":[1]}]},{"l1":9,"l2":5,"rows":3,"columns":3,"none":[],"lasers":[{"cell":2,"side":"n","dir":"se"}],"targets":[{"cell":1,"side":"e"}],"cells":[{"type":"mirror","arr":[4,6,7,9]},{"type":"blackhole","arr":[1,3,8]}],"solution":[{"type":"mirror","arr":[3,4,6,8]},{"type":"blackhole","arr":[1,7,9]}]},{"l1":9,"l2":6,"rows":4,"columns":4,"none":[],"lasers":[{"cell":2,"side":"n","dir":"se"}],"targets":[{"cell":12,"side":"e"}],"cells":[{"type":"mirror","arr":[1,4,5,8]},{"type":"blackhole","arr":[3,6,9,11,14]},{"type":"blackhole_stuck","arr":[7,13]}],"solution":[{"type":"mirror","arr":[3,5,8,15]},{"type":"blackhole","arr":[1,4,9,14,16]},{"type":"blackhole_stuck","arr":[7,13]}]},{"l1":9,"l2":7,"rows":6,"columns":4,"none":[1,24],"lasers":[{"cell":20,"side":"s","dir":"nw"}],"targets":[{"cell":6,"side":"e"}],"cells":[{"type":"mirror","arr":[9,21]},{"type":"blackhole","arr":[3,4,5,7,10,11,12,15,16,17,18,22]},{"type":"blackhole_stuck","arr":[8,13,23]}],"solution":[{"type":"mirror","arr":[12,14]},{"type":"blackhole","arr":[2,3,4,5,6,9,10,16,17,18,21,22]},{"type":"blackhole_stuck","arr":[8,13,23]}]},{"l1":9,"l2":8,"rows":5,"columns":4,"none":[],"lasers":[{"cell":7,"side":"e","dir":"nw"}],"targets":[{"cell":11,"side":"s"}],"cells":[{"type":"mirror","arr":[5,10,12,13]},{"type":"blackhole","arr":[1,4,6,9,14,16,18,20]},{"type":"blackhole_stuck","arr":[2,11,17]}],"solution":[{"type":"mirror","arr":[3,9,16,19]},{"type":"blackhole","arr":[1,4,5,8,12,13,18,20]},{"type":"blackhole_stuck","arr":[2,11,17]}]},{"l1":9,"l2":9,"rows":5,"columns":5,"none":[],"lasers":[{"cell":11,"side":"e","dir":"se"}],"targets":[{"cell":7,"side":"s"},{"cell":9,"side":"s"}],"cells":[{"type":"mirror","arr":[16,20,24]},{"type":"blackhole","arr":[2,4,8,10,11,14,15,18,22,23]},{"type":"blackhole_stuck","arr":[1,5,21,25]}],"solution":[{"type":"mirror","arr":[3,15,23]},{"type":"blackhole","arr":[2,4,6,10,11,13,16,20,22,24]},{"type":"blackhole_stuck","arr":[1,5,21,25]}]},{"l1":9,"l2":10,"rows":5,"columns":4,"none":[],"lasers":[{"cell":1,"side":"w","dir":"se"}],"targets":[{"cell":3,"side":"e"},{"cell":10,"side":"s"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[3,6,8,9,11,14]},{"type":"blackhole","arr":[2,5,16,17,19]},{"type":"blackhole_stuck","arr":[12]}],"solution":[{"type":"mirror","arr":[9,11,13,16,18,19]},{"type":"blackhole","arr":[2,4,8,17,20]},{"type":"blackhole_stuck","arr":[12]}]}],[{"l1":10,"l2":1,"rows":4,"columns":4,"none":[],"lasers":[{"cell":16,"side":"e","dir":"nw"}],"targets":[{"cell":5,"side":"e"},{"cell":6,"side":"s"},{"cell":10,"side":"e"},{"cell":11,"side":"s"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[3,12]}],"solution":[{"type":"mirror","arr":[2,5]}]},{"l1":10,"l2":2,"rows":4,"columns":4,"none":[1,3,4,8,13],"lasers":[{"cell":16,"side":"e","dir":"nw"}],"targets":[{"cell":5,"side":"e"},{"cell":6,"side":"s"},{"cell":10,"side":"e"},{"cell":11,"side":"s"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[9,10,12,14,15]}],"solution":[{"type":"mirror","arr":[2,5,7,9,14]}]},{"l1":10,"l2":3,"rows":4,"columns":4,"none":[],"lasers":[{"cell":16,"side":"e","dir":"nw"}],"targets":[{"cell":5,"side":"e"},{"cell":6,"side":"s"},{"cell":10,"side":"e"},{"cell":11,"side":"s"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[3,8]},{"type":"glass","arr":[4]},{"type":"blackhole_stuck","arr":[15]}],"solution":[{"type":"mirror","arr":[2,5]},{"type":"glass","arr":[12]},{"type":"blackhole_stuck","arr":[15]}]},{"l1":10,"l2":4,"rows":5,"columns":4,"none":[1,5,20],"lasers":[{"cell":16,"side":"e","dir":"nw"}],"targets":[{"cell":5,"side":"e"},{"cell":6,"side":"s"},{"cell":10,"side":"e"},{"cell":11,"side":"s"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[2,4,7,8,17,19]}],"solution":[{"type":"mirror","arr":[2,7,9,12,14,19]}]},{"l1":10,"l2":5,"rows":5,"columns":4,"none":[7,17],"lasers":[{"cell":16,"side":"e","dir":"nw"}],"targets":[{"cell":5,"side":"e"},{"cell":6,"side":"s"},{"cell":10,"side":"e"},{"cell":11,"side":"s"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[1,3,4,8,11,13,14,20]},{"type":"blackhole_stuck","arr":[5]}],"solution":[{"type":"mirror","arr":[2,3,8,9,12,13,18,19]},{"type":"blackhole_stuck","arr":[5]}]},{"l1":10,"l2":6,"rows":4,"columns":4,"none":[],"lasers":[{"cell":16,"side":"e","dir":"nw"}],"targets":[{"cell":5,"side":"e"},{"cell":6,"side":"s"},{"cell":10,"side":"e"},{"cell":11,"side":"s"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[3,4,8,9]},{"type":"glass","arr":[13]},{"type":"mirror_stuck","arr":[10]},{"type":"blackhole_stuck","arr":[15]}],"solution":[{"type":"mirror","arr":[2,3,5,8]},{"type":"glass","arr":[12]},{"type":"mirror_stuck","arr":[10]},{"type":"blackhole_stuck","arr":[15]}]},{"l1":10,"l2":7,"rows":5,"columns":4,"none":[1,5,6,20],"lasers":[{"cell":16,"side":"e","dir":"nw"}],"targets":[{"cell":5,"side":"e"},{"cell":6,"side":"s"},{"cell":10,"side":"e"},{"cell":11,"side":"s"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[2,4,17,19]},{"type":"glass","arr":[8]}],"solution":[{"type":"mirror","arr":[2,7,9,14]},{"type":"glass","arr":[10]}]},{"l1":10,"l2":8,"rows":5,"columns":4,"none":[],"lasers":[{"cell":16,"side":"e","dir":"nw"}],"targets":[{"cell":5,"side":"e"},{"cell":6,"side":"s"},{"cell":10,"side":"e"},{"cell":11,"side":"s"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[2,8,14,17]},{"type":"glass","arr":[7,20]},{"type":"blackhole_stuck","arr":[5,15]}],"solution":[{"type":"mirror","arr":[2,7,9,14]},{"type":"glass","arr":[6,12]},{"type":"blackhole_stuck","arr":[5,15]}]},{"l1":10,"l2":9,"rows":6,"columns":6,"none":[7,8,22,28,32],"lasers":[{"cell":28,"side":"e","dir":"nw"}],"targets":[{"cell":13,"side":"e"},{"cell":14,"side":"s"},{"cell":20,"side":"e"},{"cell":21,"side":"s"},{"cell":27,"side":"e"}],"cells":[{"type":"mirror","arr":[1,10,12,19,33,35]}],"solution":[{"type":"mirror","arr":[3,13,15,20,24,34]}]},{"l1":10,"l2":10,"rows":7,"columns":7,"none":[2,9,11,13,14,16,17,18,24,26,28,31,33,36,37,40,41,42,46,48],"lasers":[{"cell":40,"side":"e","dir":"nw"}],"targets":[{"cell":23,"side":"e"},{"cell":24,"side":"s"},{"cell":31,"side":"e"},{"cell":32,"side":"s"},{"cell":39,"side":"e"}],"cells":[{"type":"mirror","arr":[7,12,19,21,25,35,38,44,49]}],"solution":[{"type":"mirror","arr":[3,5,15,21,29,32,35,45,47]}]}],[{"l1":11,"l2":1,"rows":5,"columns":3,"none":[1,3,6,7,9,10,12],"lasers":[{"cell":10,"side":"w","dir":"ne"}],"targets":[{"cell":9,"side":"s"}],"cells":[{"type":"mirror","arr":[14]}],"solution":[{"type":"mirror","arr":[5]}]},{"l1":11,"l2":2,"rows":5,"columns":3,"none":[4,5,11,12],"lasers":[{"cell":13,"side":"w","dir":"ne"}],"targets":[{"cell":4,"side":"w"}],"cells":[{"type":"mirror","arr":[7,15]}],"solution":[{"type":"mirror","arr":[1,9]}]},{"l1":11,"l2":3,"rows":5,"columns":3,"none":[4,5,10,11],"lasers":[{"cell":10,"side":"w","dir":"ne"}],"targets":[{"cell":5,"side":"e"},{"cell":8,"side":"s"}],"cells":[{"type":"mirror","arr":[3,9,15]}],"solution":[{"type":"mirror","arr":[7,12,14]}]},{"l1":11,"l2":4,"rows":5,"columns":3,"none":[2,5,10,11,13,14],"lasers":[{"cell":3,"side":"s","dir":"nw"},{"cell":4,"side":"w","dir":"se"}],"targets":[{"cell":2,"side":"n"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[8,9,12,15]}],"solution":[{"type":"mirror","arr":[1,3,7,9]}]},{"l1":11,"l2":5,"rows":5,"columns":3,"none":[5,6,10,11],"lasers":[{"cell":9,"side":"e","dir":"nw"},{"cell":10,"side":"w","dir":"ne"}],"targets":[{"cell":5,"side":"s"},{"cell":6,"side":"e"},{"cell":8,"side":"s"}],"cells":[{"type":"mirror","arr":[1,8,12,15]},{"type":"mirror_stuck","arr":[4]}],"solution":[{"type":"mirror","arr":[3,7,12,14]},{"type":"mirror_stuck","arr":[4]}]},{"l1":11,"l2":6,"rows":5,"columns":3,"none":[5,6,11],"lasers":[{"cell":14,"side":"e","dir":"nw"},{"cell":15,"side":"e","dir":"nw"}],"targets":[{"cell":3,"side":"n"},{"cell":7,"side":"e"}],"cells":[{"type":"mirror","arr":[1,2,7]},{"type":"blackhole","arr":[9,10,12]}],"solution":[{"type":"mirror","arr":[4,9,10]},{"type":"blackhole","arr":[1,7,13]}]},{"l1":11,"l2":7,"rows":5,"columns":3,"none":[4,5,7,10,11,13,14],"lasers":[{"cell":1,"side":"s","dir":"ne"},{"cell":2,"side":"e","dir":"sw"},{"cell":8,"side":"e","dir":"ne"},{"cell":12,"side":"e","dir":"nw"},{"cell":14,"side":"e","dir":"ne"}],"targets":[{"cell":6,"side":"e"},{"cell":7,"side":"w"}],"cells":[{"type":"mirror","arr":[2,3,9,12]},{"type":"blackhole","arr":[1,8,15]}],"solution":[{"type":"mirror","arr":[1,3,8,15]},{"type":"blackhole","arr":[2,9,12]}]},{"l1":11,"l2":8,"rows":5,"columns":3,"none":[5,11],"lasers":[{"cell":5,"side":"s","dir":"ne"}],"targets":[{"cell":4,"side":"e"},{"cell":7,"side":"e"},{"cell":14,"side":"s"}],"cells":[{"type":"mirror","arr":[1,2,3,9,10,13,15]},{"type":"glass","arr":[7]}],"solution":[{"type":"mirror","arr":[2,4,6,9,10,12,15]},{"type":"glass","arr":[14]}]},{"l1":11,"l2":9,"rows":5,"columns":3,"none":[5,10,11],"lasers":[{"cell":3,"side":"s","dir":"nw"}],"targets":[{"cell":5,"side":"e"},{"cell":9,"side":"e"},{"cell":12,"side":"e"}],"cells":[{"type":"mirror","arr":[7,8,13,14,15]},{"type":"blackhole","arr":[2,3,4]},{"type":"glass","arr":[1]}],"solution":[{"type":"mirror","arr":[2,3,4,7,15]},{"type":"blackhole","arr":[1,13,14]},{"type":"glass","arr":[8]}]},{"l1":11,"l2":10,"rows":5,"columns":6,"none":[1,3,9,11,13,15,17,19,21,23],"lasers":[{"cell":26,"side":"s","dir":"ne"}],"targets":[{"cell":8,"side":"s"},{"cell":17,"side":"s"},{"cell":25,"side":"s"},{"cell":30,"side":"s"}],"cells":[{"type":"mirror","arr":[5,7,10,18,20,29]},{"type":"glass","arr":[2]},{"type":"blackhole_stuck","arr":[4,24,28]}],"solution":[{"type":"mirror","arr":[2,5,7,12,18,22]},{"type":"glass","arr":[10]},{"type":"blackhole_stuck","arr":[4,24,28]}]}],[{"l1":12,"l2":1,"rows":3,"columns":3,"none":[1,9],"lasers":[{"cell":2,"side":"n","dir":"sw"},{"cell":5,"side":"e","dir":"ne"},{"cell":7,"side":"s","dir":"ne"},{"cell":8,"side":"s","dir":"nw"}],"targets":[{"cell":3,"side":"e"},{"cell":4,"side":"w"}],"cells":[{"type":"blackhole","arr":[4,5,6]}],"solution":[{"type":"blackhole","arr":[5,7,8]}]},{"l1":12,"l2":2,"rows":3,"columns":3,"none":[],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":2,"side":"s","dir":"se"},{"cell":7,"side":"e","dir":"ne"},{"cell":8,"side":"e","dir":"ne"}],"targets":[{"cell":3,"side":"s"},{"cell":4,"side":"e"},{"cell":6,"side":"s"}],"cells":[{"type":"blackhole","arr":[1,5,8,9]}],"solution":[{"type":"blackhole","arr":[2,3,7,9]}]},{"l1":12,"l2":3,"rows":3,"columns":3,"none":[],"lasers":[{"cell":3,"side":"n","dir":"sw"},{"cell":4,"side":"w","dir":"se"},{"cell":6,"side":"s","dir":"sw"},{"cell":9,"side":"s","dir":"nw"}],"targets":[{"cell":2,"side":"e"},{"cell":4,"side":"e"},{"cell":7,"side":"w"},{"cell":8,"side":"s"}],"cells":[{"type":"blackhole","arr":[3,4,9]}],"solution":[{"type":"blackhole","arr":[1,6,9]}]},{"l1":12,"l2":4,"rows":4,"columns":3,"none":[],"lasers":[{"cell":2,"side":"n","dir":"se"},{"cell":5,"side":"s","dir":"ne"},{"cell":7,"side":"w","dir":"se"},{"cell":7,"side":"e","dir":"nw"},{"cell":9,"side":"s","dir":"sw"},{"cell":9,"side":"e","dir":"nw"},{"cell":10,"side":"s","dir":"ne"}],"targets":[{"cell":2,"side":"s"},{"cell":3,"side":"s"},{"cell":4,"side":"w"},{"cell":8,"side":"s"},{"cell":11,"side":"s"}],"cells":[{"type":"blackhole","arr":[2,6,7,10,12]}],"solution":[{"type":"blackhole","arr":[1,2,3,8,12]}]},{"l1":12,"l2":5,"rows":6,"columns":2,"none":[],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":2,"side":"e","dir":"nw"},{"cell":3,"side":"w","dir":"ne"},{"cell":4,"side":"e","dir":"sw"},{"cell":5,"side":"w","dir":"se"},{"cell":6,"side":"e","dir":"nw"},{"cell":7,"side":"w","dir":"ne"},{"cell":8,"side":"e","dir":"sw"},{"cell":9,"side":"w","dir":"ne"},{"cell":10,"side":"e","dir":"sw"},{"cell":11,"side":"w","dir":"ne"},{"cell":12,"side":"e","dir":"nw"}],"targets":[{"cell":1,"side":"e"},{"cell":3,"side":"e"},{"cell":5,"side":"e"},{"cell":7,"side":"e"},{"cell":9,"side":"e"},{"cell":11,"side":"e"}],"cells":[{"type":"blackhole","arr":[1,4,5,8,9,12]}],"solution":[{"type":"blackhole","arr":[2,4,6,8,9,11]}]},{"l1":12,"l2":6,"rows":3,"columns":4,"none":[],"lasers":[{"cell":4,"side":"n","dir":"sw"},{"cell":5,"side":"w","dir":"ne"},{"cell":10,"side":"s","dir":"ne"},{"cell":11,"side":"s","dir":"nw"},{"cell":12,"side":"s","dir":"nw"}],"targets":[{"cell":1,"side":"e"},{"cell":3,"side":"s"},{"cell":6,"side":"s"},{"cell":7,"side":"s"}],"cells":[{"type":"blackhole","arr":[4,5,9,10,11,12]}],"solution":[{"type":"blackhole","arr":[2,6,7,8,9,12]}]},{"l1":12,"l2":7,"rows":5,"columns":3,"none":[],"lasers":[{"cell":1,"side":"n","dir":"se"},{"cell":4,"side":"w","dir":"se"},{"cell":9,"side":"e","dir":"sw"},{"cell":10,"side":"w","dir":"ne"},{"cell":12,"side":"e","dir":"nw"},{"cell":13,"side":"w","dir":"ne"},{"cell":13,"side":"s","dir":"ne"}],"targets":[{"cell":1,"side":"s"},{"cell":5,"side":"e"},{"cell":7,"side":"e"},{"cell":10,"side":"e"},{"cell":11,"side":"e"}],"cells":[{"type":"blackhole","arr":[2,3,4,9,10,12,13]}],"solution":[{"type":"blackhole","arr":[1,2,3,6,11,14,15]}]},{"l1":12,"l2":8,"rows":5,"columns":4,"none":[],"lasers":[{"cell":2,"side":"n","dir":"se"},{"cell":2,"side":"s","dir":"sw"},{"cell":8,"side":"e","dir":"nw"},{"cell":9,"side":"e","dir":"ne"},{"cell":13,"side":"w","dir":"se"},{"cell":16,"side":"e","dir":"nw"},{"cell":19,"side":"e","dir":"nw"}],"targets":[{"cell":3,"side":"n"},{"cell":3,"side":"s"},{"cell":8,"side":"s"},{"cell":9,"side":"w"},{"cell":10,"side":"s"},{"cell":17,"side":"e"}],"cells":[{"type":"blackhole","arr":[2,6,8,10,13,16,19]}],"solution":[{"type":"blackhole","arr":[1,10,11,12,16,18,20]}]},{"l1":12,"l2":9,"rows":6,"columns":4,"none":[],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":3,"side":"n","dir":"sw"},{"cell":6,"side":"e","dir":"sw"},{"cell":8,"side":"e","dir":"nw"},{"cell":9,"side":"e","dir":"se"},{"cell":12,"side":"n","dir":"sw"},{"cell":17,"side":"w","dir":"se"},{"cell":19,"side":"s","dir":"ne"},{"cell":20,"side":"e","dir":"nw"},{"cell":21,"side":"w","dir":"ne"},{"cell":23,"side":"s","dir":"nw"}],"targets":[{"cell":3,"side":"e"},{"cell":5,"side":"e"},{"cell":9,"side":"s"},{"cell":11,"side":"s"},{"cell":13,"side":"w"},{"cell":15,"side":"s"},{"cell":16,"side":"e"},{"cell":22,"side":"s"}],"cells":[{"type":"blackhole","arr":[1,3,6,8,10,12,18,20,21]}],"solution":[{"type":"blackhole","arr":[1,2,3,5,7,12,18,23,24]}]},{"l1":12,"l2":10,"rows":6,"columns":4,"none":[],"lasers":[{"cell":1,"side":"w","dir":"ne"},{"cell":1,"side":"n","dir":"se"},{"cell":2,"side":"n","dir":"se"},{"cell":3,"side":"n","dir":"se"},{"cell":4,"side":"n","dir":"se"},{"cell":4,"side":"e","dir":"nw"},{"cell":5,"side":"w","dir":"ne"},{"cell":8,"side":"e","dir":"nw"},{"cell":9,"side":"w","dir":"ne"},{"cell":12,"side":"e","dir":"nw"},{"cell":13,"side":"w","dir":"ne"},{"cell":16,"side":"e","dir":"nw"},{"cell":17,"side":"w","dir":"ne"},{"cell":20,"side":"e","dir":"nw"},{"cell":21,"side":"w","dir":"ne"},{"cell":21,"side":"s","dir":"ne"},{"cell":22,"side":"s","dir":"ne"},{"cell":23,"side":"s","dir":"ne"},{"cell":24,"side":"s","dir":"ne"},{"cell":24,"side":"e","dir":"nw"}],"targets":[{"cell":1,"side":"e"},{"cell":2,"side":"e"},{"cell":3,"side":"e"},{"cell":5,"side":"e"},{"cell":6,"side":"e"},{"cell":7,"side":"e"},{"cell":9,"side":"e"},{"cell":10,"side":"e"},{"cell":11,"side":"e"},{"cell":13,"side":"e"},{"cell":14,"side":"e"},{"cell":15,"side":"e"},{"cell":17,"side":"e"},{"cell":18,"side":"e"},{"cell":19,"side":"e"},{"cell":21,"side":"e"},{"cell":22,"side":"e"},{"cell":23,"side":"e"}],"cells":[{"type":"blackhole","arr":[2,9,12,17,20,22]}],"solution":[{"type":"blackhole","arr":[4,8,12,16,20,24]}]}],[{"l1":13,"l2":1,"rows":6,"columns":5,"none":[1,6,9,13,14,15,17,23],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":5,"side":"e","dir":"sw"}],"targets":[{"cell":6,"side":"s"},{"cell":14,"side":"s"},{"cell":17,"side":"s"}],"cells":[{"type":"mirror","arr":[3,16,20]}],"solution":[{"type":"mirror","arr":[2,20,24]}]},{"l1":13,"l2":2,"rows":6,"columns":5,"none":[6,9,13,16,19,27],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":5,"side":"e","dir":"sw"}],"targets":[{"cell":3,"side":"e"},{"cell":14,"side":"s"},{"cell":14,"side":"e"}],"cells":[{"type":"mirror","arr":[2,11,29]}],"solution":[{"type":"mirror","arr":[12,17,23]}]},{"l1":13,"l2":3,"rows":6,"columns":5,"none":[6,10,19],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":5,"side":"e","dir":"sw"}],"targets":[{"cell":10,"side":"s"},{"cell":23,"side":"s"}],"cells":[{"type":"mirror","arr":[8,11,20]}],"solution":[{"type":"mirror","arr":[9,13,16]}]},{"l1":13,"l2":4,"rows":6,"columns":5,"none":[1,2,7,13,15,16,22,26,29,30],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":5,"side":"e","dir":"sw"}],"targets":[{"cell":11,"side":"e"},{"cell":20,"side":"e"}],"cells":[{"type":"mirror","arr":[4,8,11,20]}],"solution":[{"type":"mirror","arr":[3,11,19,23]}]},{"l1":13,"l2":5,"rows":6,"columns":5,"none":[3,5,8,15,18,21,22,24,26,27,28,30],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":5,"side":"e","dir":"sw"}],"targets":[{"cell":21,"side":"w"},{"cell":25,"side":"e"}],"cells":[{"type":"mirror","arr":[4,16,20,23]},{"type":"mirror_stuck","arr":[2]},{"type":"blackhole_stuck","arr":[29]}],"solution":[{"type":"mirror","arr":[4,11,13,23]},{"type":"mirror_stuck","arr":[2]},{"type":"blackhole_stuck","arr":[29]}]},{"l1":13,"l2":6,"rows":6,"columns":5,"none":[7,11,13,17,27,30],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":5,"side":"e","dir":"sw"}],"targets":[{"cell":8,"side":"s"},{"cell":14,"side":"e"},{"cell":18,"side":"s"}],"cells":[{"type":"mirror","arr":[2,4,15,16]}],"solution":[{"type":"mirror","arr":[8,16,19,22]}]},{"l1":13,"l2":7,"rows":6,"columns":5,"none":[1,2,6,7,8,16,18,24],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":5,"side":"e","dir":"sw"}],"targets":[{"cell":2,"side":"e"},{"cell":21,"side":"e"},{"cell":23,"side":"s"}],"cells":[{"type":"mirror","arr":[4,15,20,27,29]},{"type":"mirror_stuck","arr":[11]}],"solution":[{"type":"mirror","arr":[14,17,19,21,27]},{"type":"mirror_stuck","arr":[11]}]},{"l1":13,"l2":8,"rows":6,"columns":5,"none":[3,4,13,18,19,21,22,24,28],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":5,"side":"e","dir":"sw"}],"targets":[{"cell":2,"side":"e"},{"cell":15,"side":"s"},{"cell":18,"side":"s"}],"cells":[{"type":"mirror","arr":[2,16,27]},{"type":"glass","arr":[8]}],"solution":[{"type":"mirror","arr":[14,25,29]},{"type":"glass","arr":[23]}]},{"l1":13,"l2":9,"rows":6,"columns":5,"none":[16,17,19,22,25,26,27,28,30],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":5,"side":"e","dir":"sw"}],"targets":[{"cell":2,"side":"n"},{"cell":9,"side":"s"},{"cell":22,"side":"e"}],"cells":[{"type":"mirror","arr":[2,3,4,11,15,23,29]},{"type":"mirror_stuck","arr":[20]}],"solution":[{"type":"mirror","arr":[4,11,14,15,21,24,29]},{"type":"mirror_stuck","arr":[20]}]},{"l1":13,"l2":10,"rows":6,"columns":5,"none":[1,3,10,15,18,28,29],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":5,"side":"e","dir":"sw"}],"targets":[{"cell":2,"side":"n"},{"cell":4,"side":"n"},{"cell":9,"side":"s"},{"cell":16,"side":"e"}],"cells":[{"type":"mirror","arr":[2,4,8,16,20,23]},{"type":"mirror_stuck","arr":[11]}],"solution":[{"type":"mirror","arr":[13,14,16,19,22,23]},{"type":"mirror_stuck","arr":[11]}]}],[{"l1":14,"l2":1,"rows":6,"columns":6,"none":[1,4,11,12,15,16,19,34],"lasers":[{"cell":31,"side":"s","dir":"ne"}],"targets":[{"cell":18,"side":"s"}],"cells":[{"type":"mirror","arr":[2,25,28,36]}],"solution":[{"type":"mirror","arr":[3,8,17,29]}]},{"l1":14,"l2":2,"rows":5,"columns":5,"none":[8,13,14,17,18],"lasers":[{"cell":1,"side":"w","dir":"se"}],"targets":[{"cell":5,"side":"e"}],"cells":[{"type":"mirror","arr":[2,4,10,11,20,23]}],"solution":[{"type":"mirror","arr":[3,12,15,16,22,23]}]},{"l1":14,"l2":3,"rows":6,"columns":5,"none":[11,12,18,19,26],"lasers":[{"cell":4,"side":"n","dir":"sw"}],"targets":[{"cell":1,"side":"s"}],"cells":[{"type":"mirror","arr":[2,5,14,21,28]}],"solution":[{"type":"mirror","arr":[3,10,17,25,29]}]},{"l1":14,"l2":4,"rows":6,"columns":6,"none":[5,7,8,14,15,17,23,36],"lasers":[{"cell":15,"side":"s","dir":"ne"}],"targets":[{"cell":21,"side":"e"}],"cells":[{"type":"mirror","arr":[2,12,13,28,32]}],"solution":[{"type":"mirror","arr":[4,11,18,19,33]}]},{"l1":14,"l2":5,"rows":7,"columns":5,"none":[2,11,12,18,19,29,31],"lasers":[{"cell":3,"side":"n","dir":"sw"}],"targets":[{"cell":3,"side":"e"}],"cells":[{"type":"mirror","arr":[1,15,24,26,35]}],"solution":[{"type":"mirror","arr":[6,10,21,25,33]}]},{"l1":14,"l2":6,"rows":6,"columns":6,"none":[6,7,9,15,22,24,29,31],"lasers":[{"cell":25,"side":"s","dir":"ne"}],"targets":[{"cell":28,"side":"s"}],"cells":[{"type":"mirror","arr":[3,8,12,17,19,33]}],"solution":[{"type":"mirror","arr":[4,11,14,23,30,35]}]},{"l1":14,"l2":7,"rows":7,"columns":4,"none":[5,6,14,18,20,22],"lasers":[{"cell":3,"side":"n","dir":"se"}],"targets":[{"cell":7,"side":"s"}],"cells":[{"type":"mirror","arr":[2,12,13,19,21,26,28]}],"solution":[{"type":"mirror","arr":[4,9,13,15,17,24,27]}]},{"l1":14,"l2":8,"rows":6,"columns":6,"none":[4,8,15,18,21,30,31],"lasers":[{"cell":18,"side":"s","dir":"nw"}],"targets":[{"cell":24,"side":"e"}],"cells":[{"type":"mirror","arr":[1,12,14,25,29,34]}],"solution":[{"type":"mirror","arr":[9,11,19,22,33,35]}]},{"l1":14,"l2":9,"rows":7,"columns":6,"none":[1,6,17,18,20,22,23,27,34,35,39],"lasers":[{"cell":37,"side":"e","dir":"ne"}],"targets":[{"cell":38,"side":"s"}],"cells":[{"type":"mirror","arr":[2,11,15,25,30,40]}],"solution":[{"type":"mirror","arr":[3,13,24,28,36,41]}]},{"l1":14,"l2":10,"rows":7,"columns":7,"none":[4,7,10,15,16,17,25,29,30,34,38,39,41,42,44],"lasers":[{"cell":5,"side":"n","dir":"sw"}],"targets":[{"cell":17,"side":"e"}],"cells":[{"type":"mirror","arr":[2,6,19,21,36,40,48]}],"solution":[{"type":"mirror","arr":[12,22,24,26,28,32,46]}]}],[{"l1":15,"l2":1,"rows":3,"columns":3,"none":[1,9],"lasers":[{"cell":1,"side":"w","dir":"se"}],"targets":[{"cell":9,"side":"e"}],"cells":[{"type":"prism","arr":[7]}],"solution":[{"type":"prism","arr":[5]}]},{"l1":15,"l2":2,"rows":4,"columns":4,"none":[4,13],"lasers":[{"cell":4,"side":"n","dir":"sw"}],"targets":[{"cell":13,"side":"w"}],"cells":[{"type":"prism","arr":[12,14]},{"type":"blackhole_stuck","arr":[6]}],"solution":[{"type":"prism","arr":[7,10]},{"type":"blackhole_stuck","arr":[6]}]},{"l1":15,"l2":3,"rows":4,"columns":4,"none":[5,8,11],"lasers":[{"cell":5,"side":"w","dir":"se"}],"targets":[{"cell":8,"side":"e"}],"cells":[{"type":"mirror","arr":[7]},{"type":"prism","arr":[1]}],"solution":[{"type":"mirror","arr":[15]},{"type":"prism","arr":[10]}]},{"l1":15,"l2":4,"rows":4,"columns":3,"none":[],"lasers":[{"cell":7,"side":"e","dir":"se"}],"targets":[{"cell":2,"side":"s"},{"cell":5,"side":"s"}],"cells":[{"type":"mirror","arr":[1,10]},{"type":"prism","arr":[6]}],"solution":[{"type":"mirror","arr":[9,11]},{"type":"prism","arr":[5]}]},{"l1":15,"l2":5,"rows":4,"columns":4,"none":[1],"lasers":[{"cell":3,"side":"s","dir":"sw"}],"targets":[{"cell":10,"side":"s"},{"cell":16,"side":"s"}],"cells":[{"type":"mirror","arr":[12]},{"type":"prism","arr":[5]}],"solution":[{"type":"mirror","arr":[9]},{"type":"prism","arr":[15]}]},{"l1":15,"l2":6,"rows":6,"columns":3,"none":[1,3,7,8,15,16,18],"lasers":[{"cell":1,"side":"w","dir":"se"}],"targets":[{"cell":18,"side":"e"}],"cells":[{"type":"prism","arr":[6,13]}],"solution":[{"type":"prism","arr":[4,11]}]},{"l1":15,"l2":7,"rows":5,"columns":4,"none":[],"lasers":[{"cell":1,"side":"n","dir":"se"}],"targets":[{"cell":14,"side":"e"}],"cells":[{"type":"mirror","arr":[8,13,20]},{"type":"prism","arr":[18]},{"type":"mirror_stuck","arr":[6]}],"solution":[{"type":"mirror","arr":[8,13,18]},{"type":"prism","arr":[2]},{"type":"mirror_stuck","arr":[6]}]},{"l1":15,"l2":8,"rows":4,"columns":3,"none":[9],"lasers":[{"cell":2,"side":"n","dir":"sw"}],"targets":[{"cell":10,"side":"e"}],"cells":[{"type":"mirror","arr":[3,12]},{"type":"prism","arr":[5]}],"solution":[{"type":"mirror","arr":[1,6]},{"type":"prism","arr":[8]}]},{"l1":15,"l2":9,"rows":4,"columns":4,"none":[16],"lasers":[{"cell":10,"side":"s","dir":"nw"}],"targets":[{"cell":6,"side":"s"},{"cell":16,"side":"e"}],"cells":[{"type":"mirror","arr":[8]},{"type":"prism","arr":[13]},{"type":"mirror_stuck","arr":[3]}],"solution":[{"type":"mirror","arr":[9]},{"type":"prism","arr":[12]},{"type":"mirror_stuck","arr":[3]}]},{"l1":15,"l2":10,"rows":4,"columns":4,"none":[3,5,8],"lasers":[{"cell":5,"side":"w","dir":"se"}],"targets":[{"cell":3,"side":"n"}],"cells":[{"type":"mirror","arr":[7,13]},{"type":"prism","arr":[11]},{"type":"blackhole_stuck","arr":[6]}],"solution":[{"type":"mirror","arr":[4,14]},{"type":"prism","arr":[7]},{"type":"blackhole_stuck","arr":[6]}]}],[{"l1":16,"l2":1,"rows":5,"columns":3,"none":[],"lasers":[{"cell":1,"side":"n","dir":"se"}],"targets":[{"cell":9,"side":"e"},{"cell":11,"side":"e"}],"cells":[{"type":"mirror","arr":[5,13]},{"type":"prism","arr":[14]},{"type":"mirror_stuck","arr":[6,7]}],"solution":[{"type":"mirror","arr":[10,14]},{"type":"prism","arr":[8]},{"type":"mirror_stuck","arr":[6,7]}]},{"l1":16,"l2":2,"rows":4,"columns":4,"none":[1,10,13,14],"lasers":[{"cell":2,"side":"n","dir":"sw"}],"targets":[{"cell":4,"side":"e"}],"cells":[{"type":"mirror","arr":[7,12]},{"type":"prism","arr":[9,15]}],"solution":[{"type":"mirror","arr":[5,15]},{"type":"prism","arr":[2,8]}]},{"l1":16,"l2":3,"rows":4,"columns":4,"none":[1,11],"lasers":[{"cell":2,"side":"e","dir":"se"},{"cell":9,"side":"e","dir":"ne"}],"targets":[{"cell":4,"side":"s"},{"cell":16,"side":"s"}],"cells":[{"type":"prism","arr":[5,14]}],"solution":[{"type":"prism","arr":[7,16]}]},{"l1":16,"l2":4,"rows":3,"columns":4,"none":[],"lasers":[{"cell":9,"side":"s","dir":"ne"}],"targets":[{"cell":3,"side":"s"},{"cell":11,"side":"e"}],"cells":[{"type":"mirror","arr":[2,5,12]},{"type":"prism","arr":[8]}],"solution":[{"type":"mirror","arr":[3,6,8]},{"type":"prism","arr":[10]}]},{"l1":16,"l2":5,"rows":3,"columns":3,"none":[],"lasers":[{"cell":4,"side":"w","dir":"ne"},{"cell":4,"side":"s","dir":"se"}],"targets":[{"cell":6,"side":"n"},{"cell":6,"side":"s"}],"cells":[{"type":"mirror","arr":[3,5]},{"type":"prism","arr":[9]}],"solution":[{"type":"mirror","arr":[1,7]},{"type":"prism","arr":[5]}]},{"l1":16,"l2":6,"rows":4,"columns":3,"none":[],"lasers":[{"cell":3,"side":"e","dir":"sw"}],"targets":[{"cell":1,"side":"n"},{"cell":6,"side":"s"}],"cells":[{"type":"mirror","arr":[4]},{"type":"prism","arr":[9,11]}],"solution":[{"type":"mirror","arr":[9]},{"type":"prism","arr":[2,6]}]},{"l1":16,"l2":7,"rows":4,"columns":3,"none":[],"lasers":[{"cell":1,"side":"n","dir":"se"}],"targets":[{"cell":3,"side":"e"},{"cell":8,"side":"e"}],"cells":[{"type":"mirror","arr":[4,7,12]},{"type":"prism","arr":[11]}],"solution":[{"type":"mirror","arr":[7,9,11]},{"type":"prism","arr":[1]}]},{"l1":16,"l2":8,"rows":3,"columns":3,"none":[8],"lasers":[{"cell":6,"side":"e","dir":"sw"}],"targets":[{"cell":1,"side":"n"}],"cells":[{"type":"mirror","arr":[2]},{"type":"prism","arr":[4,5,6,7]},{"type":"mirror_stuck","arr":[3]}],"solution":[{"type":"mirror","arr":[9]},{"type":"prism","arr":[1,2,5,7]},{"type":"mirror_stuck","arr":[3]}]},{"l1":16,"l2":9,"rows":4,"columns":4,"none":[],"lasers":[{"cell":16,"side":"s","dir":"nw"}],"targets":[{"cell":2,"side":"s"},{"cell":3,"side":"e"},{"cell":9,"side":"e"}],"cells":[{"type":"mirror","arr":[14]},{"type":"prism","arr":[7,12,13]}],"solution":[{"type":"mirror","arr":[9]},{"type":"prism","arr":[3,6,15]}]},{"l1":16,"l2":10,"rows":4,"columns":4,"none":[6],"lasers":[{"cell":3,"side":"n","dir":"se"}],"targets":[{"cell":6,"side":"e"},{"cell":11,"side":"s"}],"cells":[{"type":"mirror","arr":[2,9]},{"type":"prism","arr":[12,14]}],"solution":[{"type":"mirror","arr":[8,15]},{"type":"prism","arr":[3,11]}]}],[{"l1":17,"l2":1,"rows":5,"columns":4,"none":[3,7,20],"lasers":[{"cell":5,"side":"w","dir":"se"}],"targets":[{"cell":7,"side":"s"},{"cell":13,"side":"w"}],"cells":[{"type":"mirror","arr":[4,16,17]},{"type":"prism","arr":[6]}],"solution":[{"type":"mirror","arr":[2,12,18]},{"type":"prism","arr":[9]}]},{"l1":17,"l2":2,"rows":5,"columns":4,"none":[],"lasers":[{"cell":1,"side":"s","dir":"se"},{"cell":14,"side":"s","dir":"se"}],"targets":[{"cell":2,"side":"e"},{"cell":9,"side":"w"},{"cell":9,"side":"e"}],"cells":[{"type":"mirror","arr":[4,7,17]},{"type":"prism","arr":[12]}],"solution":[{"type":"mirror","arr":[5,15,18]},{"type":"prism","arr":[2]}]},{"l1":17,"l2":3,"rows":4,"columns":4,"none":[4,13],"lasers":[{"cell":10,"side":"s","dir":"se"}],"targets":[{"cell":6,"side":"e"},{"cell":15,"side":"e"}],"cells":[{"type":"mirror","arr":[3,9,11]},{"type":"prism","arr":[8]},{"type":"mirror_stuck","arr":[5]}],"solution":[{"type":"mirror","arr":[2,12,14]},{"type":"prism","arr":[11]},{"type":"mirror_stuck","arr":[5]}]},{"l1":17,"l2":4,"rows":4,"columns":4,"none":[12],"lasers":[{"cell":1,"side":"n","dir":"se"}],"targets":[{"cell":5,"side":"e"},{"cell":7,"side":"s"}],"cells":[{"type":"mirror","arr":[3,9,15]},{"type":"prism","arr":[8]}],"solution":[{"type":"mirror","arr":[3,8,10]},{"type":"prism","arr":[1]}]},{"l1":17,"l2":5,"rows":4,"columns":4,"none":[],"lasers":[{"cell":6,"side":"s","dir":"nw"}],"targets":[{"cell":5,"side":"s"}],"cells":[{"type":"mirror","arr":[3,8,13,15]},{"type":"prism","arr":[7]}],"solution":[{"type":"mirror","arr":[2,5,12,15]},{"type":"prism","arr":[10]}]},{"l1":17,"l2":6,"rows":4,"columns":4,"none":[3,11],"lasers":[{"cell":8,"side":"e","dir":"nw"},{"cell":12,"side":"s","dir":"nw"}],"targets":[{"cell":2,"side":"e"},{"cell":3,"side":"e"},{"cell":5,"side":"e"}],"cells":[{"type":"mirror","arr":[15]},{"type":"prism","arr":[10,13]}],"solution":[{"type":"mirror","arr":[5]},{"type":"prism","arr":[6,8]}]},{"l1":17,"l2":7,"rows":4,"columns":4,"none":[7],"lasers":[{"cell":6,"side":"e","dir":"nw"}],"targets":[{"cell":2,"side":"s"},{"cell":7,"side":"s"},{"cell":9,"side":"w"}],"cells":[{"type":"mirror","arr":[4,5,10,12,13,16]},{"type":"prism","arr":[3]}],"solution":[{"type":"mirror","arr":[2,3,5,8,13,14]},{"type":"prism","arr":[10]}]},{"l1":17,"l2":8,"rows":5,"columns":3,"none":[],"lasers":[{"cell":7,"side":"e","dir":"nw"},{"cell":9,"side":"s","dir":"nw"}],"targets":[{"cell":2,"side":"s"},{"cell":6,"side":"s"},{"cell":10,"side":"e"}],"cells":[{"type":"mirror","arr":[13,15]},{"type":"prism","arr":[3,12]}],"solution":[{"type":"mirror","arr":[6,7]},{"type":"prism","arr":[9,11]}]},{"l1":17,"l2":9,"rows":3,"columns":3,"none":[],"lasers":[{"cell":9,"side":"e","dir":"nw"},{"cell":9,"side":"s","dir":"nw"}],"targets":[{"cell":4,"side":"s"},{"cell":5,"side":"s"}],"cells":[{"type":"mirror","arr":[9]},{"type":"prism","arr":[1,3,5,7]}],"solution":[{"type":"mirror","arr":[2]},{"type":"prism","arr":[1,3,7,9]}]},{"l1":17,"l2":10,"rows":4,"columns":4,"none":[1,12],"lasers":[{"cell":2,"side":"e","dir":"se"},{"cell":4,"side":"n","dir":"sw"}],"targets":[{"cell":1,"side":"n"},{"cell":5,"side":"s"},{"cell":6,"side":"e"}],"cells":[{"type":"mirror","arr":[11,16]},{"type":"prism","arr":[14]}],"solution":[{"type":"mirror","arr":[3,11]},{"type":"prism","arr":[4]}]}],[{"l1":18,"l2":1,"rows":4,"columns":2,"none":[],"lasers":[{"cell":5,"side":"w","dir":"ne"}],"targets":[{"cell":2,"side":"e"}],"cells":[{"type":"mirror","arr":[3,4,5,6]}],"solution":[{"type":"mirror","arr":[1,6,7,8]}]},{"l1":18,"l2":2,"rows":4,"columns":2,"none":[],"lasers":[{"cell":2,"side":"e","dir":"sw"},{"cell":8,"side":"e","dir":"nw"}],"targets":[{"cell":4,"side":"e"},{"cell":6,"side":"e"}],"cells":[{"type":"mirror","arr":[2,3,4,8]}],"solution":[{"type":"mirror","arr":[1,3,5,7]}]},{"l1":18,"l2":3,"rows":4,"columns":2,"none":[],"lasers":[{"cell":5,"side":"w","dir":"ne"}],"targets":[{"cell":1,"side":"w"},{"cell":8,"side":"e"}],"cells":[{"type":"mirror","arr":[7]},{"type":"glass","arr":[6]}],"solution":[{"type":"mirror","arr":[4]},{"type":"glass","arr":[3]}]},{"l1":18,"l2":4,"rows":4,"columns":2,"none":[],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":8,"side":"e","dir":"nw"}],"targets":[{"cell":3,"side":"w"},{"cell":6,"side":"e"}],"cells":[{"type":"mirror","arr":[1,2,7,8]}],"solution":[{"type":"mirror","arr":[2,4,5,7]}]},{"l1":18,"l2":5,"rows":4,"columns":2,"none":[],"lasers":[{"cell":4,"side":"e","dir":"sw"},{"cell":7,"side":"w","dir":"ne"}],"targets":[{"cell":3,"side":"e"},{"cell":3,"side":"s"}],"cells":[{"type":"mirror","arr":[2]},{"type":"blackhole","arr":[6,7,8]},{"type":"blackhole_stuck","arr":[1]}],"solution":[{"type":"mirror","arr":[6]},{"type":"blackhole","arr":[2,3,8]},{"type":"blackhole_stuck","arr":[1]}]},{"l1":18,"l2":6,"rows":4,"columns":2,"none":[],"lasers":[{"cell":1,"side":"e","dir":"sw"},{"cell":1,"side":"s","dir":"ne"},{"cell":8,"side":"n","dir":"sw"},{"cell":8,"side":"w","dir":"ne"}],"targets":[{"cell":2,"side":"e"},{"cell":3,"side":"w"},{"cell":6,"side":"e"},{"cell":7,"side":"w"}],"cells":[{"type":"mirror","arr":[3,4,5,6]}],"solution":[{"type":"mirror","arr":[1,4,5,8]}]},{"l1":18,"l2":7,"rows":4,"columns":2,"none":[],"lasers":[{"cell":1,"side":"w","dir":"se"},{"cell":5,"side":"w","dir":"ne"},{"cell":6,"side":"e","dir":"sw"},{"cell":7,"side":"s","dir":"ne"},{"cell":8,"side":"e","dir":"nw"}],"targets":[{"cell":3,"side":"w"},{"cell":4,"side":"e"}],"cells":[{"type":"mirror","arr":[3,7]},{"type":"blackhole","arr":[2,6]}],"solution":[{"type":"mirror","arr":[2,8]},{"type":"blackhole","arr":[1,7]}]},{"l1":18,"l2":8,"rows":4,"columns":2,"none":[],"lasers":[{"cell":3,"side":"w","dir":"se"}],"targets":[{"cell":1,"side":"w"},{"cell":2,"side":"e"},{"cell":7,"side":"w"},{"cell":8,"side":"e"}],"cells":[{"type":"glass","arr":[1,2,7]}],"solution":[{"type":"glass","arr":[4,5,6]}]},{"l1":18,"l2":9,"rows":4,"columns":2,"none":[],"lasers":[{"cell":3,"side":"w","dir":"ne"}],"targets":[{"cell":6,"side":"e"},{"cell":7,"side":"w"}],"cells":[{"type":"glass","arr":[5,8]},{"type":"prism","arr":[4]}],"solution":[{"type":"glass","arr":[1,4]},{"type":"prism","arr":[5]}]},{"l1":18,"l2":10,"rows":4,"columns":2,"none":[8],"lasers":[{"cell":3,"side":"w","dir":"ne"}],"targets":[{"cell":2,"side":"n"},{"cell":7,"side":"w"}],"cells":[{"type":"mirror","arr":[6]},{"type":"blackhole","arr":[1]},{"type":"glass","arr":[5]},{"type":"prism","arr":[4]}],"solution":[{"type":"mirror","arr":[4]},{"type":"blackhole","arr":[6]},{"type":"glass","arr":[1]},{"type":"prism","arr":[5]}]}],[{"l1":19,"l2":1,"rows":3,"columns":3,"none":[],"lasers":[{"cell":6,"side":"e","dir":"sw"}],"targets":[{"cell":2,"side":"n"},{"cell":8,"side":"s"}],"cells":[{"type":"glass","arr":[1]},{"type":"prism","arr":[3]}],"solution":[{"type":"glass","arr":[9]},{"type":"prism","arr":[2]}]},{"l1":19,"l2":2,"rows":3,"columns":3,"none":[3],"lasers":[{"cell":2,"side":"n","dir":"se"}],"targets":[{"cell":4,"side":"w"}],"cells":[{"type":"glass","arr":[5,7,9]},{"type":"prism","arr":[1]}],"solution":[{"type":"glass","arr":[1,6,8]},{"type":"prism","arr":[2]}]},{"l1":19,"l2":3,"rows":3,"columns":4,"none":[],"lasers":[{"cell":4,"side":"n","dir":"sw"}],"targets":[{"cell":1,"side":"n"},{"cell":5,"side":"e"},{"cell":8,"side":"s"}],"cells":[{"type":"glass","arr":[3,10,11]},{"type":"prism","arr":[2]}],"solution":[{"type":"glass","arr":[2,7,11]},{"type":"prism","arr":[4]}]},{"l1":19,"l2":4,"rows":4,"columns":4,"none":[5,7],"lasers":[{"cell":10,"side":"s","dir":"ne"}],"targets":[{"cell":13,"side":"e"}],"cells":[{"type":"glass","arr":[6,9,12,15]},{"type":"prism","arr":[1]}],"solution":[{"type":"glass","arr":[3,6,8,12]},{"type":"prism","arr":[14]}]},{"l1":19,"l2":5,"rows":4,"columns":4,"none":[4],"lasers":[{"cell":10,"side":"s","dir":"se"}],"targets":[{"cell":5,"side":"s"},{"cell":12,"side":"e"}],"cells":[{"type":"glass","arr":[3,6,13,16]},{"type":"prism","arr":[1]}],"solution":[{"type":"glass","arr":[2,3,7,14]},{"type":"prism","arr":[10]}]},{"l1":19,"l2":6,"rows":4,"columns":4,"none":[14],"lasers":[{"cell":3,"side":"n","dir":"sw"}],"targets":[{"cell":1,"side":"n"},{"cell":3,"side":"s"},{"cell":15,"side":"e"}],"cells":[{"type":"glass","arr":[8,13]},{"type":"prism","arr":[10,11]}],"solution":[{"type":"glass","arr":[2,6]},{"type":"prism","arr":[7,11]}]},{"l1":19,"l2":7,"rows":4,"columns":4,"none":[15],"lasers":[{"cell":15,"side":"e","dir":"nw"}],"targets":[{"cell":4,"side":"n"},{"cell":8,"side":"s"},{"cell":10,"side":"e"}],"cells":[{"type":"glass","arr":[2,7,9]},{"type":"prism","arr":[14]}],"solution":[{"type":"glass","arr":[2,5,10]},{"type":"prism","arr":[7]}]},{"l1":19,"l2":8,"rows":5,"columns":4,"none":[],"lasers":[{"cell":7,"side":"e","dir":"se"}],"targets":[{"cell":13,"side":"e"},{"cell":14,"side":"e"},{"cell":15,"side":"e"}],"cells":[{"type":"glass","arr":[2,5,11]},{"type":"prism","arr":[17]}],"solution":[{"type":"glass","arr":[8,13,18]},{"type":"prism","arr":[15]}]},{"l1":19,"l2":9,"rows":6,"columns":4,"none":[4,9,12,14,20],"lasers":[{"cell":2,"side":"n","dir":"se"}],"targets":[{"cell":6,"side":"e"},{"cell":14,"side":"s"},{"cell":20,"side":"e"}],"cells":[{"type":"glass","arr":[1,8,23]},{"type":"prism","arr":[10,17]}],"solution":[{"type":"glass","arr":[16,17,22]},{"type":"prism","arr":[2,11]}]},{"l1":19,"l2":10,"rows":6,"columns":4,"none":[1,12,13],"lasers":[{"cell":18,"side":"s","dir":"nw"}],"targets":[{"cell":1,"side":"w"},{"cell":8,"side":"e"},{"cell":9,"side":"w"}],"cells":[{"type":"glass","arr":[3,11,14,16,19,21]},{"type":"prism","arr":[6]}],"solution":[{"type":"glass","arr":[4,10,11,17,20,23]},{"type":"prism","arr":[14]}]}],[{"l1":20,"l2":1,"rows":3,"columns":3,"none":[8,9],"lasers":[{"cell":3,"side":"n","dir":"sw"}],"targets":[{"cell":4,"side":"w"},{"cell":9,"side":"e"}],"cells":[{"type":"mirror","arr":[5]},{"type":"blackhole","arr":[2]},{"type":"glass","arr":[7]},{"type":"prism","arr":[1]}],"solution":[{"type":"mirror","arr":[7]},{"type":"blackhole","arr":[1]},{"type":"glass","arr":[2]},{"type":"prism","arr":[6]}]},{"l1":20,"l2":2,"rows":3,"columns":3,"none":[7],"lasers":[{"cell":3,"side":"e","dir":"sw"}],"targets":[{"cell":1,"side":"n"},{"cell":9,"side":"s"}],"cells":[{"type":"mirror","arr":[2]},{"type":"blackhole","arr":[6]},{"type":"glass","arr":[8]},{"type":"prism","arr":[4]}],"solution":[{"type":"mirror","arr":[4]},{"type":"blackhole","arr":[6]},{"type":"glass","arr":[5]},{"type":"prism","arr":[3]}]},{"l1":20,"l2":3,"rows":3,"columns":3,"none":[1],"lasers":[{"cell":2,"side":"e","dir":"sw"}],"targets":[{"cell":3,"side":"n"},{"cell":7,"side":"w"}],"cells":[{"type":"mirror","arr":[6]},{"type":"blackhole","arr":[5]},{"type":"glass","arr":[8]},{"type":"prism","arr":[4]}],"solution":[{"type":"mirror","arr":[8]},{"type":"blackhole","arr":[9]},{"type":"glass","arr":[4]},{"type":"prism","arr":[3]}]},{"l1":20,"l2":4,"rows":3,"columns":3,"none":[3],"lasers":[{"cell":2,"side":"n","dir":"sw"}],"targets":[{"cell":6,"side":"e"},{"cell":7,"side":"w"}],"cells":[{"type":"mirror","arr":[4]},{"type":"blackhole","arr":[1]},{"type":"glass","arr":[9]},{"type":"prism","arr":[5]}],"solution":[{"type":"mirror","arr":[9]},{"type":"blackhole","arr":[8]},{"type":"glass","arr":[1]},{"type":"prism","arr":[4]}]},{"l1":20,"l2":5,"rows":3,"columns":3,"none":[1,8,9],"lasers":[{"cell":1,"side":"n","dir":"se"},{"cell":3,"side":"e","dir":"sw"}],"targets":[{"cell":4,"side":"w"},{"cell":7,"side":"w"}],"cells":[{"type":"mirror","arr":[7]},{"type":"blackhole","arr":[6]},{"type":"glass","arr":[5]},{"type":"prism","arr":[2]}],"solution":[{"type":"mirror","arr":[6]},{"type":"blackhole","arr":[3]},{"type":"glass","arr":[2]},{"type":"prism","arr":[7]}]},{"l1":20,"l2":6,"rows":3,"columns":3,"none":[],"lasers":[{"cell":7,"side":"w","dir":"ne"},{"cell":9,"side":"s","dir":"nw"}],"targets":[{"cell":1,"side":"w"},{"cell":4,"side":"w"},{"cell":9,"side":"e"}],"cells":[{"type":"mirror","arr":[6]},{"type":"blackhole","arr":[5]},{"type":"glass","arr":[3]},{"type":"prism","arr":[2]}],"solution":[{"type":"mirror","arr":[2]},{"type":"blackhole","arr":[3]},{"type":"glass","arr":[5]},{"type":"prism","arr":[8]}]},{"l1":20,"l2":7,"rows":3,"columns":3,"none":[],"lasers":[{"cell":2,"side":"n","dir":"sw"},{"cell":4,"side":"s","dir":"ne"}],"targets":[{"cell":3,"side":"e"},{"cell":7,"side":"s"},{"cell":9,"side":"s"}],"cells":[{"type":"mirror","arr":[5]},{"type":"blackhole","arr":[1]},{"type":"glass","arr":[6]},{"type":"prism","arr":[8]}],"solution":[{"type":"mirror","arr":[4]},{"type":"blackhole","arr":[1]},{"type":"glass","arr":[8]},{"type":"prism","arr":[2]}]},{"l1":20,"l2":8,"rows":3,"columns":3,"none":[],"lasers":[{"cell":3,"side":"e","dir":"sw"},{"cell":4,"side":"w","dir":"ne"}],"targets":[{"cell":2,"side":"n"},{"cell":6,"side":"e"},{"cell":9,"side":"s"}],"cells":[{"type":"mirror","arr":[1]},{"type":"blackhole","arr":[5]},{"type":"glass","arr":[8]},{"type":"prism","arr":[7]}],"solution":[{"type":"mirror","arr":[8]},{"type":"blackhole","arr":[7]},{"type":"glass","arr":[1]},{"type":"prism","arr":[6]}]},{"l1":20,"l2":9,"rows":3,"columns":3,"none":[],"lasers":[{"cell":3,"side":"s","dir":"nw"},{"cell":4,"side":"w","dir":"se"}],"targets":[{"cell":3,"side":"n"},{"cell":9,"side":"w"},{"cell":9,"side":"e"}],"cells":[{"type":"mirror","arr":[7]},{"type":"blackhole","arr":[2]},{"type":"glass","arr":[9]},{"type":"prism","arr":[1]}],"solution":[{"type":"mirror","arr":[2]},{"type":"blackhole","arr":[1]},{"type":"glass","arr":[7]},{"type":"prism","arr":[8]}]},{"l1":20,"l2":10,"rows":3,"columns":3,"none":[],"lasers":[{"cell":2,"side":"n","dir":"se"},{"cell":6,"side":"e","dir":"sw"}],"targets":[{"cell":1,"side":"s"},{"cell":7,"side":"s"},{"cell":8,"side":"e"}],"cells":[{"type":"mirror","arr":[8]},{"type":"blackhole","arr":[9]},{"type":"glass","arr":[3]},{"type":"prism","arr":[2]}],"solution":[{"type":"mirror","arr":[3]},{"type":"blackhole","arr":[1]},{"type":"glass","arr":[9]},{"type":"prism","arr":[5]}]}]]
+;
+</script>
+
+<script>
+// ===== GAME ENGINE =====
+/**
+ * Cell types
+ * == empty:
+ * cell that is empty with the possibility to move a block in, the laser goes through it with no changes;
+ * == none:
+ * cell with no possibility to move a block in, the laser goes through it with no changes;
+ * == mirror:
+ * cell that reflects the laser with a 90deg angle;
+ * == blackhole:
+ * cell that absorbs the laser and doesn't let it go through nor reflects it;
+ * == glass:
+ * cell that both let the laser go through and reflects it with a 90deg angle;
+ * == prism:
+ * the laser is translated to the opposite side of the entrance and it goes out with the same direction it came in;
+ * == mirror_stuck:
+ * same as mirror, but without the possibility to move the cell;
+ * == blackhole_stuck:
+ * same as blackhole, but without the possibility to move the cell.
+ * == glass_stuck:
+ * same as glass, but without the possibility to move the cell.
+ */
+
+
+
+var LaserGame = function() {
+	var canvas = document.getElementById(GAME_OPTS.canvasId);
+	if (!canvas.getContext) {
+		return false;
+	}
+
+	var _opt;
+
+	var _docWidth = LAYOUT.maxWidth,
+		_docHeight = LAYOUT.maxHeight,
+		_canvasW,
+		_canvasH,
+		_canvasD, // measure of the diagonal of the canvas
+		_cellW,
+		_cellH,
+		_startX, // x coordinate of where the actual grid starts
+		_startY, // y coordinate of where the actual grid starts
+		_endX, // x coordinate of where the actual grid ends
+		_endY; // y coordinate of where the actual grid ends
+
+	var _ctx = canvas.getContext('2d'),
+		_cellW_2,
+		_cellH_2,
+		_cellR,
+		_cells,
+		_cellsLength,
+		_movingCell,
+		_points,
+		_lasersCounter,
+		_targetRadius,
+		_starterRadius,
+		_screwRadius,
+		_screwDistance,
+		_targets,
+		_victory;
+
+	/**
+	 * Layers:
+	 * bg - empty and none cells, targets
+	 * debug - grids and cell numbers
+	 * cells - all the other cells
+	 * laser
+	 * moving - where the moving cell is drawn
+	 * touch - captures events and coordinates - it's the main canvas
+	 */
+	var _layers = ['bg', 'debug', 'cells', 'laser', 'moving'],
+		_canvases,
+		_ctxs,
+		_canvasParent = canvas.parentNode;
+
+	if (DEBUG === false) {
+		_layers.splice(1, 1);
+	}
+
+
+	/**
+	 * Initiate the game
+	 */
+	this.init = function(opt) {
+		_opt = opt;
+		initCanvas();
+		calcCells();
+		initCells();
+		initTargets();
+		initVictory();
+		drawStuff();
+		initLasers();
+		checkVictory();
+		canvas.on('mousedown', click);
+		canvas.on('touchstart', click);
+		// console.log(_cells);
+	};
+
+
+	/**
+	 * Show solution
+	 */
+	this.solution = function() {
+		var n = _opt.solution,
+			len = n.length;
+		// reset cells if not none
+		for (var i = 1; i <= _cellsLength; i++) {
+			if (_cells[i].type !== 'none') {
+				_cells[i].type = 'empty';
+			}
+		}
+		// load solution
+		for (var i = 0; i < len; i++) {
+			for (var l = 0; l < n[i].arr.length; l++) {
+				_cells[ n[i].arr[l] ].type = n[i].type;
+			}
+		}
+		// reset canvas cells
+		_ctxs['cells'].clearRect(0, 0, _canvasW, _canvasH);
+		// draw normal cells
+		drawLayerCells(n);
+		// redraw lasers
+		initLasers();
+	};
+
+
+	/**
+	 * Redraw the current arrangement with the new size
+	 * @param {number} w - Width of the canvas
+	 * @param {number} h - Height of the canvas
+	 */
+	this.reload = function(w, h) {
+		_docWidth = w;
+		_docHeight = h;
+
+		calcSizes();
+
+		canvas.setAttribute('height', _canvasH);
+		canvas.setAttribute('width', _canvasW);
+
+		for (var i = 0; i < _layers.length; i++) {
+			var li = _layers[i];
+			_canvases[li].setAttribute('height', _canvasH);
+			_canvases[li].setAttribute('width', _canvasW);
+			_ctxs[li].clearRect(0, 0, _canvasW, _canvasH);
+		}
+
+		// calcCells();
+		var x, y,
+			gy = _startY,
+			counter = 1;
+		for (var r = 0; r < _opt.rows; r++) {
+			x = _startX;
+			y = gy;
+			gy += _cellH;
+			for (var c = 0; c < _opt.columns; c++) {
+				_cells[counter].x = x;
+				_cells[counter].y = y;
+				x += _cellW;
+				counter++;
+			}
+		}
+
+		// initCells();
+		// not needed
+
+		initTargets();
+		initVictory();
+		drawStuff(true);
+		initLasers();
+		checkVictory();
+	};
+
+
+	/**
+	 * Prepare the canvas elements
+	 */
+	var initCanvas = function() {
+		calcSizes();
+		
+		canvas.setAttribute('height', _canvasH);
+		canvas.setAttribute('width', _canvasW);
+
+		_cells = [{}]; // first item empty
+		_cellsLength = _opt.rows * _opt.columns;
+		_movingCell = null;
+
+		_canvases = [];
+		_ctxs = [];
+
+		// Remove canvas elements if they already exist
+		if (document.getElementsByTagName('canvas').length > 1) {
+			for (var i = 0; i < _layers.length; i++) {
+				var t = document.getElementsByClassName(GAME_OPTS.canvasClass + _layers[i]);
+				if (t.length > 0) {
+					t[0].parentNode.removeChild(t[0]);
+				}
+			}
+		}
+
+		for (var i = 0; i < _layers.length; i++) {
+			var li = _layers[i];
+			_canvases[li] = document.createElement('canvas');
+			_canvasParent.appendChild(_canvases[li]);
+			_canvases[li].className = GAME_OPTS.canvasClass + li;
+			_canvases[li].setAttribute('height', _canvasH);
+			_canvases[li].setAttribute('width', _canvasW);
+			_ctxs[li] = _canvases[li].getContext('2d');
+		}
+	};
+
+
+	/**
+	 * Calculate sizes of the elements
+	 */
+	var calcSizes = function() {
+		_canvasW = _docHeight * (_opt.columns + LAYOUT.padding) / (_opt.rows + LAYOUT.padding);
+
+		if (_canvasW > _docWidth) {
+			_canvasW = _docWidth;
+		}
+
+		_cellW = Math.floor(_canvasW / (_opt.columns + LAYOUT.padding));
+
+		if (isEven(_cellW)) {
+			_cellW = _cellW - 1;
+		}
+
+		_cellH = _cellW;
+		_canvasW = _docWidth;
+		_canvasH = _docHeight;
+		_startX = Math.floor((_canvasW - (_cellW * _opt.columns)) / 2);
+		_startY = Math.floor((_canvasH - (_cellH * _opt.rows)) / 2);
+		_endX = _cellW * _opt.columns + _startX;
+		_endY = _cellH * _opt.rows + _startY;
+		_canvasD = Math.sqrt(Math.pow(_canvasW, 2) + Math.pow(_canvasH, 2));
+
+		_cellW_2 = _cellW / 2;
+		_cellH_2 = _cellH / 2;
+		_cellR = _cellW / 4; // radius of cell corners
+		_targetRadius = _cellW / 8;
+		_starterRadius = _cellW / 16;
+		_screwRadius = _cellW / 12;
+		_screwDistance = _cellW / 5;
+	};
+
+
+	/**
+	 * Calculate cells coordinate
+	 */
+	var calcCells = function() {
+		var x, y,
+			gy = _startY,
+			counter = 0;
+		for (var r = 0; r < _opt.rows; r++) {
+			x = _startX;
+			y = gy;
+			gy += _cellH;
+			for (var c = 0; c < _opt.columns; c++) {
+				_cells.push({
+					x: x,
+					y: y,
+					type: 'empty'
+				});
+				x += _cellW;
+				counter++;
+			}
+		}
+	};
+
+
+	/**
+	 * Assign cells types according to initial config
+	 */
+	var initCells = function() {
+		var n = _opt.cells,
+			len = n.length;
+		// normal block cells
+		for (var i = 0; i < len; i++) {
+			for (var l = 0; l < n[i].arr.length; l++) {
+				_cells[ n[i].arr[l] ].type = n[i].type;
+			}
+		}
+		// none cells
+		for (var l = 0; l < _opt.none.length; l++) {
+			_cells[ _opt.none[l] ].type = 'none';
+		}
+	};
+
+
+	/**
+	 * Save targets coordinates
+	 */
+	var initTargets = function() {
+		var o = _opt.targets,
+			target;
+		_targets = [];
+		for (var i = 0; i < o.length; i++) {
+			target = calcCoordinate(o[i].cell, o[i].side);
+			_targets.push(target.x + '_' + target.y);
+		}
+		// console.log(_targets);
+	};
+
+
+	/**
+	 * Reset victory targets
+	 */
+	var initVictory = function() {
+		_victory = [];
+		for (var i = 0; i < _targets.length; i++) {
+			_victory.push(_targets[i]);
+		}
+	};
+
+
+	/* Score victory point by removing the target from the stack
+	 * @returns {boolean} true if won, false otherwise
+	 */
+	var checkVictory = function() {
+		if (_victory.length === 0) {
+			drawVictory();
+			saveVictory(_opt.l1, _opt.l2);
+			return true;
+		}
+		return false;
+	};
+
+
+	/**
+	 * Draw the initial game
+	 * @param {boolean} true if drawing current cells arrangement
+	 */
+	var drawStuff = function(current) {
+		// draw cell numbers
+		if (DEBUG === true) {
+			drawCellNumbers();
+		}
+
+		// draw background cells
+		drawLayerBg();
+
+		// draw targets background
+		drawTargetBg();
+
+		if (current) {
+			// draw current cells arrangement
+			drawCurrentCells();
+		}
+		else {
+			// draw normal cells
+			drawLayerCells(_opt.cells);
+		}
+
+		// draw grid
+		if (DEBUG === true) {
+			drawGrid();
+		}
+	};
+
+
+	/**
+	 * Starts the lasers
+	 */
+	var initLasers = function() {
+		_ctxs['laser'].clearRect(0, 0, _canvasW, _canvasH);
+		resetPoints();
+		_lasersCounter = 0;
+		var n = _opt.lasers;
+		for (var i = 0; i < n.length; i++) {
+			_lasersCounter++;
+			var t = calcCoordinate(n[i].cell, n[i].side);
+
+			// draw starter point
+			drawStarter(t.x, t.y);
+
+			// save point
+			savePoint(t.x, t.y, n[i].dir, i);
+
+			// check if the point is a target
+			checkPoint(t.x, t.y);
+
+			// start drawing laser
+			drawLaser(n[i].cell, n[i].side, n[i].dir, _lasersCounter);
+		}
+		// console.log(_points);
+	};
+
+
+	/**
+	 * Draw cell from id
+	 * @param {object} ctx - Canvas context to work on
+	 * @param {number} cell - Cell id
+	 */
+	var drawCellFromId = function(ctx, cell) {
+		var c = _cells[cell];
+		drawCell(ctx, c.x, c.y, c.type);
+	};
+
+
+	/**
+	 * Draw cell from id with the given type
+	 * @param {object} ctx - Canvas context to work on
+	 * @param {number} cell - Cell id
+	 * @param {string} type - Cell type
+	 */
+	var drawCellFromType = function(ctx, cell, type) {
+		var c = _cells[cell];
+		drawCell(ctx, c.x, c.y, type);
+	};
+
+
+	/**
+	 * Draw cell
+	 * @param {object} ctx - Canvas context to work on
+	 * @param {number} x - Starting point x coordinate
+	 * @param {number} y - Starting point y coordinate
+	 * @param {string} type - Cell type
+	 */
+	var drawCell = function(ctx, x, y, type) {
+		var cx = x + _cellW/2, cy = y + _cellH/2;
+		var r = _cellR;
+		ctx.save();
+
+		if (type === 'mirror' || type === 'mirror_stuck') {
+			// Mirror: sleek metallic silver tile with diagonal reflective streak
+			var stuck = type === 'mirror_stuck';
+			// Base gradient
+			var bg = ctx.createLinearGradient(x, y, x+_cellW, y+_cellH);
+			bg.addColorStop(0, stuck ? '#6a7a8a' : '#c8e0f8');
+			bg.addColorStop(0.5, stuck ? '#8a9aaa' : '#eaf4ff');
+			bg.addColorStop(1, stuck ? '#4a5a6a' : '#9abcd8');
+			ctx.shadowColor = 'rgba(120,200,255,0.5)';
+			ctx.shadowBlur = stuck ? 4 : 10;
+			ctx.fillStyle = bg;
+			ctx.strokeStyle = stuck ? 'rgba(80,120,160,0.8)' : 'rgba(0,200,255,0.6)';
+			ctx.lineWidth = stuck ? 1.5 : 1.5;
+			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
+			ctx.fill(); ctx.stroke();
+			// Diagonal mirror line
+			ctx.shadowBlur = 0;
+			ctx.strokeStyle = stuck ? 'rgba(60,80,100,0.5)' : 'rgba(255,255,255,0.9)';
+			ctx.lineWidth = stuck ? 2 : 2.5;
+			var pad = _cellW * 0.18;
+			ctx.beginPath();
+			ctx.moveTo(x + pad, y + _cellH - pad);
+			ctx.lineTo(x + _cellW - pad, y + pad);
+			ctx.stroke();
+			// Shimmer streak
+			if (!stuck) {
+				ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(x + pad + _cellW*0.15, y + _cellH - pad);
+				ctx.lineTo(x + _cellW - pad, y + pad + _cellW*0.15);
+				ctx.stroke();
+			}
+			// Mirror emoji label (small)
+			ctx.shadowBlur = 0;
+			ctx.font = Math.floor(_cellW * 0.38) + 'px serif';
+			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+			ctx.globalAlpha = stuck ? 0.35 : 0.25;
+			ctx.fillStyle = '#000';
+			ctx.fillText('🪞', cx, cy);
+			ctx.globalAlpha = 1;
+			if (stuck) drawLockIcon(ctx, x, y);
+		}
+
+		else if (type === 'blackhole' || type === 'blackhole_stuck') {
+			var stuck = type === 'blackhole_stuck';
+			// Black hole: deep dark with swirling gradient
+			var bg = ctx.createRadialGradient(cx, cy, 1, cx, cy, _cellW*0.55);
+			bg.addColorStop(0, stuck ? '#0a0520' : '#000005');
+			bg.addColorStop(0.5, stuck ? '#150830' : '#050218');
+			bg.addColorStop(1, stuck ? '#1a0a3a' : '#0d0428');
+			ctx.shadowColor = stuck ? 'rgba(80,0,180,0.6)' : 'rgba(120,0,255,0.8)';
+			ctx.shadowBlur = stuck ? 6 : 16;
+			ctx.fillStyle = bg;
+			ctx.strokeStyle = stuck ? 'rgba(80,0,180,0.6)' : 'rgba(150,0,255,0.7)';
+			ctx.lineWidth = 1.5;
+			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
+			ctx.fill(); ctx.stroke();
+			// Swirl rings
+			ctx.shadowBlur = 0;
+			for (var ring = 0; ring < 3; ring++) {
+				var rr = _cellW * (0.35 - ring * 0.08);
+				ctx.strokeStyle = 'rgba(' + (stuck ? '80,0,180' : '150,0,255') + ',' + (0.3 + ring*0.1) + ')';
+				ctx.lineWidth = 0.8;
+				ctx.beginPath();
+				ctx.arc(cx, cy, rr, 0, Math.PI*2);
+				ctx.stroke();
+			}
+			// Center void
+			var voidG = ctx.createRadialGradient(cx, cy, 0, cx, cy, _cellW*0.18);
+			voidG.addColorStop(0, 'rgba(200,0,255,0.8)');
+			voidG.addColorStop(1, 'transparent');
+			ctx.fillStyle = voidG;
+			ctx.beginPath(); ctx.arc(cx, cy, _cellW*0.18, 0, Math.PI*2); ctx.fill();
+			ctx.font = Math.floor(_cellW * 0.42) + 'px serif';
+			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+			ctx.globalAlpha = 0.8;
+			ctx.fillStyle = '#fff';
+			ctx.fillText('🕳️', cx, cy);
+			ctx.globalAlpha = 1;
+			if (stuck) drawLockIcon(ctx, x, y);
+		}
+
+		else if (type === 'glass' || type === 'glass_stuck') {
+			var stuck = type === 'glass_stuck';
+			// Glass: transparent teal crystal look
+			var bg = ctx.createLinearGradient(x, y, x+_cellW, y+_cellH);
+			bg.addColorStop(0, stuck ? 'rgba(60,140,160,0.5)' : 'rgba(80,220,240,0.25)');
+			bg.addColorStop(0.5, stuck ? 'rgba(50,120,140,0.6)' : 'rgba(120,240,255,0.35)');
+			bg.addColorStop(1, stuck ? 'rgba(40,100,120,0.5)' : 'rgba(60,180,220,0.25)');
+			ctx.shadowColor = stuck ? 'rgba(60,180,200,0.4)' : 'rgba(0,230,255,0.7)';
+			ctx.shadowBlur = stuck ? 6 : 18;
+			ctx.fillStyle = bg;
+			ctx.strokeStyle = stuck ? 'rgba(60,180,200,0.7)' : 'rgba(0,230,255,0.8)';
+			ctx.lineWidth = 1.5;
+			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
+			ctx.fill(); ctx.stroke();
+			// Crystal facets
+			ctx.shadowBlur = 0;
+			ctx.strokeStyle = stuck ? 'rgba(100,220,240,0.4)' : 'rgba(150,240,255,0.6)';
+			ctx.lineWidth = 1;
+			ctx.beginPath(); ctx.moveTo(x+_cellW*0.2, y+_cellH*0.15); ctx.lineTo(x+_cellW*0.8, y+_cellH*0.15); ctx.stroke();
+			ctx.beginPath(); ctx.moveTo(x+_cellW*0.15, y+_cellH*0.15); ctx.lineTo(x+_cellW*0.5, y+_cellH*0.85); ctx.stroke();
+			ctx.beginPath(); ctx.moveTo(x+_cellW*0.85, y+_cellH*0.15); ctx.lineTo(x+_cellW*0.5, y+_cellH*0.85); ctx.stroke();
+			ctx.font = Math.floor(_cellW * 0.38) + 'px serif';
+			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+			ctx.globalAlpha = stuck ? 0.5 : 0.7;
+			ctx.fillText('💎', cx, cy);
+			ctx.globalAlpha = 1;
+			if (stuck) drawLockIcon(ctx, x, y);
+		}
+
+		else if (type === 'prism') {
+			// Prism: rainbow crystal with gradient fill
+			var bg = ctx.createLinearGradient(x, y, x+_cellW, y+_cellH);
+			bg.addColorStop(0,   'rgba(255,80,80,0.7)');
+			bg.addColorStop(0.2, 'rgba(255,180,0,0.7)');
+			bg.addColorStop(0.4, 'rgba(80,255,80,0.7)');
+			bg.addColorStop(0.6, 'rgba(0,200,255,0.7)');
+			bg.addColorStop(0.8, 'rgba(120,80,255,0.7)');
+			bg.addColorStop(1,   'rgba(255,80,180,0.7)');
+			ctx.shadowColor = 'rgba(200,150,255,0.8)';
+			ctx.shadowBlur = 20;
+			ctx.fillStyle = bg;
+			ctx.strokeStyle = 'rgba(220,180,255,0.9)';
+			ctx.lineWidth = 1.5;
+			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
+			ctx.fill(); ctx.stroke();
+			// Rainbow streaks
+			ctx.shadowBlur = 0;
+			var colors7 = ['rgba(255,60,60,0.6)','rgba(255,160,0,0.6)','rgba(200,255,60,0.6)','rgba(0,220,100,0.6)','rgba(0,180,255,0.6)','rgba(100,60,255,0.6)','rgba(255,60,200,0.6)'];
+			for (var ci = 0; ci < colors7.length; ci++) {
+				ctx.strokeStyle = colors7[ci];
+				ctx.lineWidth = 1.5;
+				var oy = _cellH * 0.1 + ci * _cellH * 0.12;
+				ctx.beginPath(); ctx.moveTo(x+2, y+oy); ctx.lineTo(x+_cellW-2, y+oy); ctx.stroke();
+			}
+			ctx.font = Math.floor(_cellW * 0.42) + 'px serif';
+			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+			ctx.globalAlpha = 0.9;
+			ctx.fillText('🌈', cx, cy);
+			ctx.globalAlpha = 1;
+		}
+
+		ctx.restore();
+	};
+
+	var drawLockIcon = function(ctx, x, y) {
+		// Small lock badge in corner
+		var bx = x + _cellW - _cellW*0.32, by = y + 2;
+		var bs = _cellW * 0.28;
+		ctx.font = Math.floor(bs) + 'px serif';
+		ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+		ctx.globalAlpha = 0.9;
+		ctx.fillText('🔒', bx, by);
+		ctx.globalAlpha = 1;
+	};
+
+
+	var drawCellEmpty = function(cell) {
+		var ctx = _ctxs['bg'],
+			c = _cells[cell],
+			d = _cellW / 12,
+			x = c.x + d, y = c.y + d,
+			w = _cellW - d*2, h = _cellH - d*2,
+			r = Math.max(3, _cellR - d/2);
+		var grd = ctx.createLinearGradient(x, y, x+w, y+h);
+		grd.addColorStop(0, 'rgba(14,28,52,0.85)');
+		grd.addColorStop(1, 'rgba(8,18,36,0.9)');
+		ctx.fillStyle = grd;
+		ctx.strokeStyle = 'rgba(0,160,220,0.18)';
+		ctx.lineWidth = 1;
+		drawRoundRect(ctx, x, y, w, h, r);
+		ctx.fill(); ctx.stroke();
+		// Corner dots
+		var dotR = Math.max(1, _cellW * 0.04);
+		var dotOff = _cellW * 0.18;
+		ctx.fillStyle = 'rgba(0,180,255,0.15)';
+		[[x+dotOff,y+dotOff],[x+w-dotOff,y+dotOff],[x+dotOff,y+h-dotOff],[x+w-dotOff,y+h-dotOff]].forEach(function(p){
+			ctx.beginPath(); ctx.arc(p[0],p[1],dotR,0,Math.PI*2); ctx.fill();
+		});
+	};
+
+
+	/**
+	 * Draw four sides shape
+	 * @param {object} ctx - Canvas context to work on
+	 * @param {number} x{1,4} - Point{1,4} x coordinate
+	 * @param {number} y{1,4} - Point{1,4} y coordinate
+	 * @param {string} - Fill style if any
+	 * @param {string} - Stroke style if any
+	 */
+	var drawRect = function(ctx, x1, y1, x2, y2, x3, y3, x4, y4, fill, stroke) {
+		ctx.beginPath();
+		ctx.moveTo(x1, y1);
+		ctx.lineTo(x2, y2);
+		ctx.lineTo(x3, y3);
+		ctx.lineTo(x4, y4);
+		ctx.closePath();
+		if (fill) {
+			ctx.fillStyle = fill;
+			ctx.fill();
+		}
+		if (stroke) {
+			ctx.strokeStyle = stroke;
+			ctx.stroke();
+		}
+	};
+
+
+	/**
+	 * Draw rounded rectangle
+	 * @param {object} ctx - Canvas context to work on
+	 * @param {number} x - Starting point x coordinate
+	 * @param {number} y - Starting point y coordinate
+	 * @param {number} w - Total width
+	 * @param {number} h - Total height
+	 * @param {number} r - Border radius
+	 */
+	var drawRoundRect = function(ctx, x, y, w, h, r) {
+		x = x + 1;
+		y = y + 1;
+		w = w - 2;
+		h = h - 2;
+		r = r - 1;
+		var r1_x = r4_x = x + r,
+			r1_y = r2_y = y + r,
+			r2_x = r3_x = x + w - r,
+			r3_y = r4_y = y + h - r;
+		var a_x = x + w - r,
+			a_y = y,
+			b_x = x + w,
+			b_y = y + h - r,
+			c_x = x + r,
+			c_y = y + h,
+			d_x = x,
+			d_y = y + r;
+
+		ctx.beginPath();
+		ctx.arc(r1_x, r1_y, r, Math.PI, 1.5 * Math.PI);
+		ctx.lineTo(a_x, a_y);
+		ctx.arc(r2_x, r2_y, r, 1.5 * Math.PI, 0);
+		ctx.lineTo(b_x, b_y);
+		ctx.arc(r3_x, r3_y, r, 0, 0.5 * Math.PI);
+		ctx.lineTo(c_x, c_y);
+		ctx.arc(r4_x, r4_y, r, 0.5 * Math.PI, Math.PI);
+		ctx.lineTo(d_x, d_y);
+	};
+
+
+	/**
+	 * Draw circle
+	 * @param {object} ctx - Canvas context to work on
+	 * @param {number} x - Center point x coordinate
+	 * @param {number} y - Center point y coordinate
+	 * @param {number} radius - Circle radius
+	 * @param {string} bg - Background color
+	 */
+	var drawCircle = function(ctx, x, y, radius, bg) {
+		ctx.beginPath();
+		ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+		ctx.fillStyle = bg;
+		ctx.fill();
+	};
+
+
+	/**
+	 * Draw line given start and end points coordinates
+	 * @param {object} ctx - Canvas context to work on
+	 * @param {number} x1 - Starting point x coordinate
+	 * @param {number} y1 - Starting point y coordinate
+	 * @param {number} x2 - Ending point x coordinate
+	 * @param {number} y2 - Ending point y coordinate
+	 */
+	var drawLine = function(ctx, x1, y1, x2, y2) {
+		// Outer glow
+		ctx.save();
+		ctx.shadowColor = '#ff3300';
+		ctx.shadowBlur = 14;
+		ctx.strokeStyle = 'rgba(255,100,0,0.35)';
+		ctx.lineWidth = 6;
+		ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+		// Mid glow
+		ctx.shadowBlur = 6;
+		ctx.strokeStyle = 'rgba(255,60,0,0.6)';
+		ctx.lineWidth = 3;
+		ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+		// Core beam
+		ctx.shadowBlur = 2;
+		ctx.strokeStyle = '#fff8f0';
+		ctx.lineWidth = 1.2;
+		ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+		ctx.restore();
+	};
+
+
+	/**
+	 * Draw screw
+	 * @param {object} ctx - Canvas context to work on
+	 * @param {number} x - Screw center point x coordinate
+	 * @param {number} y - Screw center point y coordinate
+	 * @param {number} r - Screw radius
+	 */
+	var drawScrew = function(ctx, x, y, r) {
+		var r_2 = r / 2;
+		ctx.strokeStyle = COLORS['empty_stroke'];
+		drawCircle(ctx, x, y, r, COLORS['empty']);
+		ctx.stroke();
+		drawLine(ctx, x-r_2, y-r_2, x+r_2, y+r_2);
+		drawLine(ctx, x+r_2, y-r_2, x-r_2, y+r_2);
+	};
+
+
+	/**
+	 * Draw screws inside cell
+	 * @param {object} ctx - Canvas context to work on
+	 * @param {number} x - Cell x coordinate
+	 * @param {number} y - Cell y coordinate
+	 */
+	var drawScrews = function(ctx, x, y) {
+		var r = _screwRadius,
+			d = _screwDistance;
+		drawScrew(ctx, x + d, y + d, r);
+		drawScrew(ctx, x +_cellW - d, y + d, r);
+		drawScrew(ctx, x + d, y + _cellH - d, r);
+		drawScrew(ctx, x + _cellW - d, y + _cellH - d, r);
+	};
+
+
+	/**
+	 * Draw grid - for debug
+	 */
+	var drawGrid = function() {
+		var ctx = _ctxs['debug'],
+			x1, y1, x2, y2;
+		ctx.strokeStyle = COLORS.grid;
+
+		// vertical
+		x1 = _startX;
+		y1 = 0;
+		y2 = _canvasH;
+		for (var i = 0; i <= _opt.columns; i++) {
+			drawLine(ctx, x1, y1, x1, y2);
+			x1 += _cellW;
+		}
+		// horizontal
+		x1 = 0;
+		x2 = _canvasW;
+		y1 = _startY;
+		for (var l = 0; l <= _opt.rows; l++) {
+			drawLine(ctx, x1, y1, x2, y1);
+			y1 += _cellH;
+		}
+	};
+
+
+	/**
+	 * Draw cells numbers - for debug
+	 */
+	var drawCellNumbers = function() {
+		var ctx = _ctxs['debug'];
+		ctx.fillStyle = COLORS.text;
+		ctx.font = "bold 12px sans-serif";
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+
+		for (var i = 1; i <= _cellsLength; i++) {
+			var c = _cells[i];
+			ctx.fillText(i, c.x + _cellW_2, c.y + _cellH_2);
+		}
+	};
+
+
+	/**
+	 * Draw background cells
+	 */
+	var drawLayerBg = function() {
+		for (var i = 1; i <= _cellsLength; i++) {
+			// check that is not none
+			if (_cells[i].type != 'none') {
+				//drawCellFromType(_ctxs['bg'], i, 'empty');
+				drawCellEmpty(i);
+			}
+		}
+	};
+
+
+	/**
+	 * Draw block cells
+	 * @param {array} conf - Cells type
+	 */
+	var drawLayerCells = function(conf) {
+		var m = conf;
+		for (var i = 0; i < m.length; i++) {
+			for (var h = 0; h < m[i].arr.length; h++) {
+				drawCellFromId(_ctxs['cells'], m[i].arr[h]);
+			}
+		}
+	};
+
+
+	/**
+	 * Draw current cells arrangement
+	 */
+	var drawCurrentCells = function() {
+		for (var i = 0; i < _cells.length; i++) {
+			if (_cells[i].type && _cells[i].type !== 'empty' && _cells[i].type !== 'none') {
+				drawCellFromId(_ctxs['cells'], i);
+			}
+		}
+	};
+
+
+	/**
+	 * Draw target points background
+	 */
+	var drawTargetBg = function() {
+		var o = _opt.targets;
+		for (var i = 0; i < o.length; i++) {
+			drawTarget(_ctxs['bg'], o[i].cell, o[i].side, COLORS.stroke);
+		}
+	};
+
+
+	/**
+	 * Draw target point hit by laser
+	 * @param {number} x - Target point x coordinate
+	 * @param {number} y - Target point y coordinate
+	 */
+	var drawTargetHit = function(x, y) {
+		var ctx = _ctxs['laser'];
+		var r = _targetRadius;
+		ctx.save();
+		// Outer explosion glow
+		var grd = ctx.createRadialGradient(x, y, 0, x, y, r*3);
+		grd.addColorStop(0, 'rgba(255,180,0,0.7)');
+		grd.addColorStop(0.4, 'rgba(255,60,0,0.4)');
+		grd.addColorStop(1, 'transparent');
+		ctx.fillStyle = grd;
+		ctx.beginPath(); ctx.arc(x, y, r*3, 0, Math.PI*2); ctx.fill();
+		// Ring
+		ctx.shadowColor = '#ffaa00';
+		ctx.shadowBlur = 12;
+		ctx.strokeStyle = '#ffcc00';
+		ctx.lineWidth = 2;
+		ctx.beginPath(); ctx.arc(x, y, r*1.4, 0, Math.PI*2); ctx.stroke();
+		// Core
+		ctx.shadowBlur = 8;
+		var coreG = ctx.createRadialGradient(x, y, 0, x, y, r);
+		coreG.addColorStop(0, '#ffffff');
+		coreG.addColorStop(0.5, '#ffdd00');
+		coreG.addColorStop(1, '#ff4400');
+		ctx.fillStyle = coreG;
+		ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+		// Sparkle lines
+		ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 6;
+		ctx.strokeStyle = '#ffee88'; ctx.lineWidth = 1.5;
+		for (var ang = 0; ang < Math.PI*2; ang += Math.PI/4) {
+			ctx.beginPath();
+			ctx.moveTo(x + Math.cos(ang)*r*1.6, y + Math.sin(ang)*r*1.6);
+			ctx.lineTo(x + Math.cos(ang)*r*2.4, y + Math.sin(ang)*r*2.4);
+			ctx.stroke();
+		}
+		ctx.restore();
+	};
+
+
+	/**
+	 * Draw target point
+	 * @param {object} ctx - Canvas context to work on
+	 * @param {number} cell - Cell id
+	 * @param {string} side - Side of the cell
+	 * @param {string} bg - Background color
+	 */
+	var drawTarget = function(ctx, cell, side, bg) {
+		var target = calcCoordinate(cell, side);
+		var x = target.x, y = target.y, r = _targetRadius;
+		ctx.save();
+		// Pulsing ring (drawn once statically)
+		var grd = ctx.createRadialGradient(x, y, 0, x, y, r*2);
+		grd.addColorStop(0, 'rgba(255,200,0,0.15)');
+		grd.addColorStop(1, 'transparent');
+		ctx.fillStyle = grd;
+		ctx.beginPath(); ctx.arc(x, y, r*2, 0, Math.PI*2); ctx.fill();
+		// Outer ring
+		ctx.strokeStyle = 'rgba(255,180,0,0.6)';
+		ctx.lineWidth = 1.5;
+		ctx.beginPath(); ctx.arc(x, y, r*1.5, 0, Math.PI*2); ctx.stroke();
+		// Inner target
+		ctx.strokeStyle = 'rgba(255,200,50,0.8)';
+		ctx.lineWidth = 1;
+		ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke();
+		// Crosshair
+		ctx.strokeStyle = 'rgba(255,200,0,0.5)';
+		ctx.lineWidth = 0.8;
+		var cr = r * 0.7;
+		ctx.beginPath(); ctx.moveTo(x-cr, y); ctx.lineTo(x+cr, y); ctx.stroke();
+		ctx.beginPath(); ctx.moveTo(x, y-cr); ctx.lineTo(x, y+cr); ctx.stroke();
+		// Center dot
+		ctx.fillStyle = 'rgba(255,200,0,0.4)';
+		ctx.beginPath(); ctx.arc(x, y, r*0.3, 0, Math.PI*2); ctx.fill();
+		ctx.restore();
+	};
+
+
+	/**
+	 * Draw laser starter point
+	 * @param {number} x - Starter point x coordinate
+	 * @param {number} y - Starter point y coordinate
+	 */
+	var drawStarter = function(x, y) {
+		var ctx = _ctxs['laser'];
+		var r = _starterRadius * 2.2;
+		ctx.save();
+		// Outer aura
+		var grd = ctx.createRadialGradient(x, y, 0, x, y, r*2.5);
+		grd.addColorStop(0, 'rgba(255,80,0,0.5)');
+		grd.addColorStop(1, 'transparent');
+		ctx.fillStyle = grd;
+		ctx.beginPath(); ctx.arc(x, y, r*2.5, 0, Math.PI*2); ctx.fill();
+		// Glow ring
+		ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 10;
+		ctx.strokeStyle = 'rgba(255,100,0,0.8)';
+		ctx.lineWidth = 1.5;
+		ctx.beginPath(); ctx.arc(x, y, r*1.5, 0, Math.PI*2); ctx.stroke();
+		// Core
+		var cg = ctx.createRadialGradient(x, y, 0, x, y, r);
+		cg.addColorStop(0, '#ffffff');
+		cg.addColorStop(0.4, '#ff8800');
+		cg.addColorStop(1, '#ff3300');
+		ctx.fillStyle = cg;
+		ctx.shadowBlur = 8;
+		ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+		// Emoji label
+		ctx.shadowBlur = 0;
+		ctx.font = Math.floor(r * 2.2) + 'px serif';
+		ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+		ctx.globalAlpha = 0.9;
+		ctx.fillText('🔴', x, y);
+		ctx.globalAlpha = 1;
+		ctx.restore();
+	};
+
+
+	/**
+	 * Calc point coordinates given cell id and side of the cell (n, e, s, w)
+	 * @param {number} cell - Cell id
+	 * @param {string} side - Side of the cell. Possible values n e s w (noth east south west)
+	 * @returns {object} x,y coordinate
+	 */
+	var calcCoordinate = function(cell, side) {
+		var c = _cells[cell],
+			res = { x: 0, y: 0 };
+
+		switch(side) {
+			case 'n':
+				res.x = c.x + _cellW_2;
+				res.y = c.y;
+				break;
+
+			case 'e':
+				res.x = c.x + _cellW;
+				res.y = c.y + _cellH_2;
+				break;
+
+			case 's':
+				res.x = c.x + _cellW_2;
+				res.y = c.y + _cellH;
+				break;
+
+			case 'w':
+				res.x = c.x;
+				res.y = c.y + _cellH_2;
+				break;
+		}
+
+		return res;
+	};
+
+
+	/**
+	 * Return cell id from x,y coordinates
+	 * @param {number} x - X coordinate of the cell
+	 * @param {number} y - Y coordinate of the cell
+	 * @returns {number} Cell id
+	 */
+	var getSelectedCell = function(x, y) {
+		var index = 0;
+
+		if (y >= _startY && y <= _endY &&
+			x >= _startX && x <= _endX) {
+			for (var r = 0; r < _opt.rows; r++) {
+				if (y <= (r + 1) * _cellH + _startY) {
+					for (var c = 1; c <= _opt.columns; c++) {
+						if (x <= c * _cellW + _startX) {
+							index = r * _opt.columns + c;
+							return index;
+						}
+					}
+				}
+			}
+		}
+		return index;
+	};
+
+
+	/**
+	 *	Click on cell
+	 */
+	var click = function(event) {
+		var pos = mousePositionElement(event),
+			cell = getSelectedCell(pos.x, pos.y);
+
+		if (cell === 0) {
+			return;
+		}
+
+		// console.log(cell);
+
+		// check if it's possible to move this cell
+		if (_cells[cell].type === 'empty' ||
+			_cells[cell].type === 'none' ||
+			_cells[cell].type === 'mirror_stuck' ||
+			_cells[cell].type === 'blackhole_stuck' ||
+			_cells[cell].type === 'glass_stuck') {
+			return false;
+		}
+		else {
+			// clear canvas
+			clearMovingCanvas();
+
+			// draw cell at current mouse point
+			drawCell(_ctxs['moving'], pos.x - _cellW_2, pos.y - _cellH_2, _cells[cell].type);
+
+			_movingCell = cell;
+
+			canvas.on('mousemove', updateLayerMoving);
+			canvas.on('touchmove', updateLayerMoving);
+			canvas.on('mouseup', pieceDropped);
+			canvas.on('touchend', pieceDropped);
+		}
+	};
+
+
+	/**
+	 * Clear moving canvas
+	 */
+	var clearMovingCanvas = function() {
+		_ctxs['moving'].clearRect(0, 0, _canvasW, _canvasH);
+	};
+
+
+	/**
+	 * Clear cell
+	 * @param {number} cell - Cell id
+	 */
+	var clearCell = function(cell) {
+		_ctxs['cells'].clearRect( _cells[cell].x, _cells[cell].y, _cellW, _cellH );
+	};
+
+
+	/**
+	 * Update moving layer while moving mouse
+	 */
+	var updateLayerMoving = function(event) {
+		// console.log('moving');
+		var pos = mousePositionElement(event);
+		clearMovingCanvas();
+		// draw cell at current mouse point
+		drawCell(_ctxs['moving'], pos.x - _cellW_2, pos.y - _cellH_2, _cells[_movingCell].type);
+	};
+
+
+	/**
+	 * Dropped piece
+	 */
+	var pieceDropped = function(event) {
+		// console.log('dropped');
+		canvas.removeEventListener('mousemove', updateLayerMoving);
+		canvas.removeEventListener('touchmove', updateLayerMoving);
+		canvas.removeEventListener('mouseup', pieceDropped);
+		canvas.removeEventListener('touchend', pieceDropped);
+		clearMovingCanvas();
+
+		var pos = mousePositionElement(event),
+			cell = getSelectedCell(pos.x, pos.y);
+
+		if (cell === 0) {
+			return;
+		}
+
+		// check if it's possible to drop the cell here
+		if (_cells[cell].type === 'empty') {
+			// update cells status
+			_cells[cell].type = _cells[_movingCell].type;
+			_cells[_movingCell].type = 'empty';
+
+			// delete old cell
+			clearCell(_movingCell);
+
+			// draw new cell
+			drawCellFromId(_ctxs['cells'], cell);
+
+			// play sound
+			if (_cells[cell].type === 'prism' || _cells[cell].type === 'mirror' || _cells[cell].type === 'glass' || _cells[cell].type === 'blackhole') {
+				playSound(_cells[cell].type);
+			}
+
+			initVictory();
+
+			// update lasers
+			initLasers();
+
+			// check victory
+			checkVictory();
+		}
+		else {
+			// nothing for the moment
+		}
+
+		// reset the moving cell id
+		_movingCell = null;
+	};
+
+
+	/**
+	 * Check if the laser goes through the cell
+	 * @param {string} side - Side of the cell
+	 * @param {string} dir - Laser direction
+	 * @returns {boolean} true if the laser goes through
+	 */
+	var isPassingThrough = function(side, dir) {
+		if (dir.indexOf(side) === -1) {
+			return true;
+		}
+		return false;
+	};
+
+
+	/**
+	 * Calc where is the next cell - same row, previous, next, same column, previous, next
+	 * @param {string} side - Side we are leaving
+	 * @returns {object} r is for row, c is for column
+	 */
+	var nextCellSide = function(side) {
+		var row = 0,
+			col = 0;
+
+		switch(side) {
+			case 'n':
+				row = -1;
+				break;
+
+			case 'e':
+				col = 1;
+				break;
+
+			case 's':
+				row = 1;
+				break;
+
+			case 'w':
+				col =-1;
+				break;
+		}
+
+		return {r: row, c: col};
+	};
+
+
+	/**
+	 * Calc row and columns of the selected cell
+	 * @param {number} cell - Cell id
+	 * @returns {object} r is for row, c is for column, false if cell doesn't exist
+	 */
+	var calcRowAndCol = function(cell) {
+		var tot = _opt.rows * _opt.columns;
+
+		if (cell <= 0 || cell > tot) {
+			return false;
+		}
+
+		var row = 0,
+			col = 0;
+
+		row = Math.ceil(cell / _opt.columns);
+		col = cell % _opt.columns;
+
+		if (col === 0) {
+			col = _opt.columns;
+		}
+
+		return {r: row, c: col};
+	};
+
+
+	/** Calc cell id from row and column position
+	 * @param {number} row - Row
+	 * @param {number} col - Column
+	 * @returns {number} cell id
+	 */
+	var calcCellFromRowAndCol = function(row, col) {
+		return (row - 1) * _opt.columns + col;
+	};
+
+
+	/**
+	 * Calc next cell base on the current exit side
+	 * @param {number} cell - Cell id
+	 * @param {string} side - Current cell exit side
+	 * @returns {number} next cell id
+	 */
+	var calcNextCell = function(cell, side) {
+		var row = 0,
+			col = 0,
+			nextSide = nextCellSide(side),
+			thisCell = calcRowAndCol(cell),
+			nextCellId,
+			tot = _opt.rows * _opt.columns;
+
+		row = thisCell.r + nextSide.r;
+		col = thisCell.c + nextSide.c;
+
+		if (row <= 0 || row > _opt.rows || col <= 0 || col > _opt.columns) {
+			return false;
+		}
+
+		nextCellId = calcCellFromRowAndCol(row, col);
+
+		if (nextCellId <= 0 || nextCellId > tot) {
+			return false;
+		}
+
+		return nextCellId;
+	};
+
+
+	/**
+	 * Returns the opposite side of the given one
+	 * @param {string} side - Previous cell side
+	 * @returns {string} next cell side
+	 */
+	var oppositeSide = function(side) {
+		var opposite;
+
+		switch(side) {
+			case 'n':
+				opposite = 's';
+				break;
+			case 'e':
+				opposite = 'w';
+				break;
+			case 's':
+				opposite = 'n';
+				break;
+			case 'w':
+				opposite = 'e';
+				break;
+		}
+
+		return opposite;
+	};
+
+
+	/**
+	 * Save point coordinates and laser direction
+	 * @param {number} x - X coordinate
+	 * @param {number} y - Y coordinate
+	 * @param {string} dir - Laser direction
+	 * @param {number} laser - laser id
+	 */
+	var savePoint = function(x, y, dir, laser) {
+		_points.push({
+			x: x,
+			y: y,
+			dir : dir,
+			laser : laser
+		});
+	};
+
+
+	/**
+	 * Reset points stack
+	 */
+	var resetPoints = function() {
+		_points = [];
+	};
+
+
+	/**
+	 * Check if the same laser goes through the point with the same direction - to avoid infinite loops
+	 * @param {number} x - X coordinate
+	 * @param {number} y - Y coordinate
+	 * @param {string} dir - Laser direction
+	 * @param {number} laser - laser id
+	 * @returns boolean - Returns true if it exists
+	 */
+	var isAlreadyPoint = function(x, y, dir, laser) {
+		var l = _points.length;
+
+		for (var i = 0; i < l; i++) {
+			if (_points[i].x === x &&
+				_points[i].y === y &&
+				_points[i].dir === dir &&
+				_points[i].laser === laser) {
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+
+	/**
+	 * Check if there is a laser that goes through the point with the same direction - to avoid infinite loops
+	 * @param {number} x - X coordinate
+	 * @param {number} y - Y coordinate
+	 * @param {string} dir - Laser direction
+	 * @returns boolean - Returns true if it exists
+	 */
+	var isAlreadyLaser = function(x, y, dir) {
+		var l = _points.length;
+
+		for (var i = 0; i < l; i++) {
+			if (_points[i].x === x &&
+				_points[i].y === y &&
+				_points[i].dir === dir) {
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+
+	/** Check if the point is a target
+	 * @param {number} x - Center point x coordinate
+	 * @param {number} y - Center point y coordinate
+	 * @returns {boolean} true if is a target
+	 */
+	var isTargetPoint = function(x, y) {
+		if (_targets.indexOf(x + '_' + y) === -1) {
+			return false;
+		}
+		return true;
+	};
+
+
+	/**
+	 * If the point is a target, light it up and sign in score
+	 * @param {number} x - Point x coordinate
+	 * @param {number} y - Point y coordinate
+	 */
+	var checkPoint = function(x, y) {
+		if (isTargetPoint(x, y)) {
+			drawTargetHit(x, y);
+
+			var index = _victory.indexOf(x + '_' + y);
+			if (index != -1) {
+				_victory.splice(index, 1);
+			}
+		}
+	};
+
+
+	/**
+	 * Draw the laser from the edge of the grid to the edge of the canvas
+	 * @param {string} dir - Laser direction
+	 * @param {number} x - Starting point x coordinate
+	 * @param {number} y - Starting point y coordinate
+	 */
+	var drawEndingLaser = function(dir, x, y) {
+		var angle = 0;
+		switch(dir) {
+			case 'se':
+				angle = 45;
+				break;
+			case 'sw':
+				angle = 135;
+				break;
+			case 'nw':
+				angle = 225;
+				break;
+			case 'ne':
+				angle = 315;
+				break;
+		}
+		var radians = angle * (Math.PI / 180);
+		// the canvas diagonal is the longest distance between two points,
+		// therefore it's used to draw the ending laser
+		var end = {
+			x: x + _canvasD * Math.cos(radians),
+			y: y + _canvasD * Math.sin(radians)
+		};
+		_ctxs['laser'].strokeStyle = COLORS.laser;
+		drawLine(_ctxs['laser'], x, y, end.x, end.y);
+	};
+
+
+	/**
+	 * Draw lasers
+	 * @param {number} cell - Cell id
+	 * @param {string} side - Side of the cell
+	 * @param {string} dir - Laser direction
+	 * @param {number} laserId - laser id 
+	 */
+	var drawLaser = function(cell, side, dir, laserId) {
+		var endSide, endDir, endPoint;
+
+		// calc entrance point coordinates
+		var startPoint = calcCoordinate(cell, side);
+
+		// check if the laser goes through the cell itself
+		if (isPassingThrough(side, dir) === false) {
+			endSide = side;
+			endDir = dir;
+			endPoint = startPoint;
+		}
+		else {
+			switch(_cells[cell]['type']) {
+				case 'empty':
+				case 'none':
+					endDir = dir;
+					endSide = dir.replace(side, "").replace(oppositeSide(side), "");
+					endPoint = calcCoordinate(cell, endSide);
+					break;
+
+				case 'mirror':
+				case 'mirror_stuck':
+					endSide = side;
+					endDir = dir.replace(oppositeSide(endSide), endSide);
+					endPoint = startPoint;
+					break;
+
+				case 'blackhole':
+				case 'blackhole_stuck':
+					return false;
+					break;
+
+				case 'glass':
+				case 'glass_stuck':
+					// laser #1 go through
+					endDir = dir;
+					endSide = dir.replace(side, "").replace(oppositeSide(side), "");
+					endPoint = calcCoordinate(cell, endSide);
+					// laser #2 reflects with a 90deg angle
+					var endSide2 = side,
+						endDir2 = dir.replace(oppositeSide(endSide2), endSide2);
+					var cell2 = calcCoordinate(cell, endSide2)
+					if (!isAlreadyLaser(cell2.x, cell2.y, endDir2)) {
+						drawLaser(cell, endSide2, endDir2, _lasersCounter++);
+					}
+					break;
+
+				case 'prism':
+					endDir = dir;
+					endSide = oppositeSide(side);
+					endPoint = calcCoordinate(cell, endSide);
+					break;
+			}
+		}
+
+		// exit if this laser is going through an existing point with the same direction
+		if (isAlreadyPoint(endPoint.x, endPoint.y, endDir, laserId)) {
+			return false;
+		}
+
+		// save point
+		savePoint(endPoint.x, endPoint.y, endDir, laserId);
+
+		// check if the point is a target
+		checkPoint(endPoint.x, endPoint.y);
+
+		if (startPoint.x != endPoint.x || startPoint.y != endPoint.y) {
+			// draw laser
+			_ctxs['laser'].strokeStyle = COLORS.laser;
+			drawLine(_ctxs['laser'], startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+		}
+
+		// calc next cell, side, dir
+		var nextCellId = calcNextCell(cell, endSide);
+		var nextCellSide = oppositeSide(endSide);
+		var nextCellDir = endDir;
+
+		// draw a line to the edge of the canvas if out of the grid
+		if (nextCellId === false) {
+			drawEndingLaser(nextCellDir, endPoint.x, endPoint.y);
+			return false;
+		}
+
+		// richiama questa funzione
+		drawLaser(nextCellId, nextCellSide, nextCellDir);
+	};
+};
+</script>
+
+<script>
+// ===== APP STATE =====
+var l1 = 0, l2 = 0;
+var game = null;
+var currentScreen = 'menu';
+
+// ===== PROGRESS =====
+var victory = [];
+try { if (localStorage.lazr_victory) victory = JSON.parse(localStorage.lazr_victory); } catch(e) {}
+
+function isCompleted(gl1, gl2) {
+  return victory.some(function(v) { return v.l1 === gl1-1 && v.l2 === gl2-1; });
+}
+
+function isUnlocked(gl1, gl2) {
+  if (gl1 === 0 && gl2 === 0) return true; // always unlock first
+  // unlock next in same group
+  if (gl2 > 0) {
+    return isCompleted(gl1+1, gl2) || isCompleted(gl1+1, gl2-1+1); // level before
+  }
+  // first of group: need to complete last of previous group
+  if (gl1 > 0) {
+    var prevGroup = levels[gl1-1];
+    return isCompleted(gl1, prevGroup.length); // last level of prev group (1-indexed)
+  }
+  return false;
+}
+
+function isLevelUnlocked(gl1idx, gl2idx) {
+  // gl1idx, gl2idx = 0-based indices
+  if (gl1idx === 0 && gl2idx === 0) return true;
+  // All levels in first group unlockable by completing previous
+  // Simplified: first level of each group unlocked if previous group has any completion
+  // Any level unlocked if the one before it is completed
+  var prevL1 = gl1idx, prevL2 = gl2idx - 1;
+  if (prevL2 < 0) {
+    prevL1 = gl1idx - 1;
+    if (prevL1 < 0) return false;
+    prevL2 = levels[prevL1].length - 1;
+  }
+  return isCompleted(prevL1+1, prevL2+1) || (gl1idx === 0); // first group all unlocked initially after first
+}
+
+// First group is always fully unlocked
+function isLevelAccessible(gl1idx, gl2idx) {
+  if (gl1idx === 0) return true; // entire first group unlocked
+  // A level is accessible if the previous one has been completed
+  var prevL1 = gl1idx, prevL2 = gl2idx - 1;
+  if (prevL2 < 0) {
+    prevL1 = gl1idx - 1;
+    if (prevL1 < 0) return true;
+    prevL2 = levels[prevL1].length - 1;
+  }
+  return isCompleted(prevL1+1, prevL2+1);
+}
+
+// ===== SCREEN MANAGEMENT =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { addClass(s, 'hidden'); });
+  var el = document.getElementById(id);
+  removeClass(el, 'hidden');
+  currentScreen = id;
+}
+
+function showMenu() {
+  showScreen('screen-menu');
+  updateMenuProgress();
+  drawMenuPreview();
+  closeSolutionPanel();
+}
+
+function showLevelSelect() {
+  buildLevelSelect();
+  showScreen('screen-levels');
+  document.getElementById('levels-title').textContent = t('select-levels');
+}
+
+function showGame() {
+  showScreen('screen-game');
+  closeSolutionPanel();
+  resizeGame();
+  if (window.doLevelTransition) { doLevelTransition(function() { loadLevel(); }); } else { loadLevel(); }
+}
+
+// ===== LEVEL SELECT BUILD =====
+function getDiffClass(b) {
+  var d = (b || '').toLowerCase();
+  if (d.indexOf('hard') > -1) return 'hard';
+  if (d.indexOf('medium') > -1) return 'medium';
+  return 'easy';
+}
+
+function buildLevelSelect() {
+  var container = document.getElementById('level-groups');
+  container.innerHTML = '';
+  var totalCompleted = victory.length;
+  var totalLevels = 0;
+  for (var i = 0; i < levels.length; i++) totalLevels += levels[i].length;
+
+  for (var gi = 0; gi < levels.length; gi++) {
+    (function(gi) {
+      var group = levels[gi];
+      var name = levelsName[gi];
+      var groupCompleted = 0;
+      for (var li = 0; li < group.length; li++) {
+        if (isCompleted(gi+1, li+1)) groupCompleted++;
+      }
+
+      var groupEl = document.createElement('div');
+      groupEl.className = 'level-group';
+
+      var header = document.createElement('div');
+      header.className = 'level-group-header';
+      header.innerHTML = '<span class="level-group-name">' + name.a + '</span>' +
+        '<span class="diff-badge diff-' + getDiffClass(name.b) + '">' + name.b + '</span>' +
+        '<span class="level-group-progress">' + groupCompleted + '/' + group.length + '</span>';
+      groupEl.appendChild(header);
+
+      // Progress bar
+      var pb = document.createElement('div');
+      pb.className = 'progress-bar';
+      pb.innerHTML = '<div class="progress-fill" style="width:' + (groupCompleted/group.length*100) + '%"></div>';
+      groupEl.appendChild(pb);
+      groupEl.appendChild(document.createElement('br'));
+
+      var grid = document.createElement('div');
+      grid.className = 'level-grid';
+
+      for (var li = 0; li < group.length; li++) {
+        (function(gi, li) {
+          var btn = document.createElement('button');
+          btn.className = 'level-btn';
+          btn.textContent = li + 1;
+          var done = isCompleted(gi+1, li+1);
+          var accessible = isLevelAccessible(gi, li);
+          var isCurrent = (gi === l1 && li === l2 && currentScreen === 'screen-game');
+
+          if (isCurrent) { btn.classList.add('current'); }
+          else if (done) { btn.classList.add('completed'); }
+          else if (accessible) { btn.classList.add('unlocked'); }
+          else { btn.classList.add('locked'); }
+
+          if (accessible) {
+            btn.onclick = function() {
+              l1 = gi; l2 = li;
+              showGame();
+            };
+          }
+          grid.appendChild(btn);
+        })(gi, li);
+      }
+      groupEl.appendChild(grid);
+      container.appendChild(groupEl);
+    })(gi);
+  }
+}
+
+// ===== GAME LOGIC =====
+function loadLevel() {
+  var opt = levels[l1][l2];
+  if (!game) { game = new LaserGame(); }
+  game.init(opt);
+  updateHeader();
+  eraseVictoryOverlay();
+}
+
+function updateHeader() {
+  var name = levelsName[l1];
+  var nameEl = document.getElementById('header-level-name');
+  nameEl.textContent = name.a + ': ' + (l2 + 1);
+  nameEl.classList.remove('flash-anim');
+  void nameEl.offsetWidth; // reflow
+  nameEl.classList.add('flash-anim');
+  document.getElementById('header-level-sub').textContent = name.b;
+  localStorage.lazr_l1 = l1;
+  localStorage.lazr_l2 = l2;
+}
+
+function navLevel(dir) {
+  eraseVictoryOverlay();
+  closeSolutionPanel();
+  l2 += dir;
+  if (l2 >= levels[l1].length) { l2 = 0; l1++; if (l1 >= levels.length) l1 = 0; }
+  if (l2 < 0) { l1--; if (l1 < 0) l1 = levels.length - 1; l2 = levels[l1].length - 1; }
+  doLevelTransition ? doLevelTransition(function() { loadLevel(); }) : loadLevel();
+}
+
+function resizeGame() {
+  var area = document.getElementById('game-area');
+  var w = area.clientWidth;
+  var h = area.clientHeight;
+  LAYOUT.maxWidth = w;
+  LAYOUT.maxHeight = h;
+  if (game) { game.reload(w, h); }
+}
+
+// ===== VICTORY =====
+window.drawVictory = function() {
+  var overlay = document.getElementById('victory-overlay');
+  var sub = document.getElementById('victory-sub');
+  sub.textContent = t('level-completed');
+  addClass(overlay, 'show');
+};
+
+window.saveVictory = function(vl1, vl2) {
+  var _l1 = vl1 - 1, _l2 = vl2 - 1;
+  if (!isCompleted(vl1, vl2)) {
+    victory.push({ l1: _l1, l2: _l2 });
+    if (window.localStorage) localStorage.lazr_victory = JSON.stringify(victory);
+  }
+};
+
+function eraseVictoryOverlay() {
+  removeClass(document.getElementById('victory-overlay'), 'show');
+}
+
+function nextLevelFromVictory() {
+  eraseVictoryOverlay();
+  navLevel(1);
+}
+
+function victoryToLevels() {
+  eraseVictoryOverlay();
+  showLevelSelect();
+}
+
+// ===== SOLUTION =====
+function showSolution() {
+  if (game) game.solution();
+}
+
+function toggleSolutionPanel() {
+  var p = document.getElementById('solution-panel');
+  if (p.classList.contains('show')) { p.classList.remove('show'); }
+  else { p.classList.add('show'); }
+}
+function closeSolutionPanel() {
+  document.getElementById('solution-panel').classList.remove('show');
+}
+
+// ===== SETTINGS =====
+function showSettings() {
+  var m = document.getElementById('settings-modal');
+  m.style.display = 'flex';
+}
+function closeSettings() {
+  document.getElementById('settings-modal').style.display = 'none';
+}
+document.getElementById('settings-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeSettings();
+});
+
+function resetProgress() {
+  if (window.confirm(t('reset') + '?')) {
+    victory = [];
+    localStorage.lazr_victory = JSON.stringify(victory);
+    if (currentScreen === 'screen-levels') buildLevelSelect();
+  }
+  closeSettings();
+}
+
+// ===== RESIZE =====
+var optimizedResize = (function() {
+  var running = false, timeoutID;
+  function resize() {
+    if (!running) {
+      running = true;
+      if (window.requestAnimationFrame) { window.requestAnimationFrame(run); }
+      else { clearTimeout(timeoutID); timeoutID = setTimeout(run, 500); }
+    }
+  }
+  function run() { resizeGame(); running = false; }
+  return {
+    init: function() { window.addEventListener('resize', resize); },
+    stop: function() { window.removeEventListener('resize', resize); }
+  };
+})();
+
+var $toggleResize = document.getElementById('toggle-resize');
+var $toggleAudio = document.getElementById('toggle-audio');
+
+if (localStorage.lazr_resize === 'true') { $toggleResize.checked = true; optimizedResize.init(); }
+$toggleResize.addEventListener('change', function() {
+  localStorage.lazr_resize = this.checked;
+  if (this.checked) { resizeGame(); optimizedResize.init(); }
+  else { optimizedResize.stop(); }
+});
+
+// Audio
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
+if (window.AudioContext) {
+  if (localStorage.lazr_audio === 'true') $toggleAudio.checked = true;
+  $toggleAudio.addEventListener('change', function() {
+    localStorage.lazr_audio = this.checked;
+  });
+} else {
+  $toggleAudio.parentNode.parentNode.style.display = 'none';
+}
+
+// ===== MENU PROGRESS =====
+function updateMenuProgress() {
+  var total = 0;
+  for (var i = 0; i < levels.length; i++) total += levels[i].length;
+  var label = document.getElementById('menu-progress-label');
+  label.textContent = victory.length + ' / ' + total + ' levels completed';
+}
+
+// ===== MENU PREVIEW ANIMATION =====
+function drawMenuPreview() {
+  var c = document.getElementById('menu-preview');
+  if (!c.getContext) return;
+  var ctx = c.getContext('2d');
+  var w = c.width, h = c.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // Draw a simple animated laser path
+  var time = Date.now() / 1000;
+  var grid = 5; var cw = w / (grid + 1), ch = h / (grid + 1);
+  var startX = cw, startY = h / 2;
+
+  // Draw cells
+  ctx.strokeStyle = 'rgba(26,45,68,0.8)'; ctx.lineWidth = 1;
+  for (var r = 0; r < grid; r++) {
+    for (var cc = 0; cc < grid; cc++) {
+      var cx2 = cw + cc * cw, cy = ch + r * ch;
+      var d = cw * 0.1;
+      ctx.fillStyle = 'rgba(17,29,46,0.9)';
+      ctx.beginPath();
+      ctx.roundRect(cx2 + d, cy + d, cw - d*2, ch - d*2, 4);
+      ctx.fill(); ctx.stroke();
+    }
+  }
+
+  // Animated laser
+  ctx.save();
+  ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 8;
+  ctx.strokeStyle = '#ff2200'; ctx.lineWidth = 1.5;
+  var pts = [
+    {x: 0, y: h/2},
+    {x: w * 0.3, y: h/2},
+    {x: w * 0.3, y: h * 0.25},
+    {x: w * 0.6, y: h * 0.25},
+    {x: w * 0.6, y: h * 0.7},
+    {x: w, y: h * 0.7}
+  ];
+  // Animate by drawing partial path
+  var progress = (Math.sin(time * 0.8) * 0.5 + 0.5);
+  var totalLen = 0;
+  for (var i = 1; i < pts.length; i++) {
+    totalLen += Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y);
+  }
+  var drawLen = progress * totalLen;
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  var drawn = 0;
+  for (var i = 1; i < pts.length; i++) {
+    var segLen = Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y);
+    if (drawn + segLen >= drawLen) {
+      var frac = (drawLen - drawn) / segLen;
+      ctx.lineTo(pts[i-1].x + (pts[i].x - pts[i-1].x) * frac, pts[i-1].y + (pts[i].y - pts[i-1].y) * frac);
+      break;
+    }
+    ctx.lineTo(pts[i].x, pts[i].y);
+    drawn += segLen;
+  }
+  ctx.stroke();
+  // Target circles
+  ctx.fillStyle = '#ff2200'; ctx.shadowBlur = 12;
+  ctx.beginPath(); ctx.arc(w, h * 0.7, 5, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+  requestAnimationFrame(drawMenuPreview);
+}
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', function() {
+  // Restore last level
+  try {
+    var rl1 = parseInt(localStorage.lazr_l1);
+    var rl2 = parseInt(localStorage.lazr_l2);
+    if (!isNaN(rl1) && !isNaN(rl2) && levels[rl1] && levels[rl1][rl2]) {
+      l1 = rl1; l2 = rl2;
+    }
+  } catch(e) {}
+
+  applyLang();
+  showMenu();
+});
+
+// ===== CLICK OUTSIDE SOLUTION PANEL =====
+document.addEventListener('click', function(e) {
+  var panel = document.getElementById('solution-panel');
+  var hintBtn = document.getElementById('hint-btn');
+  if (panel.classList.contains('show') && !panel.contains(e.target) && !hintBtn.contains(e.target)) {
+    closeSolutionPanel();
+  }
+});
+</script>
+
+<script>
+// ===== PARTICLE SYSTEM =====
+var particles = [];
+var particleCanvas, particleCtx;
+
+function initParticleLayer() {
+  particleCanvas = document.createElement('canvas');
+  particleCanvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:45;';
+  document.body.appendChild(particleCanvas);
+  particleCtx = particleCanvas.getContext('2d');
+  resizeParticleCanvas();
+  window.addEventListener('resize', resizeParticleCanvas);
+  requestAnimationFrame(animateParticles);
+}
+
+function resizeParticleCanvas() {
+  particleCanvas.width = window.innerWidth;
+  particleCanvas.height = window.innerHeight;
+}
+
+function spawnParticles(x, y, count, color, type) {
+  for (var i = 0; i < count; i++) {
+    var angle = Math.random() * Math.PI * 2;
+    var speed = Math.random() * 4 + 1;
+    var size = type === 'star' ? (Math.random() * 6 + 2) : (Math.random() * 4 + 1);
+    particles.push({
+      x: x, y: y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - (type === 'victory' ? 3 : 0),
+      size: size,
+      color: color || '#ff6600',
+      alpha: 1,
+      decay: Math.random() * 0.02 + 0.015,
+      type: type || 'spark',
+      rotation: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.2,
+      gravity: type === 'victory' ? 0.08 : 0.04,
+      emoji: type === 'star' ? ['⭐','✨','💫','🌟'][Math.floor(Math.random()*4)] : null
+    });
+  }
+}
+
+function spawnVictoryBurst(canvasEl) {
+  var rect = canvasEl.getBoundingClientRect();
+  var cx = rect.left + rect.width / 2;
+  var cy = rect.top + rect.height / 2;
+  var colors = ['#ffcc00','#ff6600','#ff00aa','#00eeff','#aaffaa','#ff4444','#ffffff'];
+  for (var i = 0; i < 80; i++) {
+    var color = colors[Math.floor(Math.random() * colors.length)];
+    var angle = Math.random() * Math.PI * 2;
+    var speed = Math.random() * 8 + 2;
+    var isEmoji = Math.random() < 0.3;
+    particles.push({
+      x: cx + (Math.random()-0.5)*80, y: cy + (Math.random()-0.5)*80,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 4,
+      size: isEmoji ? 20 : (Math.random() * 8 + 3),
+      color: color,
+      alpha: 1,
+      decay: Math.random() * 0.012 + 0.008,
+      type: isEmoji ? 'emoji' : 'victory',
+      gravity: 0.12,
+      rotation: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.15,
+      emoji: isEmoji ? ['⚡','🌟','💥','✨','🎉','⭐'][Math.floor(Math.random()*6)] : null
+    });
+  }
+}
+
+function spawnTargetHitParticles(x, y) {
+  // Convert canvas coords to screen coords
+  var gameArea = document.getElementById('game-area');
+  var rect = gameArea.getBoundingClientRect();
+  var canvas = document.getElementById('game-main');
+  var scaleX = rect.width / (canvas.width || 1);
+  var scaleY = rect.height / (canvas.height || 1);
+  var sx = rect.left + x * scaleX;
+  var sy = rect.top + y * scaleY;
+  var colors = ['#ffcc00','#ff8800','#ffffff','#ffee44'];
+  for (var i = 0; i < 18; i++) {
+    var angle = Math.random() * Math.PI * 2;
+    var speed = Math.random() * 3 + 0.5;
+    particles.push({
+      x: sx, y: sy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 1,
+      size: Math.random() * 4 + 1,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      alpha: 1,
+      decay: Math.random() * 0.03 + 0.02,
+      type: 'spark',
+      gravity: 0.05,
+      rotation: 0, rotSpeed: 0
+    });
+  }
+}
+
+function animateParticles() {
+  requestAnimationFrame(animateParticles);
+  if (!particleCtx) return;
+  particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+
+  particles = particles.filter(function(p) {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += p.gravity || 0.04;
+    p.vx *= 0.98;
+    p.alpha -= p.decay;
+    p.rotation += p.rotSpeed || 0;
+    if (p.alpha <= 0) return false;
+
+    particleCtx.save();
+    particleCtx.globalAlpha = Math.max(0, p.alpha);
+    particleCtx.translate(p.x, p.y);
+    particleCtx.rotate(p.rotation || 0);
+
+    if (p.emoji) {
+      particleCtx.font = p.size + 'px serif';
+      particleCtx.textAlign = 'center';
+      particleCtx.textBaseline = 'middle';
+      particleCtx.fillText(p.emoji, 0, 0);
+    } else if (p.type === 'victory') {
+      // Confetti rectangle
+      particleCtx.fillStyle = p.color;
+      particleCtx.shadowColor = p.color;
+      particleCtx.shadowBlur = 4;
+      particleCtx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+    } else {
+      // Spark circle with glow
+      particleCtx.shadowColor = p.color;
+      particleCtx.shadowBlur = p.size * 2;
+      particleCtx.fillStyle = p.color;
+      particleCtx.beginPath();
+      particleCtx.arc(0, 0, p.size/2, 0, Math.PI*2);
+      particleCtx.fill();
+    }
+    particleCtx.restore();
+    return true;
+  });
+}
+
+// ===== LEVEL TRANSITION =====
+var transitionOverlay = null;
+
+function createTransitionOverlay() {
+  transitionOverlay = document.createElement('div');
+  transitionOverlay.style.cssText = [
+    'position:fixed;inset:0;z-index:60;pointer-events:none;',
+    'display:flex;align-items:center;justify-content:center;',
+    'background:transparent;'
+  ].join('');
+  document.body.appendChild(transitionOverlay);
+}
+
+function doLevelTransition(callback) {
+  if (!transitionOverlay) createTransitionOverlay();
+  
+  // Flash + slide out
+  var panel = document.createElement('div');
+  panel.style.cssText = [
+    'position:absolute;inset:0;',
+    'background:linear-gradient(135deg,rgba(0,20,40,0.95),rgba(0,5,20,0.98));',
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;',
+    'transform:translateY(100%);',
+    'transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);',
+  ].join('');
+  
+  var label = document.createElement('div');
+  label.style.cssText = 'font-family:Orbitron,monospace;font-size:24px;font-weight:900;color:#00e5ff;letter-spacing:0.2em;text-shadow:0 0 30px rgba(0,229,255,0.8);opacity:0;transition:opacity 0.2s 0.15s;';
+  label.textContent = 'LEVEL ' + (l2 + 1);
+  var sublabel = document.createElement('div');
+  sublabel.style.cssText = 'font-family:Orbitron,monospace;font-size:12px;color:rgba(0,229,255,0.6);letter-spacing:0.3em;margin-top:8px;opacity:0;transition:opacity 0.2s 0.2s;';
+  sublabel.textContent = levelsName[l1] ? levelsName[l1].a.toUpperCase() : '';
+  
+  // Scan line animation
+  var scan = document.createElement('div');
+  scan.style.cssText = 'position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,229,255,0.8),transparent);top:-2px;animation:scan-down 0.5s ease-out forwards;';
+  
+  panel.appendChild(label);
+  panel.appendChild(sublabel);
+  panel.appendChild(scan);
+  transitionOverlay.appendChild(panel);
+  
+  // Add scan animation
+  if (!document.getElementById('scan-style')) {
+    var sty = document.createElement('style');
+    sty.id = 'scan-style';
+    sty.textContent = '@keyframes scan-down{from{top:-2px;opacity:1}to{top:100%;opacity:0}}';
+    document.head.appendChild(sty);
+  }
+  
+  // Slide in
+  requestAnimationFrame(function() {
+    setTimeout(function() {
+      panel.style.transform = 'translateY(0)';
+      setTimeout(function() {
+        label.style.opacity = '1';
+        sublabel.style.opacity = '1';
+      }, 50);
+    }, 10);
+  });
+  
+  // Hold, then slide out
+  setTimeout(function() {
+    callback();
+    label.textContent = 'LEVEL ' + (l2 + 1);
+    sublabel.textContent = levelsName[l1] ? levelsName[l1].a.toUpperCase() : '';
+    setTimeout(function() {
+      panel.style.transition = 'transform 0.3s cubic-bezier(0.7,0,0.84,0)';
+      panel.style.transform = 'translateY(-100%)';
+      setTimeout(function() {
+        transitionOverlay.removeChild(panel);
+      }, 350);
+    }, 300);
+  }, 500);
+}
+
+// ===== HOOK VICTORY BURST =====
+var _origDrawVictory = window.drawVictory;
+window.drawVictory = function() {
+  _origDrawVictory();
+  var canvas = document.getElementById('game-main');
+  if (canvas) spawnVictoryBurst(canvas);
+};
+
+// ===== HOOK LEVEL NAV WITH TRANSITION =====
+var _navLevelOrig = window.navLevel;
+window.navLevel = function(dir) {
+  // Calculate new l1/l2
+  var nl1 = l1, nl2 = l2 + dir;
+  if (nl2 >= levels[nl1].length) { nl2 = 0; nl1++; if (nl1 >= levels.length) nl1 = 0; }
+  if (nl2 < 0) { nl1--; if (nl1 < 0) nl1 = levels.length - 1; nl2 = levels[nl1].length - 1; }
+  eraseVictoryOverlay();
+  closeSolutionPanel();
+  l1 = nl1; l2 = nl2;
+  doLevelTransition(function() {
+    loadLevel();
+  });
+};
+
+// Also wrap level select click with transition
+var _showGameOrig = window.showGame;
+window.showGame = function() {
+  _showGameOrig();
+  // Small stagger delay so screen transition completes first
+  setTimeout(function() {
+    doLevelTransition(function() { loadLevel(); });
+  }, 300);
+  // Override the loadLevel call in showGame
+};
+
+// But showGame calls loadLevel() itself - we need to prevent double load
+// Patch: override to only set up the screen, not load level
+window.showGame = function() {
+  showScreen('screen-game');
+  closeSolutionPanel();
+  resizeGame();
+  doLevelTransition(function() { loadLevel(); });
+};
+
+// ===== ANIMATED LASER PULSE on bg canvas =====
+// Add subtle pulse animation to targets
+var _pulseFrame = 0;
+var _pulsing = false;
+
+function startTargetPulse() {
+  if (_pulsing) return;
+  _pulsing = true;
+  function pulse() {
+    if (!_pulsing) return;
+    _pulseFrame++;
+    // Trigger a repaint of target bg with pulse
+    if (window._game_redrawTargetBg) window._game_redrawTargetBg();
+    requestAnimationFrame(pulse);
+  }
+  requestAnimationFrame(pulse);
+}
+
+// ===== CELL DROP ANIMATION =====
+// Track drop animations
+var cellDropAnims = [];
+
+function animateCellDrop(x, y) {
+  var gameArea = document.getElementById('game-area');
+  var rect = gameArea.getBoundingClientRect();
+  var canvas = document.getElementById('game-main');
+  var scaleX = rect.width / (canvas.width || 1);
+  var sy = rect.top + y * scaleX;
+  var sx = rect.left + x * scaleX;
+  spawnTargetHitParticles(x / scaleX, y / scaleX);
+  // Ripple effect
+  var ripple = document.createElement('div');
+  ripple.style.cssText = [
+    'position:fixed;border-radius:50%;pointer-events:none;z-index:46;',
+    'border:2px solid rgba(0,229,255,0.8);',
+    'width:10px;height:10px;',
+    'left:' + (sx - 5) + 'px;top:' + (sy - 5) + 'px;',
+    'animation:cell-ripple 0.5s ease-out forwards;'
+  ].join('');
+  document.body.appendChild(ripple);
+  setTimeout(function() { document.body.removeChild(ripple); }, 600);
+}
+
+// Add ripple CSS
+(function() {
+  var s = document.createElement('style');
+  s.textContent = '@keyframes cell-ripple{from{width:10px;height:10px;left:var(--x);top:var(--y);opacity:1}to{width:80px;height:80px;margin-left:-35px;margin-top:-35px;opacity:0;}}';
+  document.head.appendChild(s);
+})();
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', function() {
+  initParticleLayer();
+});
+</script>
+</body>
+</html>

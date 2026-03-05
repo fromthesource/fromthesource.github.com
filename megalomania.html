@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEGALOMANIA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;700&display=swap');
+
+  :root {
+    --neon-blue: #00d4ff;
+    --neon-red: #ff2244;
+    --neon-gold: #ffd700;
+    --neon-green: #00ff88;
+    --dark-bg: #030810;
+    --panel-bg: rgba(0,15,35,0.92);
+    --grid-color: rgba(0,212,255,0.08);
+    --text-main: #c8e8ff;
+    --text-dim: #4a6a88;
+    --glow-blue: 0 0 10px #00d4ff, 0 0 30px rgba(0,212,255,0.4);
+    --glow-red: 0 0 10px #ff2244, 0 0 30px rgba(255,34,68,0.4);
+    --glow-gold: 0 0 10px #ffd700, 0 0 30px rgba(255,215,0,0.4);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--dark-bg);
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text-main);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    user-select: none;
+  }
+
+  /* STAR FIELD */
+  #starfield {
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse at 50% 20%, rgba(0,40,80,0.6) 0%, var(--dark-bg) 70%);
+  }
+  .star {
+    position: absolute; border-radius: 50%; background: white;
+    animation: twinkle var(--d) ease-in-out infinite alternate;
+  }
+  @keyframes twinkle { from{opacity:0.1;} to{opacity:var(--op);} }
+
+  /* GRID OVERLAY */
+  #grid-overlay {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridShift 20s linear infinite;
+  }
+  @keyframes gridShift { from{background-position:0 0;} to{background-position:40px 40px;} }
+
+  /* SCANLINES */
+  #scanlines {
+    position: fixed; inset: 0; z-index: 2; pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+  }
+
+  /* ===== SCREENS ===== */
+  .screen {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.6s ease;
+  }
+  .screen.hidden { opacity: 0; pointer-events: none; }
+
+  /* ===== MENU SCREEN ===== */
+  #menu-screen {
+    background: radial-gradient(ellipse at 50% 40%, rgba(0,60,120,0.3) 0%, transparent 70%);
+  }
+
+  .logo-container {
+    position: relative; text-align: center; margin-bottom: 40px;
+    animation: logoFloat 3s ease-in-out infinite alternate;
+  }
+  @keyframes logoFloat { from{transform:translateY(-8px);} to{transform:translateY(8px);} }
+
+  .logo-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2.5rem, 8vw, 5.5rem);
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    background: linear-gradient(135deg, #fff 0%, var(--neon-gold) 40%, var(--neon-blue) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 20px rgba(255,215,0,0.5)) drop-shadow(0 0 40px rgba(0,212,255,0.3));
+  }
+  .logo-sub {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(0.6rem, 2vw, 1rem);
+    color: var(--neon-blue);
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    margin-top: 8px;
+    text-shadow: var(--glow-blue);
+  }
+
+  .menu-panel {
+    background: var(--panel-bg);
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 4px;
+    padding: 30px 50px;
+    min-width: 320px;
+    box-shadow: 0 0 40px rgba(0,212,255,0.1), inset 0 0 40px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+  .menu-panel::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+    animation: scanLine 3s linear infinite;
+  }
+  @keyframes scanLine { from{transform:translateX(-100%);} to{transform:translateX(100%);} }
+
+  .menu-btn {
+    display: block; width: 100%; padding: 14px 20px; margin: 8px 0;
+    background: transparent;
+    border: 1px solid rgba(0,212,255,0.3);
+    color: var(--neon-blue);
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(0.75rem, 2vw, 0.9rem);
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .menu-btn::before {
+    content: '> '; opacity: 0; transition: opacity 0.2s;
+  }
+  .menu-btn:hover {
+    background: rgba(0,212,255,0.1);
+    border-color: var(--neon-blue);
+    color: white;
+    text-shadow: var(--glow-blue);
+    box-shadow: var(--glow-blue);
+    transform: translateX(6px);
+  }
+  .menu-btn:hover::before { opacity: 1; }
+  .menu-btn.primary {
+    border-color: var(--neon-gold);
+    color: var(--neon-gold);
+  }
+  .menu-btn.primary:hover {
+    background: rgba(255,215,0,0.1);
+    box-shadow: var(--glow-gold);
+    text-shadow: var(--glow-gold);
+  }
+
+  .save-indicator {
+    text-align: center; margin-top: 16px;
+    font-size: 0.7rem; color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+  .save-indicator.has-save { color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); }
+
+  /* ===== LANG SELECTOR ===== */
+  .lang-bar {
+    position: fixed; top: 16px; right: 16px; z-index: 100;
+    display: flex; gap: 8px;
+  }
+  .lang-btn {
+    background: transparent; border: 1px solid var(--text-dim);
+    color: var(--text-dim); font-family: 'Orbitron', monospace;
+    font-size: 0.65rem; padding: 4px 8px; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.1em;
+  }
+  .lang-btn.active, .lang-btn:hover {
+    border-color: var(--neon-blue); color: var(--neon-blue);
+    text-shadow: var(--glow-blue);
+  }
+
+  /* ===== ERA / DIFFICULTY SELECTOR ===== */
+  #era-screen { gap: 24px; }
+  .era-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.2rem, 4vw, 2rem); font-weight: 700;
+    color: var(--neon-gold); text-shadow: var(--glow-gold);
+    text-align: center; margin-bottom: 10px; letter-spacing: 0.2em;
+  }
+
+  .eras-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    max-width: 900px; width: 90vw;
+  }
+  .era-card {
+    background: var(--panel-bg);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 4px;
+    padding: 20px 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .era-card::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 60%, rgba(0,212,255,0.05));
+  }
+  .era-card:hover {
+    border-color: var(--neon-blue);
+    box-shadow: var(--glow-blue);
+    transform: translateY(-4px);
+  }
+  .era-card.locked { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.6); }
+  .era-card.unlocked { border-color: rgba(0,255,136,0.4); }
+  .era-card.unlocked:hover { border-color: var(--neon-green); box-shadow: 0 0 10px var(--neon-green), 0 0 30px rgba(0,255,136,0.3); }
+
+  .era-icon { font-size: 2.5rem; margin-bottom: 10px; display: block; }
+  .era-name {
+    font-family: 'Orbitron', monospace; font-size: 0.75rem;
+    font-weight: 700; letter-spacing: 0.1em; color: var(--neon-blue);
+  }
+  .era-year { font-size: 0.65rem; color: var(--text-dim); margin-top: 4px; }
+  .era-difficulty {
+    display: flex; gap: 3px; justify-content: center; margin-top: 8px;
+  }
+  .diff-pip {
+    width: 8px; height: 8px; border-radius: 1px;
+    background: rgba(255,255,255,0.15);
+  }
+  .diff-pip.filled { background: var(--neon-gold); box-shadow: 0 0 4px var(--neon-gold); }
+  .era-lock { font-size: 1.2rem; margin-top: 6px; }
+
+  .back-btn {
+    background: transparent; border: 1px solid var(--text-dim);
+    color: var(--text-dim); font-family: 'Orbitron', monospace;
+    font-size: 0.75rem; padding: 10px 24px; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.15em;
+    margin-top: 8px;
+  }
+  .back-btn:hover { border-color: var(--neon-red); color: var(--neon-red); text-shadow: var(--glow-red); }
+
+  /* ===== GAME SCREEN ===== */
+  #game-screen {
+    flex-direction: column;
+    padding: 0;
+    justify-content: flex-start;
+  }
+
+  /* HUD */
+  #hud {
+    width: 100%; padding: 8px 16px;
+    background: rgba(0,5,15,0.95);
+    border-bottom: 1px solid rgba(0,212,255,0.2);
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    z-index: 20;
+  }
+  .hud-section {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 12px;
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 2px;
+  }
+  .hud-label {
+    font-size: 0.55rem; color: var(--text-dim);
+    letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  .hud-value {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
+    font-weight: 700; color: var(--neon-blue);
+    text-shadow: var(--glow-blue);
+  }
+  .hud-value.gold { color: var(--neon-gold); text-shadow: var(--glow-gold); }
+  .hud-value.red  { color: var(--neon-red);  text-shadow: var(--glow-red); }
+
+  #research-bar-container {
+    flex: 1; min-width: 120px;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .bar-bg {
+    width: 100%; height: 8px; background: rgba(255,255,255,0.07);
+    border-radius: 1px; overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%; border-radius: 1px;
+    transition: width 0.5s ease;
+  }
+  .bar-fill.tech  { background: linear-gradient(90deg, var(--neon-blue), #88ffff); box-shadow: 0 0 6px var(--neon-blue); }
+  .bar-fill.pop   { background: linear-gradient(90deg, var(--neon-green), #88ffbb); box-shadow: 0 0 6px var(--neon-green); }
+  .bar-fill.moral { background: linear-gradient(90deg, var(--neon-gold), #ffe066); box-shadow: 0 0 6px var(--neon-gold); }
+
+  /* MAIN GAME AREA */
+  #game-area {
+    flex: 1; display: grid;
+    grid-template-columns: 1fr 260px;
+    grid-template-rows: 1fr;
+    width: 100%; overflow: hidden;
+    min-height: 0;
+  }
+
+  /* MAP */
+  #map-container {
+    position: relative; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 50%, rgba(0,20,50,0.8), var(--dark-bg));
+  }
+  #map-canvas { display: block; width: 100%; height: 100%; }
+
+  /* SIDE PANEL */
+  #side-panel {
+    background: var(--panel-bg);
+    border-left: 1px solid rgba(0,212,255,0.2);
+    display: flex; flex-direction: column;
+    overflow-y: auto; overflow-x: hidden;
+    scrollbar-width: thin; scrollbar-color: var(--neon-blue) transparent;
+  }
+
+  .panel-section {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(0,212,255,0.1);
+  }
+  .panel-section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.6rem; font-weight: 700;
+    color: var(--neon-blue); letter-spacing: 0.25em;
+    text-transform: uppercase; margin-bottom: 10px;
+    text-shadow: var(--glow-blue);
+  }
+
+  .tech-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px; margin: 4px 0;
+    background: rgba(0,212,255,0.04);
+    border: 1px solid rgba(0,212,255,0.1);
+    border-radius: 2px; cursor: pointer;
+    transition: all 0.2s; font-size: 0.72rem;
+  }
+  .tech-item:hover { border-color: var(--neon-blue); background: rgba(0,212,255,0.1); }
+  .tech-item.active { border-color: var(--neon-gold); background: rgba(255,215,0,0.07); }
+  .tech-item.researched { color: var(--neon-green); border-color: rgba(0,255,136,0.3); }
+  .tech-icon { font-size: 1.1rem; flex-shrink: 0; }
+  .tech-info { flex: 1; }
+  .tech-name { font-size: 0.68rem; font-weight: 600; }
+  .tech-cost { font-size: 0.58rem; color: var(--text-dim); margin-top: 2px; }
+  .tech-progress { margin-top: 4px; }
+
+  .unit-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; margin: 3px 0;
+    background: rgba(255,34,68,0.04);
+    border: 1px solid rgba(255,34,68,0.1);
+    border-radius: 2px; cursor: pointer;
+    transition: all 0.2s; font-size: 0.7rem;
+  }
+  .unit-item:hover { border-color: var(--neon-red); background: rgba(255,34,68,0.1); }
+  .unit-item.deployed { border-color: var(--neon-green); }
+  .unit-icon { font-size: 1.2rem; }
+
+  .event-log {
+    flex: 1; padding: 10px 14px;
+    overflow-y: auto; font-size: 0.65rem; line-height: 1.6;
+    max-height: 150px;
+  }
+  .log-entry {
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn { from{opacity:0; transform:translateX(-8px);} to{opacity:1; transform:translateX(0);} }
+  .log-entry.battle { color: var(--neon-red); }
+  .log-entry.tech    { color: var(--neon-blue); }
+  .log-entry.event   { color: var(--neon-gold); }
+  .log-entry.good    { color: var(--neon-green); }
+
+  /* TURN BUTTON */
+  #end-turn-btn {
+    width: calc(100% - 28px); margin: 12px 14px;
+    padding: 14px; cursor: pointer;
+    background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,212,255,0.05));
+    border: 1px solid var(--neon-blue);
+    color: var(--neon-blue); font-family: 'Orbitron', monospace;
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.2em;
+    text-shadow: var(--glow-blue); box-shadow: var(--glow-blue);
+    transition: all 0.3s; position: relative; overflow: hidden;
+  }
+  #end-turn-btn:hover {
+    background: rgba(0,212,255,0.2);
+    box-shadow: 0 0 20px var(--neon-blue), 0 0 60px rgba(0,212,255,0.3);
+    transform: scale(1.02);
+  }
+  #end-turn-btn::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+  }
+  #end-turn-btn:hover::after { transform: translateX(100%); }
+
+  /* ===== TERRITORY TOOLTIP ===== */
+  #tooltip {
+    position: fixed; z-index: 50; pointer-events: none;
+    background: rgba(0,5,20,0.95);
+    border: 1px solid var(--neon-blue);
+    padding: 10px 14px; border-radius: 2px;
+    font-size: 0.72rem; line-height: 1.6;
+    box-shadow: var(--glow-blue);
+    max-width: 200px;
+    opacity: 0; transition: opacity 0.15s;
+    transform: translate(12px, -50%);
+  }
+  #tooltip.visible { opacity: 1; }
+  .tooltip-name { font-family: 'Orbitron', monospace; font-size: 0.78rem; color: var(--neon-gold); margin-bottom: 4px; }
+
+  /* ===== POPUP / MODAL ===== */
+  #overlay {
+    position: fixed; inset: 0; z-index: 60;
+    background: rgba(0,0,0,0.75);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  }
+  #overlay.visible { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--panel-bg);
+    border: 1px solid var(--neon-gold);
+    border-radius: 4px;
+    padding: 30px 36px;
+    max-width: 500px; width: 90vw;
+    box-shadow: var(--glow-gold);
+    animation: modalIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    text-align: center;
+  }
+  @keyframes modalIn { from{transform:scale(0.7) translateY(40px); opacity:0;} to{transform:scale(1) translateY(0); opacity:1;} }
+  .modal-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1rem, 3vw, 1.5rem); font-weight: 900;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--neon-gold), white);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .modal-body { font-size: 0.82rem; line-height: 1.7; color: var(--text-main); margin-bottom: 20px; }
+  .modal-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .modal-btn {
+    padding: 10px 24px; cursor: pointer;
+    background: transparent; border: 1px solid var(--neon-blue);
+    color: var(--neon-blue); font-family: 'Orbitron', monospace;
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em;
+    transition: all 0.2s;
+  }
+  .modal-btn:hover { background: rgba(0,212,255,0.15); box-shadow: var(--glow-blue); }
+  .modal-btn.danger { border-color: var(--neon-red); color: var(--neon-red); }
+  .modal-btn.danger:hover { background: rgba(255,34,68,0.15); box-shadow: var(--glow-red); }
+  .modal-btn.success { border-color: var(--neon-green); color: var(--neon-green); }
+  .modal-btn.success:hover { background: rgba(0,255,136,0.15); }
+
+  /* ===== VICTORY / DEFEAT ===== */
+  #result-screen {
+    background: rgba(0,0,0,0.9);
+  }
+  .result-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2rem, 8vw, 4rem); font-weight: 900;
+    letter-spacing: 0.2em;
+    animation: resultPulse 1.5s ease-in-out infinite alternate;
+  }
+  .result-title.victory {
+    background: linear-gradient(135deg, var(--neon-gold), white, var(--neon-green));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 30px var(--neon-gold));
+  }
+  .result-title.defeat {
+    color: var(--neon-red); text-shadow: var(--glow-red);
+  }
+  @keyframes resultPulse {
+    from { filter: drop-shadow(0 0 10px currentColor); }
+    to   { filter: drop-shadow(0 0 40px currentColor); }
+  }
+  .result-stats {
+    background: var(--panel-bg); border: 1px solid rgba(0,212,255,0.3);
+    padding: 20px 30px; border-radius: 4px; margin: 20px 0;
+    font-size: 0.8rem; line-height: 2; text-align: left;
+  }
+  .stat-row { display: flex; justify-content: space-between; gap: 30px; }
+  .stat-key { color: var(--text-dim); }
+  .stat-val { color: var(--neon-gold); font-family: 'Orbitron', monospace; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 700px) {
+    #game-area { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+    #side-panel {
+      max-height: 42vh;
+      border-left: none; border-top: 1px solid rgba(0,212,255,0.2);
+      flex-direction: row; overflow-x: auto; overflow-y: hidden;
+    }
+    .panel-section { min-width: 180px; border-bottom: none; border-right: 1px solid rgba(0,212,255,0.1); }
+    .event-log { max-height: 100px; }
+    #end-turn-btn { margin: 8px; width: calc(100% - 16px); }
+    .eras-grid { grid-template-columns: repeat(2, 1fr); }
+    .logo-title { font-size: clamp(1.8rem, 10vw, 3.5rem); }
+    .menu-panel { padding: 20px 24px; min-width: 0; width: 90vw; }
+  }
+  @media (max-width: 400px) {
+    .eras-grid { grid-template-columns: 1fr 1fr; }
+    #hud { padding: 6px 8px; gap: 6px; }
+    .hud-section { padding: 3px 6px; }
+  }
+
+  /* PULSE / ATTENTION ANIMATIONS */
+  .pulse-anim { animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse {
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.05);}
+  }
+  .shake { animation: shake 0.5s ease; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-8px);}
+    40%{transform:translateX(8px);}
+    60%{transform:translateX(-5px);}
+    80%{transform:translateX(5px);}
+  }
+
+  /* MAP territories */
+  .territory-label {
+    position: absolute; font-size: 0.55rem;
+    font-family: 'Orbitron', monospace;
+    color: rgba(255,255,255,0.75);
+    pointer-events: none; text-shadow: 0 0 4px black;
+    text-align: center; transform: translate(-50%,-50%);
+    white-space: nowrap; letter-spacing: 0.05em;
+  }
+
+  /* notification toast */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+    z-index: 100; background: rgba(0,10,30,0.95); border: 1px solid var(--neon-blue);
+    padding: 12px 24px; font-family: 'Orbitron', monospace; font-size: 0.75rem;
+    color: var(--neon-blue); text-shadow: var(--glow-blue); box-shadow: var(--glow-blue);
+    border-radius: 2px; letter-spacing: 0.1em;
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s;
+    opacity: 0;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* Settings icon */
+  #settings-btn {
+    position: fixed; bottom: 16px; right: 16px; z-index: 100;
+    background: transparent; border: 1px solid var(--text-dim);
+    color: var(--text-dim); width: 36px; height: 36px;
+    font-size: 1rem; cursor: pointer; border-radius: 2px;
+    transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+  }
+  #settings-btn:hover { border-color: var(--neon-blue); color: var(--neon-blue); }
+
+  /* ===== HIGHSCORES ===== */
+  #scores-screen { gap: 20px; }
+  .scores-table {
+    width: 90vw; max-width: 500px;
+    border-collapse: collapse;
+  }
+  .scores-table th {
+    font-family: 'Orbitron', monospace; font-size: 0.6rem;
+    color: var(--neon-blue); letter-spacing: 0.2em; padding: 8px 12px;
+    border-bottom: 1px solid rgba(0,212,255,0.3); text-align: left;
+  }
+  .scores-table td {
+    padding: 8px 12px; font-size: 0.72rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .scores-table tr:hover td { background: rgba(0,212,255,0.05); }
+
+  /* how-to-play */
+  #howto-screen { gap: 16px; overflow-y: auto; padding: 20px; }
+  .howto-card {
+    background: var(--panel-bg); border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 4px; padding: 16px 20px;
+    max-width: 600px; width: 90vw;
+    font-size: 0.75rem; line-height: 1.8;
+  }
+  .howto-card h3 {
+    font-family: 'Orbitron', monospace; color: var(--neon-gold);
+    font-size: 0.8rem; margin-bottom: 8px; letter-spacing: 0.15em;
+  }
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND -->
+<div id="starfield"></div>
+<div id="grid-overlay"></div>
+<div id="scanlines"></div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- LANGUAGE BAR -->
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" onclick="setLang('es')">ES</button>
+  <button class="lang-btn" onclick="setLang('fr')">FR</button>
+  <button class="lang-btn" onclick="setLang('de')">DE</button>
+</div>
+
+<!-- SETTINGS BTN (in game) -->
+<button id="settings-btn" onclick="openSettings()" style="display:none;">⚙</button>
+
+<!-- ===================== MENU SCREEN ===================== -->
+<div id="menu-screen" class="screen">
+  <div class="logo-container">
+    <div class="logo-title">MEGALOMANIA</div>
+    <div class="logo-sub" id="logo-sub">SUPREME COMMANDER — GALACTIC EDITION</div>
+  </div>
+  <div class="menu-panel">
+    <button class="menu-btn primary pulse-anim" id="btn-new" onclick="showEraSelect()">▶ NEW CONQUEST</button>
+    <button class="menu-btn" id="btn-continue" onclick="continueGame()" style="display:none;">↺ CONTINUE</button>
+    <button class="menu-btn" id="btn-howto" onclick="showScreen('howto-screen')">? HOW TO PLAY</button>
+    <button class="menu-btn" id="btn-scores" onclick="showScreen('scores-screen'); renderScores()">◈ HIGH SCORES</button>
+  </div>
+  <div class="save-indicator" id="save-info">— NO SAVE DATA —</div>
+</div>
+
+<!-- ===================== ERA SELECT ===================== -->
+<div id="era-screen" class="screen hidden">
+  <div class="era-title" id="era-title">CHOOSE YOUR ERA</div>
+  <div class="eras-grid" id="eras-grid"></div>
+  <button class="back-btn" onclick="showScreen('menu-screen')">◄ BACK</button>
+</div>
+
+<!-- ===================== HOW TO PLAY ===================== -->
+<div id="howto-screen" class="screen hidden" style="overflow-y:auto; padding:20px;">
+  <div class="era-title" id="howto-title" style="margin-bottom:16px;">HOW TO PLAY</div>
+  <div class="howto-card" id="howto-content"></div>
+  <button class="back-btn" style="margin-top:16px;" onclick="showScreen('menu-screen')">◄ BACK</button>
+</div>
+
+<!-- ===================== HIGH SCORES ===================== -->
+<div id="scores-screen" class="screen hidden">
+  <div class="era-title" id="scores-title">HIGH SCORES</div>
+  <table class="scores-table" id="scores-table">
+    <thead><tr>
+      <th id="sc-rank">#</th>
+      <th id="sc-name">ERA</th>
+      <th id="sc-score">SCORE</th>
+      <th id="sc-turns">TURNS</th>
+      <th id="sc-date">DATE</th>
+    </tr></thead>
+    <tbody id="scores-body"></tbody>
+  </table>
+  <button class="back-btn" onclick="showScreen('menu-screen')">◄ BACK</button>
+</div>
+
+<!-- ===================== GAME SCREEN ===================== -->
+<div id="game-screen" class="screen hidden">
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-section">
+      <div>
+        <div class="hud-label" id="hud-era-lbl">ERA</div>
+        <div class="hud-value" id="hud-era">—</div>
+      </div>
+    </div>
+    <div class="hud-section">
+      <div>
+        <div class="hud-label" id="hud-turn-lbl">TURN</div>
+        <div class="hud-value" id="hud-turn">1</div>
+      </div>
+    </div>
+    <div class="hud-section">
+      <div>
+        <div class="hud-label" id="hud-res-lbl">RESOURCES</div>
+        <div class="hud-value gold" id="hud-res">0</div>
+      </div>
+    </div>
+    <div class="hud-section">
+      <div>
+        <div class="hud-label" id="hud-pop-lbl">POPULATION</div>
+        <div class="hud-value" id="hud-pop">0</div>
+      </div>
+    </div>
+    <div class="hud-section" style="flex:1; min-width:100px;">
+      <div id="research-bar-container" style="width:100%;">
+        <div class="hud-label" id="hud-tech-lbl">RESEARCH</div>
+        <div class="bar-bg"><div class="bar-fill tech" id="bar-tech" style="width:0%"></div></div>
+        <div class="hud-label" id="hud-pop2-lbl">MORALE</div>
+        <div class="bar-bg"><div class="bar-fill moral" id="bar-moral" style="width:75%"></div></div>
+      </div>
+    </div>
+    <div class="hud-section">
+      <div>
+        <div class="hud-label" id="hud-terr-lbl">TERRITORIES</div>
+        <div class="hud-value" id="hud-terr">0 / 0</div>
+      </div>
+    </div>
+    <div class="hud-section">
+      <div>
+        <div class="hud-label" id="hud-score-lbl">SCORE</div>
+        <div class="hud-value gold" id="hud-score">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div id="game-area">
+    <div id="map-container">
+      <canvas id="map-canvas"></canvas>
+    </div>
+    <div id="side-panel">
+      <div class="panel-section">
+        <div class="panel-section-title" id="panel-tech-title">RESEARCH</div>
+        <div id="tech-list"></div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-section-title" id="panel-units-title">UNITS</div>
+        <div id="units-list"></div>
+      </div>
+      <div class="panel-section" style="flex:1;">
+        <div class="panel-section-title" id="panel-log-title">COMMAND LOG</div>
+        <div class="event-log" id="event-log"></div>
+      </div>
+      <button id="end-turn-btn" onclick="endTurn()" data-i18n="endturn">⚡ END TURN</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== RESULT SCREEN ===================== -->
+<div id="result-screen" class="screen hidden">
+  <div class="result-title" id="result-title">VICTORY!</div>
+  <div class="result-stats" id="result-stats"></div>
+  <div class="modal-btns">
+    <button class="modal-btn success" onclick="showEraSelect()" id="btn-replay">PLAY AGAIN</button>
+    <button class="modal-btn" onclick="showScreen('menu-screen')" id="btn-menu-result">MAIN MENU</button>
+  </div>
+</div>
+
+<!-- MODAL OVERLAY -->
+<div id="overlay">
+  <div class="modal" id="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+<div id="tooltip"><div class="tooltip-name" id="tip-name"></div><div id="tip-body"></div></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  MEGALOMANIA — Modern Edition
+//  Single-file HTML game. All logic here.
+// ═══════════════════════════════════════════════════════════
+
+// ─── LOCALISATION ───────────────────────────────────────────
+const LANGS = {
+  en: {
+    logoSub:'SUPREME COMMANDER — GALACTIC EDITION',
+    newGame:'▶ NEW CONQUEST', continueGame:'↺ CONTINUE',
+    howto:'? HOW TO PLAY', scores:'◈ HIGH SCORES',
+    noSave:'— NO SAVE DATA —', hasSave:'◈ SAVE FOUND — TURN ',
+    chooseEra:'CHOOSE YOUR ERA',
+    endturn:'⚡ END TURN',
+    hudEra:'ERA', hudTurn:'TURN', hudRes:'RESOURCES',
+    hudPop:'POPULATION', hudTech:'RESEARCH', hudMoral:'MORALE',
+    hudTerr:'TERRITORIES', hudScore:'SCORE',
+    panelTech:'RESEARCH', panelUnits:'UNITS', panelLog:'COMMAND LOG',
+    victory:'VICTORY!', defeat:'DEFEAT',
+    turns:'Turns', score:'Score', conquered:'Territories',
+    era:'Era', playAgain:'PLAY AGAIN', mainMenu:'MAIN MENU',
+    confirmAttack:'ATTACK', confirmAttackMsg:'Deploy your forces against',
+    attack:'ATTACK', cancel:'CANCEL',
+    howtoTitle:'HOW TO PLAY',
+    howtoText:`<h3>OBJECTIVE</h3>Conquer all enemy territories to achieve supreme dominance.<br><br>
+<h3>EACH TURN</h3>
+• Research technologies to unlock new units and abilities.<br>
+• Click on enemy territories to launch attacks.<br>
+• Click End Turn to advance time and collect resources.<br><br>
+<h3>TERRITORIES</h3>
+Your territories are shown in <span style="color:#00d4ff">blue</span>. Enemies in <span style="color:#ff2244">red</span>. Neutral in grey.<br>
+Hover territories to see their stats.<br><br>
+<h3>RESEARCH</h3>
+Each era has unique technologies. Research unlocks stronger units and bonuses. Prioritise early!<br><br>
+<h3>UNITS</h3>
+Tap units in the panel to enable them for battle. Higher-tier units deal more damage.<br><br>
+<h3>WIN / LOSE</h3>
+Own all territories → Victory. Lose all yours → Defeat.`,
+    scoresTitle:'HIGH SCORES',
+    scRank:'#', scName:'ERA', scScore:'SCORE', scTurns:'TURNS', scDate:'DATE',
+    noScores:'No scores yet. Start a conquest!',
+    settingsTitle:'SETTINGS',
+    deleteConfirm:'Delete save data?',
+    yes:'YES', no:'NO',
+    logAttack:'Attacked', logCaptured:'CAPTURED', logRepelled:'Repelled!',
+    logResearch:'Research complete', logEvent:'EVENT',
+    logNewTurn:'--- TURN', logEnemyAttack:'Enemy attacks',
+    resInsufficient:'Insufficient resources!',
+    eras:['Stone Age','Bronze Age','Iron Age','Classical','Medieval','Renaissance','Industrial','Modern','Atomic','Space Age'],
+    eraYears:['3000 BC','2000 BC','1000 BC','500 AD','1000 AD','1500 AD','1800 AD','1950 AD','1970 AD','2050 AD'],
+  },
+  es: {
+    logoSub:'COMANDANTE SUPREMO — EDICIÓN GALÁCTICA',
+    newGame:'▶ NUEVA CONQUISTA', continueGame:'↺ CONTINUAR',
+    howto:'? CÓMO JUGAR', scores:'◈ PUNTUACIONES',
+    noSave:'— SIN DATOS GUARDADOS —', hasSave:'◈ PARTIDA GUARDADA — TURNO ',
+    chooseEra:'ELIGE TU ERA',
+    endturn:'⚡ FIN DE TURNO',
+    hudEra:'ERA', hudTurn:'TURNO', hudRes:'RECURSOS',
+    hudPop:'POBLACIÓN', hudTech:'INVESTIGACIÓN', hudMoral:'MORAL',
+    hudTerr:'TERRITORIOS', hudScore:'PUNTOS',
+    panelTech:'INVESTIGACIÓN', panelUnits:'UNIDADES', panelLog:'REGISTRO',
+    victory:'¡VICTORIA!', defeat:'DERROTA',
+    turns:'Turnos', score:'Puntos', conquered:'Territorios',
+    era:'Era', playAgain:'JUGAR DE NUEVO', mainMenu:'MENÚ PRINCIPAL',
+    confirmAttack:'ATACAR', confirmAttackMsg:'Lanzar fuerzas contra',
+    attack:'ATACAR', cancel:'CANCELAR',
+    howtoTitle:'CÓMO JUGAR',
+    howtoText:`<h3>OBJETIVO</h3>Conquista todos los territorios enemigos para alcanzar el dominio supremo.<br><br>
+<h3>CADA TURNO</h3>
+• Investiga tecnologías para desbloquear nuevas unidades.<br>
+• Haz clic en territorios enemigos para atacar.<br>
+• Pulsa Fin de Turno para avanzar y recoger recursos.<br><br>
+<h3>TERRITORIOS</h3>
+Tus territorios en <span style="color:#00d4ff">azul</span>. Enemigos en <span style="color:#ff2244">rojo</span>. Neutros en gris.<br><br>
+<h3>INVESTIGACIÓN</h3>
+Cada era tiene tecnologías únicas. Investiga para desbloquear unidades más fuertes.<br><br>
+<h3>UNIDADES</h3>
+Toca las unidades en el panel para activarlas en batalla.<br><br>
+<h3>VICTORIA / DERROTA</h3>
+Controla todos los territorios → Victoria. Pierde los tuyos → Derrota.`,
+    scoresTitle:'PUNTUACIONES',
+    scRank:'#', scName:'ERA', scScore:'PUNTOS', scTurns:'TURNOS', scDate:'FECHA',
+    noScores:'Sin puntuaciones. ¡Inicia una conquista!',
+    settingsTitle:'AJUSTES',
+    deleteConfirm:'¿Borrar datos guardados?',
+    yes:'SÍ', no:'NO',
+    logAttack:'Atacó', logCaptured:'CAPTURADO', logRepelled:'¡Repelido!',
+    logResearch:'Investigación completa', logEvent:'EVENTO',
+    logNewTurn:'--- TURNO', logEnemyAttack:'El enemigo ataca',
+    resInsufficient:'¡Recursos insuficientes!',
+    eras:['Edad de Piedra','Edad de Bronce','Edad de Hierro','Clásica','Medieval','Renacimiento','Industrial','Moderna','Atómica','Era Espacial'],
+    eraYears:['3000 AC','2000 AC','1000 AC','500 DC','1000 DC','1500 DC','1800 DC','1950 DC','1970 DC','2050 DC'],
+  },
+  fr: {
+    logoSub:'COMMANDANT SUPRÊME — ÉDITION GALACTIQUE',
+    newGame:'▶ NOUVELLE CONQUÊTE', continueGame:'↺ CONTINUER',
+    howto:'? COMMENT JOUER', scores:'◈ MEILLEURS SCORES',
+    noSave:'— AUCUNE SAUVEGARDE —', hasSave:'◈ SAUVEGARDE — TOUR ',
+    chooseEra:'CHOISISSEZ VOTRE ÈRE',
+    endturn:'⚡ FIN DE TOUR',
+    hudEra:'ÈRE', hudTurn:'TOUR', hudRes:'RESSOURCES',
+    hudPop:'POPULATION', hudTech:'RECHERCHE', hudMoral:'MORAL',
+    hudTerr:'TERRITOIRES', hudScore:'SCORE',
+    panelTech:'RECHERCHE', panelUnits:'UNITÉS', panelLog:'JOURNAL',
+    victory:'VICTOIRE!', defeat:'DÉFAITE',
+    turns:'Tours', score:'Score', conquered:'Territoires',
+    era:'Ère', playAgain:'REJOUER', mainMenu:'MENU PRINCIPAL',
+    confirmAttack:'ATTAQUER', confirmAttackMsg:'Lancer vos forces sur',
+    attack:'ATTAQUER', cancel:'ANNULER',
+    howtoTitle:'COMMENT JOUER',
+    howtoText:`<h3>OBJECTIF</h3>Conquérez tous les territoires ennemis pour dominer le monde.<br><br>
+<h3>CHAQUE TOUR</h3>
+• Recherchez des technologies pour débloquer de nouvelles unités.<br>
+• Cliquez sur les territoires ennemis pour attaquer.<br>
+• Fin de Tour pour collecter des ressources.<br><br>
+<h3>TERRITOIRES</h3>
+Vos territoires en <span style="color:#00d4ff">bleu</span>. Ennemis en <span style="color:#ff2244">rouge</span>.<br><br>
+<h3>RECHERCHE</h3>
+Chaque ère a des technologies uniques. Recherchez tôt!<br><br>
+<h3>UNITÉS</h3>
+Cliquez sur les unités dans le panneau pour les activer.<br><br>
+<h3>VICTOIRE / DÉFAITE</h3>
+Contrôlez tous → Victoire. Perdez les vôtres → Défaite.`,
+    scoresTitle:'MEILLEURS SCORES',
+    scRank:'#', scName:'ÈRE', scScore:'SCORE', scTurns:'TOURS', scDate:'DATE',
+    noScores:'Aucun score. Commencez une conquête!',
+    settingsTitle:'PARAMÈTRES',
+    deleteConfirm:'Supprimer la sauvegarde?',
+    yes:'OUI', no:'NON',
+    logAttack:'Attaqué', logCaptured:'CAPTURÉ', logRepelled:'Repoussé!',
+    logResearch:'Recherche terminée', logEvent:'ÉVÉNEMENT',
+    logNewTurn:'--- TOUR', logEnemyAttack:"L'ennemi attaque",
+    resInsufficient:'Ressources insuffisantes!',
+    eras:['Âge de Pierre','Âge du Bronze','Âge du Fer','Classique','Médiéval','Renaissance','Industriel','Moderne','Atomique','Ère Spatiale'],
+    eraYears:['3000 AV','2000 AV','1000 AV','500 AP','1000 AP','1500 AP','1800 AP','1950 AP','1970 AP','2050 AP'],
+  },
+  de: {
+    logoSub:'OBERBEFEHLSHABER — GALAKTISCHE EDITION',
+    newGame:'▶ NEUE EROBERUNG', continueGame:'↺ FORTSETZEN',
+    howto:'? WIE MAN SPIELT', scores:'◈ HIGHSCORES',
+    noSave:'— KEINE SPEICHERDATEN —', hasSave:'◈ SPIELSTAND — ZUG ',
+    chooseEra:'WÄHLE DEINE ÄRA',
+    endturn:'⚡ ZUG BEENDEN',
+    hudEra:'ÄRA', hudTurn:'ZUG', hudRes:'RESSOURCEN',
+    hudPop:'BEVÖLKERUNG', hudTech:'FORSCHUNG', hudMoral:'MORAL',
+    hudTerr:'GEBIETE', hudScore:'PUNKTE',
+    panelTech:'FORSCHUNG', panelUnits:'EINHEITEN', panelLog:'PROTOKOLL',
+    victory:'SIEG!', defeat:'NIEDERLAGE',
+    turns:'Züge', score:'Punkte', conquered:'Gebiete',
+    era:'Ära', playAgain:'NOCHMAL', mainMenu:'HAUPTMENÜ',
+    confirmAttack:'ANGREIFEN', confirmAttackMsg:'Streitkräfte entsenden gegen',
+    attack:'ANGREIFEN', cancel:'ABBRECHEN',
+    howtoTitle:'WIE MAN SPIELT',
+    howtoText:`<h3>ZIEL</h3>Erobere alle feindlichen Gebiete für die absolute Vorherrschaft.<br><br>
+<h3>JEDER ZUG</h3>
+• Forsche Technologien um neue Einheiten freizuschalten.<br>
+• Klicke feindliche Gebiete an um anzugreifen.<br>
+• Zug beenden um Ressourcen zu sammeln.<br><br>
+<h3>GEBIETE</h3>
+Deine Gebiete in <span style="color:#00d4ff">blau</span>. Feinde in <span style="color:#ff2244">rot</span>.<br><br>
+<h3>FORSCHUNG</h3>
+Jede Ära hat einzigartige Technologien. Forsche früh!<br><br>
+<h3>EINHEITEN</h3>
+Klicke Einheiten im Panel um sie zu aktivieren.<br><br>
+<h3>SIEG / NIEDERLAGE</h3>
+Alle Gebiete → Sieg. Verliere deine → Niederlage.`,
+    scoresTitle:'HIGHSCORES',
+    scRank:'#', scName:'ÄRA', scScore:'PUNKTE', scTurns:'ZÜGE', scDate:'DATUM',
+    noScores:'Noch keine Scores. Starte eine Eroberung!',
+    settingsTitle:'EINSTELLUNGEN',
+    deleteConfirm:'Speicherdaten löschen?',
+    yes:'JA', no:'NEIN',
+    logAttack:'Angegriffen', logCaptured:'EROBERT', logRepelled:'Zurückgeschlagen!',
+    logResearch:'Forschung abgeschlossen', logEvent:'EREIGNIS',
+    logNewTurn:'--- ZUG', logEnemyAttack:'Feind greift an',
+    resInsufficient:'Nicht genug Ressourcen!',
+    eras:['Steinzeit','Bronzezeit','Eisenzeit','Klassisch','Mittelalter','Renaissance','Industriell','Modern','Atomar','Raumzeitalter'],
+    eraYears:['3000 v.Chr','2000 v.Chr','1000 v.Chr','500 n.Chr','1000 n.Chr','1500 n.Chr','1800 n.Chr','1950 n.Chr','1970 n.Chr','2050 n.Chr'],
+  },
+};
+
+let currentLang = 'en';
+let T = LANGS.en;
+
+function setLang(lang) {
+  currentLang = lang;
+  T = LANGS[lang];
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.trim()===lang.toUpperCase()));
+  applyTranslations();
+}
+function applyTranslations() {
+  document.getElementById('logo-sub').textContent = T.logoSub;
+  document.getElementById('btn-new').textContent = T.newGame;
+  const cb = document.getElementById('btn-continue');
+  if(cb) cb.textContent = T.continueGame;
+  document.getElementById('btn-howto').textContent = T.howto;
+  document.getElementById('btn-scores').textContent = T.scores;
+  document.getElementById('era-title').textContent = T.chooseEra;
+  document.getElementById('end-turn-btn').textContent = T.endturn;
+  document.getElementById('hud-era-lbl').textContent = T.hudEra;
+  document.getElementById('hud-turn-lbl').textContent = T.hudTurn;
+  document.getElementById('hud-res-lbl').textContent = T.hudRes;
+  document.getElementById('hud-pop-lbl').textContent = T.hudPop;
+  document.getElementById('hud-tech-lbl').textContent = T.hudTech;
+  document.getElementById('hud-pop2-lbl').textContent = T.hudMoral;
+  document.getElementById('hud-terr-lbl').textContent = T.hudTerr;
+  document.getElementById('hud-score-lbl').textContent = T.hudScore;
+  document.getElementById('panel-tech-title').textContent = T.panelTech;
+  document.getElementById('panel-units-title').textContent = T.panelUnits;
+  document.getElementById('panel-log-title').textContent = T.panelLog;
+  document.getElementById('howto-title').textContent = T.howtoTitle;
+  document.getElementById('howto-content').innerHTML = T.howtoText;
+  document.getElementById('scores-title').textContent = T.scoresTitle;
+  document.getElementById('sc-rank').textContent = T.scRank;
+  document.getElementById('sc-name').textContent = T.scName;
+  document.getElementById('sc-score').textContent = T.scScore;
+  document.getElementById('sc-turns').textContent = T.scTurns;
+  document.getElementById('sc-date').textContent = T.scDate;
+  document.getElementById('btn-replay').textContent = T.playAgain;
+  document.getElementById('btn-menu-result').textContent = T.mainMenu;
+  checkSave();
+  if(gameState) renderEras();
+}
+
+// ─── SAVE / LOAD ─────────────────────────────────────────────
+const SAVE_KEY = 'megalomania_save';
+const SCORES_KEY = 'megalomania_scores';
+
+function saveGame() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(gameState)); } catch(e){}
+}
+function loadGame() {
+  try { const d = localStorage.getItem(SAVE_KEY); return d ? JSON.parse(d) : null; } catch(e){ return null; }
+}
+function deleteSave() {
+  try { localStorage.removeItem(SAVE_KEY); } catch(e){}
+  gameState = null;
+  checkSave();
+}
+function saveScore(eraIdx, score, turns) {
+  try {
+    let scores = JSON.parse(localStorage.getItem(SCORES_KEY)||'[]');
+    scores.push({ era: eraIdx, score, turns, date: new Date().toLocaleDateString() });
+    scores.sort((a,b) => b.score - a.score);
+    scores = scores.slice(0,10);
+    localStorage.setItem(SCORES_KEY, JSON.stringify(scores));
+  } catch(e){}
+}
+function getScores() {
+  try { return JSON.parse(localStorage.getItem(SCORES_KEY)||'[]'); } catch(e){ return []; }
+}
+
+function checkSave() {
+  const save = loadGame();
+  const el = document.getElementById('save-info');
+  const cb = document.getElementById('btn-continue');
+  if(save) {
+    el.textContent = T.hasSave + save.turn;
+    el.className = 'save-indicator has-save';
+    if(cb) { cb.textContent = T.continueGame; cb.style.display = 'block'; }
+  } else {
+    el.textContent = T.noSave;
+    el.className = 'save-indicator';
+    if(cb) cb.style.display = 'none';
+  }
+}
+
+// ─── ERA DEFINITIONS ──────────────────────────────────────────
+const ERA_ICONS  = ['🪨','🥉','⚔️','🏛️','🏰','🎨','🏭','✈️','☢️','🚀'];
+const ERA_COLORS_PLAYER = ['#00aaff','#00ccff','#0088ff','#00bbff','#0099ee','#00ddff','#3388ff','#55aaff','#00ffdd','#88eeff'];
+const ERA_COLORS_ENEMY  = ['#ff3344','#ff2233','#ee1133','#ff4455','#dd1133','#ff3355','#ee2244','#ff1133','#ff0044','#ee3355'];
+
+// Technologies per era (procedurally extended by difficulty)
+const ERA_TECH_TEMPLATES = [
+  [{name:'Stone Tools',icon:'🪨',cost:20,effect:'atk',val:1},{name:'Fire',icon:'🔥',cost:30,effect:'pop',val:5},{name:'Cave Art',icon:'🎭',cost:25,effect:'moral',val:10}],
+  [{name:'Bronze Sword',icon:'⚔️',cost:35,effect:'atk',val:2},{name:'Pottery',icon:'🏺',cost:30,effect:'res',val:5},{name:'Writing',icon:'📜',cost:40,effect:'tech',val:5}],
+  [{name:'Iron Armor',icon:'🛡️',cost:50,effect:'def',val:3},{name:'Catapult',icon:'💣',cost:60,effect:'atk',val:3},{name:'Roads',icon:'🛤️',cost:45,effect:'res',val:8}],
+  [{name:'Legion',icon:'🏛️',cost:65,effect:'atk',val:4},{name:'Philosophy',icon:'🧠',cost:55,effect:'moral',val:15},{name:'Aqueduct',icon:'🌊',cost:70,effect:'pop',val:10}],
+  [{name:'Knights',icon:'🐴',cost:80,effect:'atk',val:5},{name:'Castle',icon:'🏰',cost:90,effect:'def',val:5},{name:'Trade Routes',icon:'💰',cost:75,effect:'res',val:12}],
+  [{name:'Gunpowder',icon:'💥',cost:95,effect:'atk',val:6},{name:'Printing Press',icon:'📚',cost:85,effect:'tech',val:8},{name:'Navigation',icon:'🧭',cost:90,effect:'res',val:15}],
+  [{name:'Steam Engine',icon:'🔧',cost:110,effect:'res',val:20},{name:'Rifles',icon:'🔫',cost:120,effect:'atk',val:7},{name:'Railways',icon:'🚂',cost:100,effect:'pop',val:15}],
+  [{name:'Aircraft',icon:'✈️',cost:140,effect:'atk',val:9},{name:'Radio',icon:'📡',cost:120,effect:'moral',val:20},{name:'Industry',icon:'🏗️',cost:130,effect:'res',val:25}],
+  [{name:'Nuclear Bomb',icon:'☢️',cost:200,effect:'atk',val:15},{name:'Computers',icon:'💻',cost:160,effect:'tech',val:12},{name:'Satellites',icon:'🛰️',cost:180,effect:'res',val:30}],
+  [{name:'Laser Cannon',icon:'🔆',cost:250,effect:'atk',val:20},{name:'AI Generals',icon:'🤖',cost:220,effect:'def',val:12},{name:'Warp Drive',icon:'🌌',cost:300,effect:'res',val:50}],
+];
+
+const ERA_UNIT_TEMPLATES = [
+  [{name:'Tribesman',icon:'🧑',power:1},{name:'Shaman',icon:'🧙',power:2}],
+  [{name:'Spearman',icon:'🗡️',power:2},{name:'Charioteer',icon:'🏇',power:3}],
+  [{name:'Swordsman',icon:'⚔️',power:3},{name:'Archer',icon:'🏹',power:4}],
+  [{name:'Legionary',icon:'🛡️',power:4},{name:'Centurion',icon:'👑',power:5}],
+  [{name:'Knight',icon:'🐴',power:5},{name:'Trebuchet',icon:'🎯',power:6}],
+  [{name:'Musketeer',icon:'🔫',power:6},{name:'Cannon',icon:'💣',power:7}],
+  [{name:'Infantry',icon:'🪖',power:7},{name:'Ironclad',icon:'⚙️',power:8}],
+  [{name:'Tank',icon:'🛡️',power:8},{name:'Fighter',icon:'✈️',power:10}],
+  [{name:'Missile',icon:'🚀',power:12},{name:'ICBM',icon:'☢️',power:15}],
+  [{name:'Plasma Ship',icon:'🛸',power:16},{name:'Death Star',icon:'🌟',power:22}],
+];
+
+// ─── GAME STATE ───────────────────────────────────────────────
+let gameState = null;
+let canvas, ctx;
+let territories = [];
+let animFrame = null;
+let hoveredTerr = -1;
+let selectedTerr = -1;
+
+// ─── SEEDED RANDOM ────────────────────────────────────────────
+function seededRand(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+
+// ─── PROCEDURAL MAP GENERATION ───────────────────────────────
+function generateMap(eraIdx, difficulty) {
+  const W = canvas.width, H = canvas.height;
+  const rng = seededRand(eraIdx * 999 + difficulty * 137 + Date.now() % 1000);
+  // number of territories scales with difficulty
+  const count = 12 + difficulty * 4;
+  const pts = [];
+  // distribute points with some padding
+  for(let i = 0; i < count; i++) {
+    let attempts = 0, x, y, ok;
+    do {
+      x = 40 + rng() * (W - 80);
+      y = 40 + rng() * (H - 80);
+      ok = true;
+      for(const p of pts) {
+        const d = Math.hypot(p.x-x, p.y-y);
+        if(d < 80) { ok = false; break; }
+      }
+      attempts++;
+    } while(!ok && attempts < 60);
+    pts.push({x, y});
+  }
+
+  // Build Voronoi-ish territories using point assignment
+  const terrs = pts.map((p, i) => {
+    const isPlayer = i === 0;
+    const isNeutral = i > Math.floor(count * 0.6);
+    return {
+      id: i,
+      x: p.x, y: p.y,
+      name: generateName(rng, eraIdx),
+      owner: isPlayer ? 'player' : (isNeutral ? 'neutral' : 'enemy'),
+      defense: Math.floor(2 + rng() * (4 + difficulty)),
+      resources: Math.floor(5 + rng() * 15),
+      population: Math.floor(10 + rng() * 30),
+      neighbors: [],
+      polygon: [],
+      color: null,
+    };
+  });
+
+  // Build neighbor connections (Delaunay-like via nearest)
+  for(let i = 0; i < terrs.length; i++) {
+    const dists = terrs.map((t,j) => ({j, d: Math.hypot(t.x-terrs[i].x, t.y-terrs[i].y)}))
+      .filter(e => e.j !== i)
+      .sort((a,b) => a.d - b.d)
+      .slice(0, 4)
+      .map(e => e.j);
+    for(const j of dists) {
+      if(!terrs[i].neighbors.includes(j)) terrs[i].neighbors.push(j);
+      if(!terrs[j].neighbors.includes(i)) terrs[j].neighbors.push(i);
+    }
+  }
+
+  // Generate polygons via Voronoi relaxation approximation
+  computeVoronoi(terrs, W, H);
+
+  return terrs;
+}
+
+function generateName(rng, era) {
+  const pref = ['Al','Ar','Ba','Ca','Da','El','Fe','Ga','Ha','Is','Ka','La','Mo','Na','Or','Po','Ra','Sa','Ta','Ur','Ve','Xa','Za'];
+  const suf  = ['oria','ania','eria','ia','ara','ura','ula','ossa','enta','oria','ila','ona','ima','ira'];
+  return pref[Math.floor(rng()*pref.length)] + suf[Math.floor(rng()*suf.length)];
+}
+
+function computeVoronoi(terrs, W, H) {
+  // Simple approximate Voronoi: for each cell sample grid points
+  const grid = 10;
+  const cellPoints = terrs.map(() => []);
+  for(let px = 0; px < W; px += grid) {
+    for(let py = 0; py < H; py += grid) {
+      let best = -1, bestD = Infinity;
+      for(let i = 0; i < terrs.length; i++) {
+        const d = Math.hypot(terrs[i].x - px, terrs[i].y - py);
+        if(d < bestD) { bestD = d; best = i; }
+      }
+      cellPoints[best].push([px, py]);
+    }
+  }
+  // Compute convex hull of each cell
+  terrs.forEach((t, i) => {
+    t.polygon = convexHull(cellPoints[i]);
+  });
+}
+
+function convexHull(pts) {
+  if(pts.length < 3) return pts;
+  pts = [...pts].sort((a,b) => a[0]-b[0] || a[1]-b[1]);
+  const cross = (O, A, B) => (A[0]-O[0])*(B[1]-O[1]) - (A[1]-O[1])*(B[0]-O[0]);
+  const lower = [], upper = [];
+  for(const p of pts) {
+    while(lower.length >= 2 && cross(lower[lower.length-2], lower[lower.length-1], p) <= 0) lower.pop();
+    lower.push(p);
+  }
+  for(const p of [...pts].reverse()) {
+    while(upper.length >= 2 && cross(upper[upper.length-2], upper[upper.length-1], p) <= 0) upper.pop();
+    upper.push(p);
+  }
+  upper.pop(); lower.pop();
+  return lower.concat(upper);
+}
+
+// ─── SCREENS ─────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.getElementById('settings-btn').style.display = (id === 'game-screen') ? 'flex' : 'none';
+}
+
+function showEraSelect() {
+  renderEras();
+  showScreen('era-screen');
+}
+
+function renderEras() {
+  const grid = document.getElementById('eras-grid');
+  const saved = loadGame();
+  let maxUnlocked = 0;
+  if(saved) maxUnlocked = Math.max(maxUnlocked, saved.eraIdx);
+  const scores = getScores();
+  for(const s of scores) maxUnlocked = Math.max(maxUnlocked, s.era + 1);
+
+  grid.innerHTML = '';
+  for(let i = 0; i < 10; i++) {
+    const locked = i > maxUnlocked;
+    const d = document.createElement('div');
+    d.className = 'era-card' + (locked ? ' locked' : ' unlocked');
+    const pips = [1,2,3,4,5,6,7,8,9,10].slice(0,Math.ceil((i+1)/2)).map((_, j) =>
+      `<div class="diff-pip ${j <= i/2 ? 'filled' : ''}"></div>`
+    ).join('');
+    d.innerHTML = `
+      <span class="era-icon">${ERA_ICONS[i]}</span>
+      <div class="era-name">${T.eras[i]}</div>
+      <div class="era-year">${T.eraYears[i]}</div>
+      <div class="era-difficulty">${pips}</div>
+      ${locked ? `<div class="era-lock">🔒</div>` : ''}
+    `;
+    if(!locked) d.onclick = () => startNewGame(i);
+    grid.appendChild(d);
+  }
+}
+
+// ─── START / CONTINUE ─────────────────────────────────────────
+function startNewGame(eraIdx) {
+  const difficulty = eraIdx; // difficulty = era index (0–9)
+  deleteSave();
+  initGameState(eraIdx, difficulty);
+  showScreen('game-screen');
+  initCanvas();
+  renderGame();
+  addLog(T.logNewTurn + ' 1 ---', 'event');
+}
+
+function continueGame() {
+  const save = loadGame();
+  if(!save) return;
+  gameState = save;
+  showScreen('game-screen');
+  initCanvas();
+  territories = gameState.territories;
+  renderGame();
+}
+
+function initGameState(eraIdx, difficulty) {
+  const rng = seededRand(eraIdx * 7 + difficulty * 13);
+  const techs = ERA_TECH_TEMPLATES[eraIdx].map((t,i) => ({...t, id:i, researched:false, progress:0}));
+  const units = ERA_UNIT_TEMPLATES[eraIdx].map((u,i) => ({...u, id:i, unlocked: i===0, active: i===0, count: i===0 ? 3+difficulty : 0}));
+
+  gameState = {
+    eraIdx,
+    difficulty,
+    turn: 1,
+    resources: 50 + difficulty * 10,
+    population: 100,
+    morale: 75,
+    techProgress: 0,
+    currentTech: -1,
+    score: 0,
+    territories: [],
+    techs,
+    units,
+    log: [],
+    maxTurns: 40 + difficulty * 10,
+  };
+
+  // defer territory generation until canvas is ready
+  gameState._pendingTerritories = true;
+  gameState._eraIdx = eraIdx;
+  gameState._difficulty = difficulty;
+}
+
+function initCanvas() {
+  canvas = document.getElementById('map-canvas');
+  const container = document.getElementById('map-container');
+  const resize = () => {
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+    if(gameState) {
+      if(gameState._pendingTerritories) {
+        territories = generateMap(gameState._eraIdx, gameState._difficulty);
+        gameState.territories = territories;
+        delete gameState._pendingTerritories;
+        updateHUD();
+        renderTechPanel();
+        renderUnitsPanel();
+      }
+      drawMap();
+    }
+  };
+  ctx = canvas.getContext('2d');
+  const ro = new ResizeObserver(resize);
+  ro.observe(container);
+  resize();
+
+  canvas.addEventListener('mousemove', onMapHover);
+  canvas.addEventListener('mouseleave', () => { hoveredTerr = -1; drawMap(); document.getElementById('tooltip').classList.remove('visible'); });
+  canvas.addEventListener('click', onMapClick);
+  canvas.addEventListener('touchstart', onTouch, {passive:true});
+}
+
+function onTouch(e) {
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches[0];
+  const x = (t.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (t.clientY - rect.top)  * (canvas.height / rect.height);
+  onMapClickXY(x, y);
+}
+
+function onMapHover(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top)  * (canvas.height / rect.height);
+  const idx = getTerritoryAt(x, y);
+  if(idx !== hoveredTerr) { hoveredTerr = idx; drawMap(); }
+  if(idx >= 0) {
+    showTooltip(e.clientX, e.clientY, territories[idx]);
+  } else {
+    document.getElementById('tooltip').classList.remove('visible');
+  }
+}
+
+function showTooltip(cx, cy, t) {
+  const tip = document.getElementById('tooltip');
+  document.getElementById('tip-name').textContent = t.name;
+  const ownerColor = t.owner === 'player' ? '#00d4ff' : (t.owner === 'enemy' ? '#ff2244' : '#888');
+  document.getElementById('tip-body').innerHTML =
+    `<span style="color:${ownerColor}">${t.owner.toUpperCase()}</span><br>` +
+    `DEF: ${t.defense} &nbsp; POP: ${t.population}<br>RES: +${t.resources}/turn`;
+  tip.style.left = (cx + 14) + 'px';
+  tip.style.top = cy + 'px';
+  tip.classList.add('visible');
+}
+
+function onMapClick(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top)  * (canvas.height / rect.height);
+  onMapClickXY(x, y);
+}
+
+function onMapClickXY(x, y) {
+  const idx = getTerritoryAt(x, y);
+  if(idx < 0) return;
+  const t = territories[idx];
+  if(t.owner === 'player') {
+    toast(`${t.name}: ${t.population} pop, ${t.resources} res`);
+    return;
+  }
+  // Check adjacency to player
+  const playerIds = territories.filter(t=>t.owner==='player').map(t=>t.id);
+  const isAdjacent = t.neighbors.some(n => playerIds.includes(n));
+  if(!isAdjacent) {
+    toast('⚠ Not adjacent to your territory!');
+    return;
+  }
+  showAttackModal(idx);
+}
+
+function getTerritoryAt(x, y) {
+  if(!territories.length) return -1;
+  // Find closest territory center within polygon
+  let best = -1, bestD = 60;
+  for(let i = 0; i < territories.length; i++) {
+    const t = territories[i];
+    if(t.polygon.length < 3) continue;
+    if(pointInPolygon(x, y, t.polygon)) return i;
+    const d = Math.hypot(t.x - x, t.y - y);
+    if(d < bestD) { bestD = d; best = i; }
+  }
+  return best;
+}
+
+function pointInPolygon(px, py, poly) {
+  let inside = false;
+  for(let i = 0, j = poly.length-1; i < poly.length; j = i++) {
+    const xi = poly[i][0], yi = poly[i][1];
+    const xj = poly[j][0], yj = poly[j][1];
+    if(((yi > py) !== (yj > py)) && (px < (xj-xi)*(py-yi)/(yj-yi)+xi))
+      inside = !inside;
+  }
+  return inside;
+}
+
+// ─── ATTACK MODAL ────────────────────────────────────────────
+function showAttackModal(terrIdx) {
+  const t = territories[terrIdx];
+  const activeUnits = gameState.units.filter(u => u.active && u.unlocked);
+  const playerPower = activeUnits.reduce((s,u) => s + u.power * (u.count||1), 0) + (gameState.techs.filter(t=>t.researched && t.effect==='atk').reduce((s,t)=>s+t.val,0));
+  const enemyPower = t.defense * 3;
+
+  const winChance = Math.round(Math.min(95, Math.max(5, 50 + (playerPower - enemyPower) * 5)));
+
+  showModal(
+    `${T.confirmAttack}: ${t.name}`,
+    `${T.confirmAttackMsg} <strong style="color:#ff2244">${t.name}</strong><br><br>
+     Your Power: <strong style="color:#00d4ff">${playerPower}</strong> &nbsp;|&nbsp; Enemy Defense: <strong style="color:#ff2244">${enemyPower}</strong><br>
+     Win Chance: <strong style="color:${winChance>60?'#00ff88':'#ffd700'}">${winChance}%</strong>`,
+    [
+      {label: T.attack, cls: 'danger', fn: () => { closeModal(); resolveAttack(terrIdx, playerPower, enemyPower, winChance); }},
+      {label: T.cancel, cls: '', fn: closeModal},
+    ]
+  );
+}
+
+function resolveAttack(terrIdx, playerPower, enemyPower, winChance) {
+  const t = territories[terrIdx];
+  const roll = Math.random() * 100;
+  if(roll < winChance) {
+    t.owner = 'player';
+    t.defense = Math.max(1, t.defense - 2);
+    gameState.score += Math.floor(100 + t.resources * 5 + winChance);
+    addLog(`${T.logAttack} ${t.name} — ${T.logCaptured}!`, 'battle');
+    toast(`⚔ ${t.name} ${T.logCaptured}!`);
+    // Resources bonus
+    gameState.resources += Math.floor(t.resources * 0.5);
+  } else {
+    addLog(`${T.logAttack} ${t.name} — ${T.logRepelled}`, 'battle');
+    toast(`💥 ${t.name} — ${T.logRepelled}`);
+    // Lose a unit
+    const active = gameState.units.filter(u=>u.active && u.unlocked && u.count>0);
+    if(active.length) active[0].count = Math.max(0, active[0].count-1);
+  }
+  updateHUD();
+  drawMap();
+  saveGame();
+  checkVictory();
+}
+
+// ─── END TURN ────────────────────────────────────────────────
+function endTurn() {
+  if(!gameState) return;
+  gameState.turn++;
+  addLog(`${T.logNewTurn} ${gameState.turn} ---`, 'event');
+
+  // Collect resources
+  const playerTerrs = territories.filter(t=>t.owner==='player');
+  const res = playerTerrs.reduce((s,t) => s + t.resources, 0);
+  gameState.resources += res;
+  gameState.population = playerTerrs.reduce((s,t) => s + t.population, 0);
+
+  // Research progress
+  if(gameState.currentTech >= 0) {
+    const tech = gameState.techs[gameState.currentTech];
+    if(!tech.researched) {
+      tech.progress += 20 + Math.floor(Math.random() * 15);
+      const pct = Math.min(100, Math.round(tech.progress / tech.cost * 100));
+      document.getElementById('bar-tech').style.width = pct + '%';
+      if(tech.progress >= tech.cost) {
+        tech.researched = true;
+        gameState.currentTech = -1;
+        applyTechEffect(tech);
+        addLog(`${T.logResearch}: ${tech.icon} ${tech.name}`, 'tech');
+        toast(`🔬 ${tech.name} researched!`);
+        unlockUnitsFromTech(tech);
+        document.getElementById('bar-tech').style.width = '0%';
+        renderTechPanel();
+        renderUnitsPanel();
+      }
+    }
+  }
+
+  // Enemy AI: attack adjacent player territories
+  enemyTurn();
+
+  // Random events
+  if(Math.random() < 0.15) triggerEvent();
+
+  // Morale drift
+  const enemyTerrs = territories.filter(t=>t.owner==='enemy').length;
+  const pTerrs = playerTerrs.length;
+  if(pTerrs > enemyTerrs) gameState.morale = Math.min(100, gameState.morale + 3);
+  else gameState.morale = Math.max(10, gameState.morale - 2);
+
+  // Score per turn
+  gameState.score += playerTerrs.length * 5;
+
+  updateHUD();
+  renderTechPanel();
+  renderUnitsPanel();
+  drawMap();
+  saveGame();
+  checkVictory();
+
+  // Turn limit
+  if(gameState.turn >= gameState.maxTurns) {
+    const pCount = territories.filter(t=>t.owner==='player').length;
+    const eCount = territories.filter(t=>t.owner==='enemy').length;
+    if(pCount > eCount) showVictory();
+    else showDefeat();
+  }
+}
+
+function enemyTurn() {
+  const enemyTerrs = territories.filter(t=>t.owner==='enemy');
+  for(const et of enemyTerrs) {
+    if(Math.random() < 0.25 + gameState.difficulty * 0.02) {
+      const target = et.neighbors.map(n=>territories[n]).find(n=>n.owner==='player');
+      if(target) {
+        const ePow = et.defense * 2 + gameState.difficulty;
+        const pDef = 3 + gameState.techs.filter(t=>t.researched && t.effect==='def').reduce((s,t)=>s+t.val,0);
+        if(Math.random() < 0.3 + (ePow - pDef) * 0.05) {
+          target.owner = 'enemy';
+          target.defense = Math.floor(3 + gameState.difficulty);
+          addLog(`${T.logEnemyAttack} ${target.name}!`, 'battle');
+          toast(`💀 ${target.name} lost!`);
+          gameState.score = Math.max(0, gameState.score - 50);
+        }
+      }
+    }
+    // Neutral capture
+    const neutral = et.neighbors.map(n=>territories[n]).find(n=>n.owner==='neutral');
+    if(neutral && Math.random() < 0.2) neutral.owner = 'enemy';
+  }
+}
+
+function triggerEvent() {
+  const events = [
+    {msg:'⛈ Storm destroys supply lines!', fn: () => { gameState.resources = Math.max(0, gameState.resources - 20); }},
+    {msg:'💰 Trade winds bring wealth!', fn: () => { gameState.resources += 30; }},
+    {msg:'🎖 Soldiers return victorious!', fn: () => { gameState.morale = Math.min(100, gameState.morale + 15); }},
+    {msg:'😤 Rebellion in the ranks!', fn: () => { gameState.morale = Math.max(10, gameState.morale - 20); }},
+    {msg:'🌾 Bountiful harvest!', fn: () => { gameState.population += 20; gameState.resources += 15; }},
+  ];
+  const ev = events[Math.floor(Math.random() * events.length)];
+  ev.fn();
+  addLog(`${T.logEvent}: ${ev.msg}`, 'event');
+  toast(ev.msg);
+}
+
+function applyTechEffect(tech) {
+  if(tech.effect==='res') gameState.resources += tech.val * 5;
+  if(tech.effect==='pop') gameState.population += tech.val;
+  if(tech.effect==='moral') gameState.morale = Math.min(100, gameState.morale + tech.val);
+}
+
+function unlockUnitsFromTech(tech) {
+  // Unlock second unit tier when first offensive tech researched
+  if(tech.effect==='atk') {
+    const locked = gameState.units.find(u=>!u.unlocked);
+    if(locked) { locked.unlocked = true; locked.count = 2; }
+  }
+}
+
+// ─── RESEARCH ────────────────────────────────────────────────
+function researchTech(techId) {
+  if(!gameState) return;
+  const tech = gameState.techs[techId];
+  if(tech.researched) return;
+  if(gameState.resources < Math.floor(tech.cost * 0.3)) { toast(T.resInsufficient); return; }
+  gameState.currentTech = techId;
+  gameState.resources -= Math.floor(tech.cost * 0.3);
+  tech.progress = Math.floor(tech.cost * 0.3);
+  addLog(`Researching: ${tech.icon} ${tech.name}`, 'tech');
+  renderTechPanel();
+  updateHUD();
+  saveGame();
+}
+
+// ─── PANELS ──────────────────────────────────────────────────
+function renderTechPanel() {
+  const el = document.getElementById('tech-list');
+  el.innerHTML = '';
+  gameState.techs.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'tech-item' +
+      (t.researched ? ' researched' : '') +
+      (gameState.currentTech === t.id ? ' active' : '');
+    const pct = t.researched ? 100 : Math.min(100, Math.round(t.progress / t.cost * 100));
+    div.innerHTML = `
+      <span class="tech-icon">${t.icon}</span>
+      <div class="tech-info">
+        <div class="tech-name">${t.name}</div>
+        <div class="tech-cost">${t.researched ? '✓ Done' : (gameState.currentTech===t.id ? `${pct}%…` : `${t.cost} res`)}</div>
+        ${!t.researched && gameState.currentTech !== t.id ? `<div class="tech-progress"><div class="bar-bg" style="height:3px;"><div class="bar-fill tech" style="width:${pct}%"></div></div></div>` : ''}
+      </div>
+    `;
+    if(!t.researched && gameState.currentTech !== t.id) div.onclick = () => { researchTech(t.id); };
+    el.appendChild(div);
+  });
+}
+
+function renderUnitsPanel() {
+  const el = document.getElementById('units-list');
+  el.innerHTML = '';
+  gameState.units.forEach(u => {
+    const div = document.createElement('div');
+    div.className = 'unit-item' + (u.active ? ' deployed' : '') + (!u.unlocked ? ' locked' : '');
+    div.style.opacity = u.unlocked ? '1' : '0.4';
+    div.innerHTML = `
+      <span class="unit-icon">${u.icon}</span>
+      <div class="tech-info">
+        <div class="tech-name">${u.name}</div>
+        <div class="tech-cost">PWR:${u.power} &nbsp;×${u.count||0}${!u.unlocked ? ' 🔒' : ''}</div>
+      </div>
+      ${u.unlocked ? `<span style="font-size:0.65rem;color:${u.active?'var(--neon-green)':'var(--text-dim)'}">${u.active ? 'ON' : 'OFF'}</span>` : ''}
+    `;
+    if(u.unlocked) div.onclick = () => { u.active = !u.active; renderUnitsPanel(); saveGame(); };
+    el.appendChild(div);
+  });
+}
+
+// ─── HUD UPDATE ──────────────────────────────────────────────
+function updateHUD() {
+  if(!gameState) return;
+  document.getElementById('hud-era').textContent = T.eras[gameState.eraIdx];
+  document.getElementById('hud-turn').textContent = `${gameState.turn}/${gameState.maxTurns}`;
+  document.getElementById('hud-res').textContent = gameState.resources;
+  document.getElementById('hud-pop').textContent = gameState.population;
+  document.getElementById('bar-moral').style.width = gameState.morale + '%';
+  document.getElementById('hud-score').textContent = gameState.score;
+  const pCount = territories.filter(t=>t.owner==='player').length;
+  const total  = territories.length;
+  document.getElementById('hud-terr').textContent = `${pCount} / ${total}`;
+}
+
+// ─── MAP DRAWING ─────────────────────────────────────────────
+function drawMap() {
+  if(!ctx || !canvas.width) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background
+  const bg = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, Math.max(canvas.width, canvas.height)*0.7);
+  bg.addColorStop(0, 'rgba(0,20,50,0.6)');
+  bg.addColorStop(1, 'rgba(3,8,16,0.8)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if(!territories.length) return;
+
+  // Draw territories
+  territories.forEach((t, i) => {
+    if(!t.polygon || t.polygon.length < 3) return;
+
+    const isPlayer  = t.owner === 'player';
+    const isEnemy   = t.owner === 'enemy';
+    const isHovered = i === hoveredTerr;
+
+    let baseColor, glowColor;
+    if(isPlayer)  { baseColor = ERA_COLORS_PLAYER[gameState.eraIdx]; glowColor = baseColor; }
+    else if(isEnemy) { baseColor = ERA_COLORS_ENEMY[gameState.eraIdx]; glowColor = baseColor; }
+    else { baseColor = '#445566'; glowColor = '#667788'; }
+
+    // Shadow / glow
+    if(isHovered) {
+      ctx.shadowColor = glowColor;
+      ctx.shadowBlur = 20;
+    } else {
+      ctx.shadowBlur = 4;
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    }
+
+    // Fill
+    ctx.beginPath();
+    ctx.moveTo(t.polygon[0][0], t.polygon[0][1]);
+    t.polygon.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+    ctx.closePath();
+
+    // Gradient fill
+    const grad = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, 80);
+    grad.addColorStop(0, hexToRgba(baseColor, isHovered ? 0.45 : 0.3));
+    grad.addColorStop(1, hexToRgba(baseColor, isHovered ? 0.2 : 0.1));
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Border
+    ctx.strokeStyle = hexToRgba(baseColor, isHovered ? 1 : 0.6);
+    ctx.lineWidth = isHovered ? 2.5 : 1;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Draw connections (only between neighbors)
+    for(const n of t.neighbors) {
+      if(n > i) {
+        const nt = territories[n];
+        ctx.beginPath();
+        ctx.moveTo(t.x, t.y);
+        ctx.lineTo(nt.x, nt.y);
+        ctx.strokeStyle = 'rgba(0,212,255,0.07)';
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([4,6]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    // Center dot
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, isHovered ? 6 : 4, 0, Math.PI*2);
+    ctx.fillStyle = isHovered ? baseColor : hexToRgba(baseColor, 0.7);
+    if(isHovered) { ctx.shadowColor = baseColor; ctx.shadowBlur = 12; }
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Label
+    ctx.fillStyle = isHovered ? '#fff' : 'rgba(200,232,255,0.7)';
+    ctx.font = `bold ${isHovered ? 10 : 8}px "Orbitron", monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(t.name, t.x, t.y - 14);
+    ctx.shadowBlur = 0;
+
+    // Defense indicator
+    if(isHovered || isEnemy) {
+      ctx.fillStyle = isEnemy ? '#ff4466' : '#00aaff';
+      ctx.font = '7px "Share Tech Mono", monospace';
+      ctx.fillText(`DEF:${t.defense}`, t.x, t.y + 16);
+    }
+  });
+
+  // Player territory border glow
+  const playerPolys = territories.filter(t=>t.owner==='player');
+  playerPolys.forEach(t => {
+    if(!t.polygon || t.polygon.length < 3) return;
+    ctx.beginPath();
+    ctx.moveTo(t.polygon[0][0], t.polygon[0][1]);
+    t.polygon.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+    ctx.closePath();
+    ctx.strokeStyle = ERA_COLORS_PLAYER[gameState.eraIdx];
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = ERA_COLORS_PLAYER[gameState.eraIdx];
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  });
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ─── WIN / LOSE ──────────────────────────────────────────────
+function checkVictory() {
+  if(!territories.length) return;
+  const pCount = territories.filter(t=>t.owner==='player').length;
+  const eCount = territories.filter(t=>t.owner==='enemy').length;
+  if(eCount === 0) showVictory();
+  else if(pCount === 0) showDefeat();
+}
+
+function showVictory() {
+  saveScore(gameState.eraIdx, gameState.score, gameState.turn);
+  deleteSave();
+  document.getElementById('result-title').textContent = T.victory;
+  document.getElementById('result-title').className = 'result-title victory';
+  document.getElementById('result-stats').innerHTML = renderStats();
+  showScreen('result-screen');
+}
+
+function showDefeat() {
+  deleteSave();
+  document.getElementById('result-title').textContent = T.defeat;
+  document.getElementById('result-title').className = 'result-title defeat';
+  document.getElementById('result-stats').innerHTML = renderStats();
+  showScreen('result-screen');
+}
+
+function renderStats() {
+  return `
+    <div class="stat-row"><span class="stat-key">${T.era}</span><span class="stat-val">${T.eras[gameState.eraIdx]}</span></div>
+    <div class="stat-row"><span class="stat-key">${T.turns}</span><span class="stat-val">${gameState.turn}</span></div>
+    <div class="stat-row"><span class="stat-key">${T.score}</span><span class="stat-val">${gameState.score}</span></div>
+    <div class="stat-row"><span class="stat-key">${T.conquered}</span><span class="stat-val">${territories.filter(t=>t.owner==='player').length}</span></div>
+  `;
+}
+
+// ─── MODAL ───────────────────────────────────────────────────
+function showModal(title, body, buttons) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body;
+  const btns = document.getElementById('modal-btns');
+  btns.innerHTML = '';
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'modal-btn ' + (b.cls||'');
+    btn.textContent = b.label;
+    btn.onclick = b.fn;
+    btns.appendChild(btn);
+  });
+  document.getElementById('overlay').classList.add('visible');
+}
+function closeModal() { document.getElementById('overlay').classList.remove('visible'); }
+
+// ─── SETTINGS ────────────────────────────────────────────────
+function openSettings() {
+  showModal(
+    T.settingsTitle,
+    `<div style="text-align:left;line-height:2;font-size:0.78rem;">
+      ${T.deleteConfirm}<br>
+      <span style="color:var(--text-dim);font-size:0.7rem;">(Current progress will be lost)</span>
+    </div>`,
+    [
+      {label: T.yes, cls: 'danger', fn: () => { closeModal(); deleteSave(); toast('Save deleted.'); checkSave(); showScreen('menu-screen'); }},
+      {label: T.no, cls: '', fn: closeModal},
+    ]
+  );
+}
+
+// ─── LOG ─────────────────────────────────────────────────────
+function addLog(msg, type='') {
+  if(!gameState) return;
+  gameState.log.unshift({msg, type, turn: gameState.turn});
+  if(gameState.log.length > 40) gameState.log.pop();
+  renderLog();
+}
+
+function renderLog() {
+  const el = document.getElementById('event-log');
+  el.innerHTML = '';
+  (gameState.log||[]).slice(0,20).forEach(e => {
+    const d = document.createElement('div');
+    d.className = 'log-entry ' + (e.type||'');
+    d.textContent = e.msg;
+    el.appendChild(d);
+  });
+}
+
+// ─── SCORES ──────────────────────────────────────────────────
+function renderScores() {
+  const scores = getScores();
+  const body = document.getElementById('scores-body');
+  if(!scores.length) {
+    body.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">${T.noScores}</td></tr>`;
+    return;
+  }
+  body.innerHTML = scores.map((s,i) => `
+    <tr>
+      <td style="color:${i<3?'var(--neon-gold)':'var(--text-dim)'}">${i+1}</td>
+      <td>${T.eras[s.era]||s.era}</td>
+      <td style="color:var(--neon-gold);font-family:'Orbitron',monospace;">${s.score}</td>
+      <td>${s.turns}</td>
+      <td style="color:var(--text-dim);font-size:0.65rem;">${s.date}</td>
+    </tr>
+  `).join('');
+}
+
+// ─── TOAST ───────────────────────────────────────────────────
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ─── RENDER GAME ─────────────────────────────────────────────
+function renderGame() {
+  if(!gameState) return;
+  territories = gameState.territories || [];
+  updateHUD();
+  renderTechPanel();
+  renderUnitsPanel();
+  renderLog();
+  drawMap();
+}
+
+// ─── STARFIELD ───────────────────────────────────────────────
+function initStarfield() {
+  const sf = document.getElementById('starfield');
+  for(let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    const size = Math.random() * 2.5 + 0.5;
+    s.className = 'star';
+    s.style.cssText = `
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      width:${size}px; height:${size}px;
+      --d:${(Math.random()*4+2).toFixed(1)}s;
+      --op:${(Math.random()*0.7+0.3).toFixed(2)};
+      animation-delay:${(Math.random()*5).toFixed(1)}s;
+    `;
+    sf.appendChild(s);
+  }
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  initStarfield();
+  checkSave();
+  applyTranslations();
+  showScreen('menu-screen');
+  document.getElementById('overlay').addEventListener('click', e => { if(e.target === document.getElementById('overlay')) closeModal(); });
+});
+</script>
+</body>
+</html>
