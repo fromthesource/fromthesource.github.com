@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>LAZR — Laser Puzzle</title>
+<title>Laser Emoji</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -11,17 +11,17 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #080c12;
-  --surface: #0d1520;
-  --surface2: #111d2e;
-  --border: #1a2d44;
-  --accent: #00e5ff;
-  --accent2: #ff3366;
-  --accent3: #7c3aed;
-  --text: #e2e8f0;
-  --text-muted: #64748b;
-  --laser: #ff2200;
-  --gold: #fbbf24;
+  --bg: #e8f4ff;
+  --surface: #ffffff;
+  --surface2: #f0f8ff;
+  --border: #b8d8f8;
+  --accent: #2979ff;
+  --accent2: #ff4081;
+  --accent3: #9c27b0;
+  --text: #1a3050;
+  --text-muted: #6080a0;
+  --laser: #ff3300;
+  --gold: #f59e0b;
   --success: #10b981;
   --header-h: 56px;
   --panel-w: 260px;
@@ -31,9 +31,10 @@
 html, body {
   height: 100%; width: 100%;
   overflow: hidden;
-  background: var(--bg);
+  background: linear-gradient(145deg, #d4eeff 0%, #ede4ff 40%, #ffd4ec 70%, #fffbd4 100%);
+  background-attachment: fixed;
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Nunito', sans-serif;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
 }
@@ -41,6 +42,7 @@ html, body {
 /* ===== SCREENS ===== */
 .screen {
   position: fixed; inset: 0;
+  background: transparent;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
   z-index: 10;
@@ -56,7 +58,7 @@ html, body {
 }
 .star {
   position: absolute; border-radius: 50%;
-  background: #fff;
+  background: var(--star-color, #fff);
   animation: twinkle var(--dur, 3s) ease-in-out infinite;
   animation-delay: var(--delay, 0s);
 }
@@ -69,14 +71,15 @@ html, body {
 .grid-bg {
   position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background-image:
-    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(41,121,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(41,121,255,0.06) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
 /* ===== MENU SCREEN ===== */
 #screen-menu {
   gap: 32px;
+  background: transparent;
 }
 .logo {
   text-align: center;
@@ -88,22 +91,25 @@ html, body {
   font-size: clamp(48px, 12vw, 96px);
   font-weight: 900;
   letter-spacing: 0.2em;
-  color: var(--accent);
-  text-shadow: 0 0 40px rgba(0,229,255,0.5), 0 0 80px rgba(0,229,255,0.2);
-  animation: pulse-glow 3s ease-in-out infinite;
   line-height: 1;
+  background: linear-gradient(135deg, #2979ff 0%, #e040fb 50%, #ff4081 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 4px 16px rgba(124,77,255,0.3));
 }
 .logo-sub {
-  font-family: 'Orbitron', monospace;
-  font-size: clamp(10px, 2vw, 14px);
-  letter-spacing: 0.4em;
-  color: var(--text-muted);
+  font-family: 'Nunito', sans-serif;
+  font-size: clamp(12px, 2vw, 15px);
+  letter-spacing: 0.25em;
+  color: #8060c0;
   margin-top: 8px;
   text-transform: uppercase;
+  font-weight: 700;
 }
 @keyframes pulse-glow {
-  0%, 100% { text-shadow: 0 0 40px rgba(0,229,255,0.5), 0 0 80px rgba(0,229,255,0.2); }
-  50% { text-shadow: 0 0 60px rgba(0,229,255,0.8), 0 0 120px rgba(0,229,255,0.4); }
+  0%, 100% { text-shadow: 0 4px 20px rgba(41,121,255,0.3), 0 0 60px rgba(41,121,255,0.1); }
+  50% { text-shadow: 0 4px 30px rgba(41,121,255,0.5), 0 0 80px rgba(41,121,255,0.25); }
 }
 
 .menu-laser-preview {
@@ -173,7 +179,7 @@ html, body {
   display: flex; align-items: center; gap: 16px;
   padding: 0 0 24px;
   position: sticky; top: 0;
-  background: linear-gradient(var(--bg) 80%, transparent);
+  background: linear-gradient(rgba(220,236,255,0.98) 80%, transparent);
   z-index: 5;
   padding-top: 8px;
 }
@@ -191,11 +197,11 @@ html, body {
 .back-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 .level-groups { width: 100%; max-width: 600px; margin: 0 auto; }
-.level-group { margin-bottom: 24px; }
+.level-group { margin-bottom: 20px; background: rgba(255,255,255,0.55); border-radius: 16px; padding: 16px; border: 1px solid rgba(255,255,255,0.85); box-shadow: 0 2px 12px rgba(41,121,255,0.08); }
 .level-group-header {
   display: flex; align-items: baseline; gap: 10px;
   margin-bottom: 12px; padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(41,121,255,0.15);
 }
 .level-group-name {
   font-family: 'Orbitron', monospace; font-size: 15px; font-weight: 700;
@@ -213,14 +219,15 @@ html, body {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 8px;
 }
 .level-btn {
-  aspect-ratio: 1; border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-muted);
-  font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700;
+  aspect-ratio: 1; border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.75);
+  color: #6080a0;
+  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s var(--ease);
+  transition: all 0.18s var(--ease);
   position: relative;
+  box-shadow: 0 2px 8px rgba(41,121,255,0.1);
 }
 .level-btn.unlocked {
   color: var(--text); border-color: var(--border);
@@ -257,18 +264,19 @@ html, body {
 /* ===== HEADER ===== */
 .game-header {
   width: 100%; height: var(--header-h);
-  background: rgba(8,12,18,0.9);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(16px);
+  border-bottom: 2px solid rgba(41,121,255,0.2);
+  box-shadow: 0 3px 16px rgba(41,121,255,0.15);
   display: flex; align-items: center;
   padding: 0 12px; gap: 8px;
   position: relative; z-index: 20; flex-shrink: 0;
 }
 .header-btn {
   height: 36px; padding: 0 12px;
-  border-radius: 6px; background: transparent;
+  border-radius: 6px; background: rgba(41,121,255,0.06);
   border: 1px solid var(--border); color: var(--text-muted);
-  cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif;
+  cursor: pointer; font-size: 12px; font-family: 'Nunito', sans-serif;
   display: flex; align-items: center; gap: 6px;
   transition: all 0.2s; white-space: nowrap;
 }
@@ -291,8 +299,8 @@ html, body {
 }
 .nav-arrow {
   width: 32px; height: 32px; border-radius: 6px;
-  background: var(--surface); border: 1px solid var(--border);
-  color: var(--text-muted); cursor: pointer; font-size: 14px;
+  background: rgba(41,121,255,0.08); border: 1px solid var(--border);
+  color: var(--text); cursor: pointer; font-size: 14px;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s;
 }
@@ -313,10 +321,10 @@ html, body {
 /* ===== OVERLAY PANELS ===== */
 .overlay-panel {
   position: fixed; z-index: 100;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  background: #fff;
+  border: 2px solid rgba(41,121,255,0.2);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(41,121,255,0.18);
   padding: 20px;
   min-width: 220px;
   display: none;
@@ -374,7 +382,7 @@ html, body {
 #victory-overlay {
   position: fixed; inset: 0; z-index: 50;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(8,12,18,0.8); backdrop-filter: blur(8px);
+  background: rgba(200,225,255,0.75); backdrop-filter: blur(10px);
   opacity: 0; pointer-events: none;
   transition: opacity 0.4s var(--ease);
 }
@@ -382,12 +390,13 @@ html, body {
   opacity: 1; pointer-events: auto;
 }
 .victory-card {
-  background: var(--surface);
-  border: 1px solid var(--accent);
-  border-radius: 20px;
+  background: linear-gradient(160deg, #fff 0%, #f0f8ff 50%, #fff5ff 100%);
+  border: 3px solid transparent;
+  border-radius: 24px;
   padding: 40px 48px;
   text-align: center;
-  box-shadow: 0 0 60px rgba(0,229,255,0.2), 0 20px 60px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 40px rgba(41,121,255,0.2), 0 2px 0 rgba(255,255,255,0.8) inset;
+  outline: 3px solid rgba(41,121,255,0.2);
   animation: victory-pop 0.5s var(--ease);
 }
 @keyframes victory-pop {
@@ -404,8 +413,8 @@ html, body {
 }
 .victory-title {
   font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 900;
-  color: var(--accent); letter-spacing: 0.1em;
-  text-shadow: 0 0 30px rgba(0,229,255,0.5);
+  color: #2979ff; letter-spacing: 0.1em;
+  text-shadow: 0 2px 8px rgba(41,121,255,0.25);
   margin-bottom: 8px;
 }
 .victory-sub { color: var(--text-muted); margin-bottom: 28px; font-size: 14px; }
@@ -428,7 +437,7 @@ html, body {
   padding: 4px 10px; border-radius: 4px; font-size: 11px;
   background: var(--surface2); border: 1px solid var(--border);
   color: var(--text-muted); cursor: pointer; transition: all 0.2s;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Nunito', sans-serif;
 }
 .lang-btn.active, .lang-btn:hover {
   border-color: var(--accent); color: var(--accent);
@@ -567,7 +576,7 @@ html, body {
 
 /* Game area vignette */
 #screen-game {
-  background: radial-gradient(ellipse at 50% 50%, rgba(0,10,30,0.3) 0%, rgba(0,0,0,0.8) 100%);
+  background: transparent;
 }
 
 /* ===== SCROLLBAR ===== */
@@ -596,8 +605,8 @@ canvas { image-rendering: crisp-edges; }
 <!-- ===== MENU SCREEN ===== -->
 <div class="screen" id="screen-menu">
   <div class="logo">
-    <div class="logo-title">LAZR</div>
-    <div class="logo-sub">Laser Puzzle Game</div>
+    <div class="logo-title">Laser Emoji</div>
+    <div class="logo-sub">🔴 Apunta · Refleja · ¡Quema! 🔥</div>
   </div>
   <canvas id="menu-preview" width="320" height="180" style="width:min(320px,80vw);height:min(180px,45vw);border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:0 0 40px rgba(0,229,255,0.05);position:relative;z-index:1;"></canvas>
   <div class="menu-buttons">
@@ -625,22 +634,10 @@ canvas { image-rendering: crisp-edges; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
       <span id="i18n-menu">Menu</span>
     </button>
-    <button class="header-btn" onclick="showLevelSelect()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      <span id="i18n-levels">Levels</span>
-    </button>
-    <div class="header-level">
+    <div class="header-level" style="flex:1;text-align:center;">
       <div class="header-level-name" id="header-level-name">–</div>
       <div class="header-level-sub" id="header-level-sub"></div>
     </div>
-    <div class="header-nav">
-      <button class="nav-arrow" onclick="navLevel(-1)" title="Previous">‹</button>
-      <button class="nav-arrow" onclick="navLevel(1)" title="Next">›</button>
-    </div>
-    <button class="header-btn" onclick="toggleSolutionPanel()" id="hint-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-      <span id="i18n-hint">Hint</span>
-    </button>
   </div>
   <div class="game-area" id="game-area">
     <canvas id="game-main" height="600" width="600"></canvas>
@@ -654,7 +651,7 @@ canvas { image-rendering: crisp-edges; }
 </div>
 
 <!-- ===== SETTINGS MODAL ===== -->
-<div id="settings-modal" style="position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(8,12,18,0.7);backdrop-filter:blur(8px);">
+<div id="settings-modal" style="position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(180,210,255,0.6);backdrop-filter:blur(8px);">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:min(340px,90vw);box-shadow:0 20px 60px rgba(0,0,0,0.5);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
       <h3 style="font-family:Orbitron,monospace;font-size:13px;font-weight:700;letter-spacing:0.15em;color:var(--accent);" id="i18n-settings">SETTINGS</h3>
@@ -699,8 +696,9 @@ canvas { image-rendering: crisp-edges; }
   var s = document.getElementById('stars');
   for (var i = 0; i < 120; i++) {
     var el = document.createElement('div');
-    el.className = 'star';
+    if (i % 5 === 0) { el.textContent = sparkleEmojis[Math.floor(Math.random()*sparkleEmojis.length)]; el.style.background='none'; el.style.borderRadius='0'; el.style.fontSize=(sz+4)+'px'; } else { el.className = 'star'; }
     var sz = Math.random() * 2 + 0.5;
+    var starColors = ['#fbbf24','#f472b6','#a78bfa','#34d399','#60a5fa','#fb7185','#facc15'];
     el.style.cssText = [
       'width:' + sz + 'px',
       'height:' + sz + 'px',
@@ -708,8 +706,9 @@ canvas { image-rendering: crisp-edges; }
       'top:' + Math.random() * 100 + '%',
       '--dur:' + (Math.random() * 4 + 2) + 's',
       '--delay:' + (-Math.random() * 6) + 's',
-      '--min-op:' + (Math.random() * 0.1 + 0.05),
-      '--max-op:' + (Math.random() * 0.5 + 0.3),
+      '--min-op:' + (Math.random() * 0.2 + 0.15),
+      '--max-op:' + (Math.random() * 0.5 + 0.45),
+      '--star-color:' + starColors[Math.floor(Math.random()*starColors.length)],
     ].join(';');
     s.appendChild(el);
   }
@@ -750,7 +749,48 @@ function mouseTarget(e){var targ;if(!e)var e=window.event;if(e.target)targ=e.tar
 function mousePositionDocument(e){var posx=0,posy=0;if(!e){var e=window.event;}if(e.changedTouches){var touches=e.changedTouches;posx=touches[0].pageX;posy=touches[0].pageY;}else if(e.pageX||e.pageY){posx=e.pageX;posy=e.pageY;}else if(e.clientX||e.clientY){posx=e.clientX+document.body.scrollLeft+document.documentElement.scrollLeft;posy=e.clientY+document.body.scrollTop+document.documentElement.scrollTop;}return{x:posx,y:posy};}
 function findPos(obj){var curleft=0,curtop=0;if(obj.offsetParent){do{curleft+=obj.offsetLeft;curtop+=obj.offsetTop;}while(obj=obj.offsetParent);}return{left:curleft,top:curtop};}
 function mousePositionElement(e){var mousePosDoc=mousePositionDocument(e);var target=mouseTarget(e);var targetPos=findPos(target);return{x:mousePosDoc.x-targetPos.left,y:mousePosDoc.y-targetPos.top};}
-window.playSound=function(){};
+// Simple Web Audio sounds
+(function() {
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) { window.playSound = function(){}; return; }
+  var ac = null;
+  function getAC() { if (!ac) ac = new AC(); return ac; }
+
+  function tone(freq, type, duration, vol, attack, decay) {
+    try {
+      var a = getAC();
+      var osc = a.createOscillator();
+      var gain = a.createGain();
+      osc.connect(gain); gain.connect(a.destination);
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, a.currentTime);
+      gain.gain.setValueAtTime(0, a.currentTime);
+      gain.gain.linearRampToValueAtTime(vol||0.18, a.currentTime + (attack||0.01));
+      gain.gain.exponentialRampToValueAtTime(0.001, a.currentTime + (decay||duration||0.3));
+      osc.start(a.currentTime);
+      osc.stop(a.currentTime + (duration||0.3) + 0.05);
+    } catch(e){}
+  }
+
+  function chord(freqs, type, dur, vol) {
+    freqs.forEach(function(f, i) { setTimeout(function(){ tone(f, type, dur, vol); }, i*30); });
+  }
+
+  window.playSound = function(name) {
+    if (localStorage.lazr_audio !== 'true') return;
+    switch(name) {
+      case 'mirror': tone(880, 'triangle', 0.18, 0.15, 0.005, 0.15); break;
+      case 'glass':  tone(1200, 'sine', 0.22, 0.12, 0.005, 0.2); tone(1600, 'sine', 0.15, 0.08, 0.01, 0.12); break;
+      case 'prism':  chord([440,554,659,880], 'sine', 0.3, 0.1); break;
+      case 'blackhole': tone(80, 'sawtooth', 0.4, 0.2, 0.02, 0.35); tone(60, 'square', 0.3, 0.1, 0.01, 0.28); break;
+      case 'tap':    tone(600, 'sine', 0.1, 0.1, 0.005, 0.08); break;
+      case 'init':   chord([330,440,550], 'triangle', 0.4, 0.12); break;
+      case 'victory': chord([523,659,784,1047], 'triangle', 0.6, 0.15); setTimeout(function(){ chord([784,988,1175], 'sine', 0.5, 0.12); }, 200); break;
+      case 'solution': tone(440, 'sine', 0.2, 0.1, 0.01, 0.18); tone(550, 'sine', 0.2, 0.08, 0.06, 0.14); break;
+      case 'target_hit': tone(1047, 'sine', 0.15, 0.18, 0.005, 0.12); tone(1319, 'triangle', 0.1, 0.1, 0.01, 0.08); break;
+    }
+  };
+})();
 </script>
 
 <script>
@@ -818,7 +858,7 @@ var TRANSLATIONS = {
   }
 };
 
-var currentLang = localStorage.lazr_lang || navigator.language.split('-')[0] || 'en';
+var currentLang = localStorage.lazr_lang || (navigator.language || navigator.userLanguage || 'en').split('-')[0];
 if (!TRANSLATIONS[currentLang]) currentLang = 'en';
 
 function t(key) { return (TRANSLATIONS[currentLang] || TRANSLATIONS['en'])[key] || key; }
@@ -878,18 +918,18 @@ var ALPHA = 1;
 var COLORS = {
   laser: '#ff3300',
   grid: '#FF0',
-  text: '#000',
-  stroke: 'rgba(0,230,255,0.25)',
-  empty_stroke: 'rgba(0,180,255,0.12)',
+  text: '#1a3050',
+  stroke: 'rgba(41,121,255,0.5)',
+  empty_stroke: 'rgba(80,160,255,0.3)',
   none: 'transparent',
-  empty: 'rgba(10,20,40,0.7)',
-  mirror: '#d0e8ff',
-  blackhole: '#050818',
-  glass: '#b8f0ff',
-  prism: '#c8b8ff',
-  mirror_stuck: '#a0b8cc',
-  blackhole_stuck: '#0a0520',
-  glass_stuck: '#88c8dd'
+  empty: 'rgba(220,238,255,0.9)',
+  mirror: '#bbddff',
+  blackhole: '#2a0050',
+  glass: '#d8f6ff',
+  prism: '#f0e0ff',
+  mirror_stuck: '#a8c8e8',
+  blackhole_stuck: '#1a0038',
+  glass_stuck: '#aaddf5'
 };
 var LAYOUT = {
   padding: 1, line: 2, empty_line: 1,
@@ -966,7 +1006,8 @@ var LaserGame = function() {
 		_screwRadius,
 		_screwDistance,
 		_targets,
-		_victory;
+		_victory,
+		_fireCtx = null;
 
 	/**
 	 * Layers:
@@ -1002,7 +1043,133 @@ var LaserGame = function() {
 		checkVictory();
 		canvas.on('mousedown', click);
 		canvas.on('touchstart', click);
-		// console.log(_cells);
+		// Start fire animation loop
+		if (!_fireLoopRunning) {
+			_fireLoopRunning = true;
+			(function fireLoop() {
+				_animateFireTargets();
+				_animateSheens();
+				_animateTargets();
+				// Pulsing laser: redraw only laser canvas (not fire/sheen)
+				if (_laserPulseFrame % 3 === 0 && !_movingCell) {
+					_redrawLaserBeams();
+				}
+				requestAnimationFrame(fireLoop);
+			})();
+		}
+	};
+	var _fireLoopRunning = false;
+
+	// Sheen animation for mirrors/glass
+	var _sheenCanvas = null, _sheenCtx = null, _sheenFrame = 0;
+	var _ensureSheenCanvas = function() {
+		if (_sheenCtx) return;
+		var sc = document.createElement('canvas');
+		sc.className = GAME_OPTS.canvasClass + 'sheen';
+		sc.setAttribute('width', _canvasW);
+		sc.setAttribute('height', _canvasH);
+		sc.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;';
+		_canvasParent.appendChild(sc);
+		_sheenCtx = sc.getContext('2d');
+		window._sheenCanvas = sc;
+	};
+	var _animateSheens = function() {
+		if (_mirrorCells.length === 0) return;
+		_ensureSheenCanvas();
+		if (window._sheenCanvas && (window._sheenCanvas.width !== _canvasW || window._sheenCanvas.height !== _canvasH)) {
+			window._sheenCanvas.setAttribute('width', _canvasW);
+			window._sheenCanvas.setAttribute('height', _canvasH);
+		}
+		_sheenFrame++;
+		var ctx = _sheenCtx;
+		ctx.clearRect(0, 0, _canvasW, _canvasH);
+		for (var mi = 0; mi < _mirrorCells.length; mi++) {
+			var cidx = _mirrorCells[mi];
+			var cell = _cells[cidx];
+			if (!cell) continue;
+			var cx2 = cell.x + _cellW/2, cy2 = cell.y + _cellH/2;
+			var isGlass = (cell.type === 'glass' || cell.type === 'glass_stuck');
+			// Each mirror flashes at a different offset
+			var offset = mi * 1.7;
+			var t2 = (_sheenFrame + offset * 40) / 60; // speed
+			// Flash every ~3 seconds per mirror, short burst
+			var cycle = t2 % 3.0;
+			if (cycle > 0.6) continue; // only flash during first 0.6s of 3s cycle
+			var progress = cycle / 0.6; // 0→1 during flash
+			// Ease: ramp up then down
+			var brightness = Math.sin(progress * Math.PI);
+			if (brightness < 0.05) continue;
+
+			ctx.save();
+			// Clip to cell shape
+			drawRoundRect(ctx, cell.x+1, cell.y+1, _cellW-2, _cellH-2, _cellR-1);
+			ctx.clip();
+			// Moving sheen band
+			var sheenPos = progress; // 0→1 across cell
+			var sheenX = cell.x + sheenPos * _cellW * 1.6 - _cellW * 0.3;
+			var grad = ctx.createLinearGradient(sheenX - _cellW*0.3, cell.y, sheenX + _cellW*0.3, cell.y);
+			if (isGlass) {
+				grad.addColorStop(0, 'transparent');
+				grad.addColorStop(0.4, 'rgba(120,240,255,' + (brightness * 0.5) + ')');
+				grad.addColorStop(0.5, 'rgba(255,255,255,' + (brightness * 0.7) + ')');
+				grad.addColorStop(0.6, 'rgba(120,240,255,' + (brightness * 0.5) + ')');
+				grad.addColorStop(1, 'transparent');
+			} else {
+				grad.addColorStop(0, 'transparent');
+				grad.addColorStop(0.4, 'rgba(200,230,255,' + (brightness * 0.45) + ')');
+				grad.addColorStop(0.5, 'rgba(255,255,255,' + (brightness * 0.75) + ')');
+				grad.addColorStop(0.6, 'rgba(200,230,255,' + (brightness * 0.45) + ')');
+				grad.addColorStop(1, 'transparent');
+			}
+			ctx.fillStyle = grad;
+			ctx.fillRect(cell.x, cell.y, _cellW, _cellH);
+			ctx.restore();
+		}
+	};
+
+	// Pulsing laser glow — stored as a multiplier
+	var _laserPulse = 1.0;
+	var _laserPulseFrame = 0;
+	var getLaserPulse = function() {
+		_laserPulseFrame++;
+		// Combine two frequencies for organic flicker
+		var slow = Math.sin(_laserPulseFrame * 0.07);
+		var fast = Math.sin(_laserPulseFrame * 0.23) * 0.4;
+		_laserPulse = 0.72 + 0.2 * slow + 0.08 * fast;
+		return _laserPulse;
+	};
+
+	// Redraw only beams (not bg, not cells, not fire)
+	var _redrawLaserBeams = function() {
+		if (!_ctxs || !_ctxs['laser'] || !_opt || !_opt.lasers) return;
+		_ctxs['laser'].clearRect(0, 0, _canvasW, _canvasH);
+		resetPoints();
+		_lasersCounter = 0;
+		var n = _opt.lasers;
+		for (var i = 0; i < n.length; i++) {
+			_lasersCounter++;
+			var t = calcCoordinate(n[i].cell, n[i].side);
+			drawStarter(t.x, t.y);
+			savePoint(t.x, t.y, n[i].dir, i);
+			checkPoint(t.x, t.y);
+			drawLaser(n[i].cell, n[i].side, n[i].dir, _lasersCounter);
+		}
+		// Redraw fired targets on laser canvas (glow rings, not flames)
+		_fireTargets.forEach(function(ft) {
+			var ctx = _ctxs['laser'];
+			var r = _targetRadius;
+			ctx.save();
+			var grd = ctx.createRadialGradient(ft.x, ft.y, 0, ft.x, ft.y, r*4);
+			grd.addColorStop(0, 'rgba(255,200,0,0.45)');
+			grd.addColorStop(0.5, 'rgba(255,80,0,0.2)');
+			grd.addColorStop(1, 'transparent');
+			ctx.fillStyle = grd;
+			ctx.beginPath(); ctx.arc(ft.x, ft.y, r*4, 0, Math.PI*2); ctx.fill();
+			ctx.shadowColor = '#ff8800'; ctx.shadowBlur = 18;
+			ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 2.5;
+			ctx.beginPath(); ctx.arc(ft.x, ft.y, r*1.6, 0, Math.PI*2); ctx.stroke();
+			ctx.restore();
+		});
 	};
 
 
@@ -1105,6 +1272,18 @@ var LaserGame = function() {
 					t[0].parentNode.removeChild(t[0]);
 				}
 			}
+			// Remove fire canvas too
+			var ft = document.getElementsByClassName(GAME_OPTS.canvasClass + 'fire');
+			if (ft.length > 0) ft[0].parentNode.removeChild(ft[0]);
+			_fireCtx = null; window._fireCanvas = null;
+			// Remove sheen canvas too
+			var st = document.getElementsByClassName(GAME_OPTS.canvasClass + 'sheen');
+			if (st.length > 0) st[0].parentNode.removeChild(st[0]);
+			_sheenCtx = null; window._sheenCanvas = null;
+			var tcanv = document.getElementsByClassName(GAME_OPTS.canvasClass + 'targets');
+			if (tcanv.length > 0) tcanv[0].parentNode.removeChild(tcanv[0]);
+			_targetCtx = null; window._targetCanvas = null;
+// target canvas already handled below
 		}
 
 		for (var i = 0; i < _layers.length; i++) {
@@ -1181,9 +1360,11 @@ var LaserGame = function() {
 	/**
 	 * Assign cells types according to initial config
 	 */
+	var _mirrorCells = []; // for sheen animation
 	var initCells = function() {
 		var n = _opt.cells,
 			len = n.length;
+		_mirrorCells = [];
 		// normal block cells
 		for (var i = 0; i < len; i++) {
 			for (var l = 0; l < n[i].arr.length; l++) {
@@ -1193,6 +1374,12 @@ var LaserGame = function() {
 		// none cells
 		for (var l = 0; l < _opt.none.length; l++) {
 			_cells[ _opt.none[l] ].type = 'none';
+		}
+		// collect mirrors for sheen animation
+		for (var i = 1; i <= _cellsLength; i++) {
+			if (_cells[i].type === 'mirror' || _cells[i].type === 'glass' || _cells[i].type === 'glass_stuck') {
+				_mirrorCells.push(i);
+			}
 		}
 	};
 
@@ -1228,8 +1415,11 @@ var LaserGame = function() {
 	 */
 	var checkVictory = function() {
 		if (_victory.length === 0) {
-			drawVictory();
-			saveVictory(_opt.l1, _opt.l2);
+			// Delay victory screen so the laser settling is visible
+			setTimeout(function() {
+				drawVictory();
+				saveVictory(_opt.l1, _opt.l2);
+			}, 900);
 			return true;
 		}
 		return false;
@@ -1273,6 +1463,8 @@ var LaserGame = function() {
 	 */
 	var initLasers = function() {
 		_ctxs['laser'].clearRect(0, 0, _canvasW, _canvasH);
+		_fireTargets = []; // reset fire targets
+		if (_fireCtx) _fireCtx.clearRect(0, 0, _canvasW, _canvasH);
 		resetPoints();
 		_lasersCounter = 0;
 		var n = _opt.lasers;
@@ -1332,46 +1524,59 @@ var LaserGame = function() {
 		ctx.save();
 
 		if (type === 'mirror' || type === 'mirror_stuck') {
-			// Mirror: sleek metallic silver tile with diagonal reflective streak
 			var stuck = type === 'mirror_stuck';
-			// Base gradient
+			// Blue base
 			var bg = ctx.createLinearGradient(x, y, x+_cellW, y+_cellH);
-			bg.addColorStop(0, stuck ? '#6a7a8a' : '#c8e0f8');
-			bg.addColorStop(0.5, stuck ? '#8a9aaa' : '#eaf4ff');
-			bg.addColorStop(1, stuck ? '#4a5a6a' : '#9abcd8');
-			ctx.shadowColor = 'rgba(120,200,255,0.5)';
-			ctx.shadowBlur = stuck ? 4 : 10;
+			if (stuck) {
+				bg.addColorStop(0, '#3a6a9e'); bg.addColorStop(0.5, '#4a7aae'); bg.addColorStop(1, '#2a5a8e');
+			} else {
+				bg.addColorStop(0, '#2878e8'); bg.addColorStop(0.3, '#50a8ff'); bg.addColorStop(0.6, '#2888ff'); bg.addColorStop(1, '#1868dd');
+			}
+			ctx.shadowColor = stuck ? 'rgba(80,140,230,0.6)' : 'rgba(80,180,255,1)';
+			ctx.shadowBlur = stuck ? 10 : 28;
 			ctx.fillStyle = bg;
-			ctx.strokeStyle = stuck ? 'rgba(80,120,160,0.8)' : 'rgba(0,200,255,0.6)';
-			ctx.lineWidth = stuck ? 1.5 : 1.5;
+			ctx.strokeStyle = stuck ? 'rgba(80,140,220,0.7)' : 'rgba(100,200,255,0.9)';
+			ctx.lineWidth = 2;
 			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
 			ctx.fill(); ctx.stroke();
-			// Diagonal mirror line
+			// 🟦 emoji as base
 			ctx.shadowBlur = 0;
-			ctx.strokeStyle = stuck ? 'rgba(60,80,100,0.5)' : 'rgba(255,255,255,0.9)';
-			ctx.lineWidth = stuck ? 2 : 2.5;
-			var pad = _cellW * 0.18;
-			ctx.beginPath();
-			ctx.moveTo(x + pad, y + _cellH - pad);
-			ctx.lineTo(x + _cellW - pad, y + pad);
-			ctx.stroke();
-			// Shimmer streak
-			if (!stuck) {
-				ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-				ctx.lineWidth = 1;
-				ctx.beginPath();
-				ctx.moveTo(x + pad + _cellW*0.15, y + _cellH - pad);
-				ctx.lineTo(x + _cellW - pad, y + pad + _cellW*0.15);
-				ctx.stroke();
-			}
-			// Mirror emoji label (small)
-			ctx.shadowBlur = 0;
-			ctx.font = Math.floor(_cellW * 0.38) + 'px serif';
+			ctx.font = Math.floor(_cellW * 0.72) + 'px serif';
 			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-			ctx.globalAlpha = stuck ? 0.35 : 0.25;
-			ctx.fillStyle = '#000';
-			ctx.fillText('🪞', cx, cy);
+			ctx.globalAlpha = stuck ? 0.55 : 0.75;
+			ctx.fillText('🟦', cx, cy);
 			ctx.globalAlpha = 1;
+			// Mirror sheen: diagonal bright band to simulate reflection
+			ctx.save();
+			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
+			ctx.clip();
+			var sheen = ctx.createLinearGradient(x, y+_cellH, x+_cellW, y);
+			sheen.addColorStop(0, 'transparent');
+			sheen.addColorStop(0.35, 'transparent');
+			sheen.addColorStop(0.48, 'rgba(255,255,255,0.55)');
+			sheen.addColorStop(0.52, 'rgba(200,235,255,0.7)');
+			sheen.addColorStop(0.65, 'transparent');
+			sheen.addColorStop(1, 'transparent');
+			ctx.fillStyle = sheen;
+			ctx.fillRect(x, y, _cellW, _cellH);
+			// Second thinner streak
+			var sheen2 = ctx.createLinearGradient(x, y+_cellH, x+_cellW, y);
+			sheen2.addColorStop(0, 'transparent');
+			sheen2.addColorStop(0.6, 'transparent');
+			sheen2.addColorStop(0.68, 'rgba(255,255,255,0.3)');
+			sheen2.addColorStop(0.72, 'transparent');
+			sheen2.addColorStop(1, 'transparent');
+			ctx.fillStyle = sheen2;
+			ctx.fillRect(x, y, _cellW, _cellH);
+			ctx.restore();
+			// Border glow inner
+			if (!stuck) {
+				ctx.shadowColor = 'rgba(100,200,255,0.6)'; ctx.shadowBlur = 8;
+				ctx.strokeStyle = 'rgba(180,230,255,0.5)'; ctx.lineWidth = 1;
+				drawRoundRect(ctx, x+3, y+3, _cellW-6, _cellH-6, r-2);
+				ctx.stroke();
+				ctx.shadowBlur = 0;
+			}
 			if (stuck) drawLockIcon(ctx, x, y);
 		}
 
@@ -1379,13 +1584,13 @@ var LaserGame = function() {
 			var stuck = type === 'blackhole_stuck';
 			// Black hole: deep dark with swirling gradient
 			var bg = ctx.createRadialGradient(cx, cy, 1, cx, cy, _cellW*0.55);
-			bg.addColorStop(0, stuck ? '#0a0520' : '#000005');
-			bg.addColorStop(0.5, stuck ? '#150830' : '#050218');
-			bg.addColorStop(1, stuck ? '#1a0a3a' : '#0d0428');
-			ctx.shadowColor = stuck ? 'rgba(80,0,180,0.6)' : 'rgba(120,0,255,0.8)';
+			bg.addColorStop(0, stuck ? '#1a0840' : '#0d0530');
+			bg.addColorStop(0.5, stuck ? '#2a1060' : '#180848');
+			bg.addColorStop(1, stuck ? '#3a1880' : '#250c60');
+			ctx.shadowColor = stuck ? 'rgba(120,0,220,0.7)' : 'rgba(160,60,255,0.9)';
 			ctx.shadowBlur = stuck ? 6 : 16;
 			ctx.fillStyle = bg;
-			ctx.strokeStyle = stuck ? 'rgba(80,0,180,0.6)' : 'rgba(150,0,255,0.7)';
+			ctx.strokeStyle = stuck ? 'rgba(140,60,220,0.8)' : 'rgba(180,80,255,0.9)';
 			ctx.lineWidth = 1.5;
 			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
 			ctx.fill(); ctx.stroke();
@@ -1418,27 +1623,29 @@ var LaserGame = function() {
 			var stuck = type === 'glass_stuck';
 			// Glass: transparent teal crystal look
 			var bg = ctx.createLinearGradient(x, y, x+_cellW, y+_cellH);
-			bg.addColorStop(0, stuck ? 'rgba(60,140,160,0.5)' : 'rgba(80,220,240,0.25)');
-			bg.addColorStop(0.5, stuck ? 'rgba(50,120,140,0.6)' : 'rgba(120,240,255,0.35)');
-			bg.addColorStop(1, stuck ? 'rgba(40,100,120,0.5)' : 'rgba(60,180,220,0.25)');
-			ctx.shadowColor = stuck ? 'rgba(60,180,200,0.4)' : 'rgba(0,230,255,0.7)';
-			ctx.shadowBlur = stuck ? 6 : 18;
+			bg.addColorStop(0, stuck ? 'rgba(80,190,230,0.88)' : 'rgba(160,235,255,0.9)');
+			bg.addColorStop(0.5, stuck ? 'rgba(100,210,245,0.92)' : 'rgba(200,248,255,0.96)');
+			bg.addColorStop(1, stuck ? 'rgba(60,170,215,0.88)' : 'rgba(140,220,255,0.9)');
+			ctx.shadowColor = stuck ? 'rgba(60,180,200,0.6)' : 'rgba(0,220,255,1)';
+			ctx.shadowBlur = stuck ? 10 : 26;
 			ctx.fillStyle = bg;
-			ctx.strokeStyle = stuck ? 'rgba(60,180,200,0.7)' : 'rgba(0,230,255,0.8)';
+			ctx.strokeStyle = stuck ? 'rgba(80,200,230,0.9)' : 'rgba(0,220,255,1)';
 			ctx.lineWidth = 1.5;
 			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
 			ctx.fill(); ctx.stroke();
 			// Crystal facets
 			ctx.shadowBlur = 0;
-			ctx.strokeStyle = stuck ? 'rgba(100,220,240,0.4)' : 'rgba(150,240,255,0.6)';
+			ctx.strokeStyle = stuck ? 'rgba(100,220,240,0.65)' : 'rgba(180,248,255,0.9)';
 			ctx.lineWidth = 1;
 			ctx.beginPath(); ctx.moveTo(x+_cellW*0.2, y+_cellH*0.15); ctx.lineTo(x+_cellW*0.8, y+_cellH*0.15); ctx.stroke();
 			ctx.beginPath(); ctx.moveTo(x+_cellW*0.15, y+_cellH*0.15); ctx.lineTo(x+_cellW*0.5, y+_cellH*0.85); ctx.stroke();
 			ctx.beginPath(); ctx.moveTo(x+_cellW*0.85, y+_cellH*0.15); ctx.lineTo(x+_cellW*0.5, y+_cellH*0.85); ctx.stroke();
-			ctx.font = Math.floor(_cellW * 0.38) + 'px serif';
+			ctx.font = Math.floor(_cellW * 0.45) + 'px serif';
 			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-			ctx.globalAlpha = stuck ? 0.5 : 0.7;
+			ctx.globalAlpha = stuck ? 0.75 : 1.0;
+			ctx.shadowColor = 'rgba(0,220,255,0.6)'; ctx.shadowBlur = 8;
 			ctx.fillText('💎', cx, cy);
+			ctx.shadowBlur = 0;
 			ctx.globalAlpha = 1;
 			if (stuck) drawLockIcon(ctx, x, y);
 		}
@@ -1446,12 +1653,12 @@ var LaserGame = function() {
 		else if (type === 'prism') {
 			// Prism: rainbow crystal with gradient fill
 			var bg = ctx.createLinearGradient(x, y, x+_cellW, y+_cellH);
-			bg.addColorStop(0,   'rgba(255,80,80,0.7)');
-			bg.addColorStop(0.2, 'rgba(255,180,0,0.7)');
-			bg.addColorStop(0.4, 'rgba(80,255,80,0.7)');
-			bg.addColorStop(0.6, 'rgba(0,200,255,0.7)');
-			bg.addColorStop(0.8, 'rgba(120,80,255,0.7)');
-			bg.addColorStop(1,   'rgba(255,80,180,0.7)');
+			bg.addColorStop(0,   'rgba(255,80,80,0.9)');
+			bg.addColorStop(0.2, 'rgba(255,180,0,0.9)');
+			bg.addColorStop(0.4, 'rgba(80,255,80,0.9)');
+			bg.addColorStop(0.6, 'rgba(0,200,255,0.9)');
+			bg.addColorStop(0.8, 'rgba(120,80,255,0.9)');
+			bg.addColorStop(1,   'rgba(255,80,180,0.9)');
 			ctx.shadowColor = 'rgba(200,150,255,0.8)';
 			ctx.shadowBlur = 20;
 			ctx.fillStyle = bg;
@@ -1497,18 +1704,22 @@ var LaserGame = function() {
 			x = c.x + d, y = c.y + d,
 			w = _cellW - d*2, h = _cellH - d*2,
 			r = Math.max(3, _cellR - d/2);
+		// Light cell background
 		var grd = ctx.createLinearGradient(x, y, x+w, y+h);
-		grd.addColorStop(0, 'rgba(14,28,52,0.85)');
-		grd.addColorStop(1, 'rgba(8,18,36,0.9)');
+		grd.addColorStop(0, 'rgba(230,242,255,0.92)');
+		grd.addColorStop(1, 'rgba(210,228,255,0.96)');
 		ctx.fillStyle = grd;
-		ctx.strokeStyle = 'rgba(0,160,220,0.18)';
+		ctx.strokeStyle = 'rgba(41,121,255,0.35)';
 		ctx.lineWidth = 1;
+		ctx.shadowColor = 'rgba(41,121,255,0.12)';
+		ctx.shadowBlur = 4;
 		drawRoundRect(ctx, x, y, w, h, r);
 		ctx.fill(); ctx.stroke();
-		// Corner dots
-		var dotR = Math.max(1, _cellW * 0.04);
-		var dotOff = _cellW * 0.18;
-		ctx.fillStyle = 'rgba(0,180,255,0.15)';
+		ctx.shadowBlur = 0;
+		// Corner accent dots
+		var dotR = Math.max(1.2, _cellW * 0.045);
+		var dotOff = _cellW * 0.2;
+		ctx.fillStyle = 'rgba(41,121,255,0.4)';
 		[[x+dotOff,y+dotOff],[x+w-dotOff,y+dotOff],[x+dotOff,y+h-dotOff],[x+w-dotOff,y+h-dotOff]].forEach(function(p){
 			ctx.beginPath(); ctx.arc(p[0],p[1],dotR,0,Math.PI*2); ctx.fill();
 		});
@@ -1606,23 +1817,71 @@ var LaserGame = function() {
 	 * @param {number} y2 - Ending point y coordinate
 	 */
 	var drawLine = function(ctx, x1, y1, x2, y2) {
-		// Outer glow
+		var p = (typeof getLaserPulse === 'function') ? getLaserPulse() : 1;
+		// Second faster oscillation for shimmer
+		var shimmer = 0.5 + 0.5 * Math.sin((typeof _laserPulseFrame !== 'undefined' ? _laserPulseFrame * 0.35 : 0));
+		// Occasional bright flash (every ~90 frames)
+		var flash = (typeof _laserPulseFrame !== 'undefined' && _laserPulseFrame % 90 < 8)
+			? (_laserPulseFrame % 90) / 8 : 0;
+		var glowBoost = 1 + flash * 1.8;
 		ctx.save();
-		ctx.shadowColor = '#ff3300';
-		ctx.shadowBlur = 14;
-		ctx.strokeStyle = 'rgba(255,100,0,0.35)';
-		ctx.lineWidth = 6;
+		ctx.lineCap = 'round';
+		// Outermost soft halo (very wide, low opacity)
+		ctx.shadowColor = '#ff6600';
+		ctx.shadowBlur = (18 + 12 * p) * glowBoost;
+		ctx.strokeStyle = 'rgba(255,140,0,' + (0.15 + 0.1 * shimmer) * glowBoost + ')';
+		ctx.lineWidth = (10 + 4 * p) * glowBoost;
 		ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-		// Mid glow
-		ctx.shadowBlur = 6;
-		ctx.strokeStyle = 'rgba(255,60,0,0.6)';
-		ctx.lineWidth = 3;
+		// Outer glow
+		ctx.shadowBlur = (10 + 8 * p) * glowBoost;
+		ctx.strokeStyle = 'rgba(255,80,0,' + (0.35 + 0.2 * p) * glowBoost + ')';
+		ctx.lineWidth = (4 + 2 * p) * glowBoost;
 		ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-		// Core beam
-		ctx.shadowBlur = 2;
-		ctx.strokeStyle = '#fff8f0';
-		ctx.lineWidth = 1.2;
+		// Mid beam — color shifts with shimmer
+		ctx.shadowBlur = 4;
+		var r_ = Math.round(255);
+		var g_ = Math.round(60 + 60 * shimmer);
+		ctx.strokeStyle = 'rgba(' + r_ + ',' + g_ + ',0,' + (0.7 + 0.2 * p) + ')';
+		ctx.lineWidth = 2.2;
 		ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+		// Core bright
+		ctx.shadowColor = '#ffffff';
+		ctx.shadowBlur = (3 + 3 * flash) * glowBoost;
+		ctx.strokeStyle = flash > 0.5 ? '#ffffff' : (p > 0.88 ? '#fffaf0' : '#fff0e0');
+		ctx.lineWidth = 1.2 + 0.4 * flash;
+		ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+		ctx.restore();
+	};
+
+	var drawBendFlash = function(ctx, x, y) {
+		ctx.save();
+		// Starburst at reflection point
+		var r = _cellW * 0.22;
+		var grd = ctx.createRadialGradient(x, y, 0, x, y, r);
+		grd.addColorStop(0, 'rgba(255,255,220,0.95)');
+		grd.addColorStop(0.25, 'rgba(255,160,0,0.7)');
+		grd.addColorStop(1, 'transparent');
+		ctx.fillStyle = grd;
+		ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+		// 4 short rays
+		ctx.strokeStyle = 'rgba(255,240,120,0.9)';
+		ctx.lineWidth = 1.5;
+		ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 6;
+		for (var a = 0; a < Math.PI*2; a += Math.PI/2) {
+			ctx.beginPath();
+			ctx.moveTo(x + Math.cos(a)*r*0.5, y + Math.sin(a)*r*0.5);
+			ctx.lineTo(x + Math.cos(a)*r*1.1, y + Math.sin(a)*r*1.1);
+			ctx.stroke();
+		}
+		// Diagonal rays
+		ctx.strokeStyle = 'rgba(255,200,80,0.6)';
+		ctx.lineWidth = 1;
+		for (var a = Math.PI/4; a < Math.PI*2; a += Math.PI/2) {
+			ctx.beginPath();
+			ctx.moveTo(x + Math.cos(a)*r*0.3, y + Math.sin(a)*r*0.3);
+			ctx.lineTo(x + Math.cos(a)*r*0.8, y + Math.sin(a)*r*0.8);
+			ctx.stroke();
+		}
 		ctx.restore();
 	};
 
@@ -1747,10 +2006,95 @@ var LaserGame = function() {
 	/**
 	 * Draw target points background
 	 */
+	var _targetDefs = []; // for animated emoji layer
 	var drawTargetBg = function() {
 		var o = _opt.targets;
+		_targetDefs = [];
 		for (var i = 0; i < o.length; i++) {
-			drawTarget(_ctxs['bg'], o[i].cell, o[i].side, COLORS.stroke);
+			var tcoord = calcCoordinate(o[i].cell, o[i].side);
+			_targetDefs.push({ cell: o[i].cell, side: o[i].side, x: tcoord.x, y: tcoord.y });
+			_drawTargetRings(_ctxs['bg'], tcoord.x, tcoord.y);
+		}
+	};
+
+	var _drawTargetRings = function(ctx, x, y) {
+		var r = _targetRadius;
+		ctx.save();
+		var grd = ctx.createRadialGradient(x, y, 0, x, y, r*2.5);
+		grd.addColorStop(0, 'rgba(255,60,200,0.12)');
+		grd.addColorStop(1, 'transparent');
+		ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(x, y, r*2.5, 0, Math.PI*2); ctx.fill();
+		ctx.strokeStyle = 'rgba(180,0,220,0.4)'; ctx.lineWidth = 1.5;
+		ctx.beginPath(); ctx.arc(x, y, r*1.8, 0, Math.PI*2); ctx.stroke();
+		ctx.strokeStyle = 'rgba(200,80,255,0.5)'; ctx.lineWidth = 1;
+		ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke();
+		ctx.strokeStyle = 'rgba(180,60,220,0.3)'; ctx.lineWidth = 0.8;
+		ctx.setLineDash([2,2]);
+		var cr = r * 0.8;
+		ctx.beginPath(); ctx.moveTo(x-cr,y); ctx.lineTo(x+cr,y); ctx.stroke();
+		ctx.beginPath(); ctx.moveTo(x,y-cr); ctx.lineTo(x,y+cr); ctx.stroke();
+		ctx.setLineDash([]);
+		ctx.restore();
+	};
+
+	// Animated target emoji canvas
+	var _targetCtx = null;
+	var _ensureTargetCanvas = function() {
+		if (_targetCtx) return;
+		var tc = document.createElement('canvas');
+		tc.className = GAME_OPTS.canvasClass + 'targets';
+		tc.setAttribute('width', _canvasW);
+		tc.setAttribute('height', _canvasH);
+		tc.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;';
+		var bgCanvas = _canvasParent.querySelector('canvas');
+		if (bgCanvas && bgCanvas.nextSibling) {
+			_canvasParent.insertBefore(tc, bgCanvas.nextSibling);
+		} else {
+			_canvasParent.appendChild(tc);
+		}
+		_targetCtx = tc.getContext('2d');
+		window._targetCanvas = tc;
+	};
+
+	var _animateTargets = function() {
+		if (!_targetDefs || _targetDefs.length === 0) return;
+		_ensureTargetCanvas();
+		if (window._targetCanvas && (window._targetCanvas.width !== _canvasW || window._targetCanvas.height !== _canvasH)) {
+			window._targetCanvas.setAttribute('width', _canvasW);
+			window._targetCanvas.setAttribute('height', _canvasH);
+		}
+		var ctx = _targetCtx;
+		ctx.clearRect(0, 0, _canvasW, _canvasH);
+		for (var i = 0; i < _targetDefs.length; i++) {
+			var td = _targetDefs[i];
+			var key = td.x + '_' + td.y;
+			if (_victory && _victory.indexOf(key) === -1) continue; // already hit
+			var r = _targetRadius;
+			var seed = (Math.round(td.x) * 31 + Math.round(td.y) * 17) % 100;
+			var animT = (typeof _sheenFrame !== 'undefined' ? _sheenFrame : 0) + seed * 2.5;
+			var animStyle = seed % 3;
+			var floatY = 0, rotAngle = 0, scaleV = 1;
+			if (animStyle === 0) {
+				floatY = Math.sin(animT * 0.04) * r * 0.28;
+				scaleV = 1 + Math.sin(animT * 0.06) * 0.07;
+			} else if (animStyle === 1) {
+				rotAngle = Math.sin(animT * 0.05) * 0.22;
+				scaleV = 1 + Math.abs(Math.sin(animT * 0.05)) * 0.06;
+			} else {
+				rotAngle = animT * 0.015;
+				scaleV = 1 + Math.sin(animT * 0.07) * 0.09;
+			}
+			ctx.save();
+			ctx.translate(td.x, td.y + floatY);
+			ctx.rotate(rotAngle);
+			ctx.font = Math.floor(r * 1.8 * scaleV) + 'px serif';
+			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+			ctx.globalAlpha = 1;
+			ctx.shadowColor = 'rgba(140,0,240,0.5)';
+			ctx.shadowBlur = r * 0.8;
+			ctx.fillText('😈', 0, 0);
+			ctx.shadowBlur = 0;
+			ctx.restore();
 		}
 	};
 
@@ -1760,41 +2104,110 @@ var LaserGame = function() {
 	 * @param {number} x - Target point x coordinate
 	 * @param {number} y - Target point y coordinate
 	 */
+	// Animated fire targets: store hit positions for animation
+	var _fireTargets = [];
+	var _fireAnim = 0;
+
 	var drawTargetHit = function(x, y) {
+		// Add to fire animation list (avoid duplicates)
+		var key = Math.round(x) + '_' + Math.round(y);
+		var exists = _fireTargets.some(function(ft){ return ft.key === key; });
+		if (!exists) _fireTargets.push({ x:x, y:y, key:key, frame:0 });
+
 		var ctx = _ctxs['laser'];
 		var r = _targetRadius;
 		ctx.save();
-		// Outer explosion glow
-		var grd = ctx.createRadialGradient(x, y, 0, x, y, r*3);
-		grd.addColorStop(0, 'rgba(255,180,0,0.7)');
-		grd.addColorStop(0.4, 'rgba(255,60,0,0.4)');
+		// Big glow halo
+		var grd = ctx.createRadialGradient(x, y, 0, x, y, r*4);
+		grd.addColorStop(0, 'rgba(255,200,0,0.5)');
+		grd.addColorStop(0.5, 'rgba(255,80,0,0.25)');
 		grd.addColorStop(1, 'transparent');
 		ctx.fillStyle = grd;
-		ctx.beginPath(); ctx.arc(x, y, r*3, 0, Math.PI*2); ctx.fill();
-		// Ring
-		ctx.shadowColor = '#ffaa00';
-		ctx.shadowBlur = 12;
-		ctx.strokeStyle = '#ffcc00';
-		ctx.lineWidth = 2;
-		ctx.beginPath(); ctx.arc(x, y, r*1.4, 0, Math.PI*2); ctx.stroke();
-		// Core
-		ctx.shadowBlur = 8;
-		var coreG = ctx.createRadialGradient(x, y, 0, x, y, r);
-		coreG.addColorStop(0, '#ffffff');
-		coreG.addColorStop(0.5, '#ffdd00');
-		coreG.addColorStop(1, '#ff4400');
-		ctx.fillStyle = coreG;
-		ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
-		// Sparkle lines
-		ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 6;
-		ctx.strokeStyle = '#ffee88'; ctx.lineWidth = 1.5;
-		for (var ang = 0; ang < Math.PI*2; ang += Math.PI/4) {
-			ctx.beginPath();
-			ctx.moveTo(x + Math.cos(ang)*r*1.6, y + Math.sin(ang)*r*1.6);
-			ctx.lineTo(x + Math.cos(ang)*r*2.4, y + Math.sin(ang)*r*2.4);
-			ctx.stroke();
-		}
+		ctx.beginPath(); ctx.arc(x, y, r*4, 0, Math.PI*2); ctx.fill();
+		// Hot ring
+		ctx.shadowColor = '#ff8800'; ctx.shadowBlur = 18;
+		ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 2.5;
+		ctx.beginPath(); ctx.arc(x, y, r*1.6, 0, Math.PI*2); ctx.stroke();
 		ctx.restore();
+		// Draw burning devil (initial frame)
+		_drawBurningDevil(ctx, x, y, r, 0);
+	};
+
+	var _drawBurningDevil = function(ctx, x, y, r, frame) {
+		ctx.save();
+		var flicker = 1 + Math.sin(frame * 0.45) * 0.1;
+		ctx.translate(x, y);
+		// Devil emoji (slightly shaking)
+		var shake = Math.sin(frame * 0.6) * r * 0.04;
+		ctx.font = Math.floor(r * 1.7) + 'px serif';
+		ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+		ctx.shadowColor = '#ff4400'; ctx.shadowBlur = r * 0.8;
+		ctx.fillText('😈', shake, r * 0.1);
+		// Fire on top of devil
+		ctx.font = Math.floor(r * 1.4 * flicker) + 'px serif';
+		ctx.shadowColor = '#ff8800'; ctx.shadowBlur = r * 1.2;
+		var fireFlip = ((Math.floor(frame / 7) % 3) === 0) ? -1 : 1;
+		ctx.scale(fireFlip, 1);
+		ctx.fillText('🔥', 0, -r * 0.85);
+		ctx.scale(fireFlip, 1); // reset flip
+		// Small side fires
+		ctx.globalAlpha = 0.7;
+		ctx.font = Math.floor(r * 0.9) + 'px serif';
+		ctx.shadowBlur = r * 0.8;
+		ctx.fillText('🔥', -r * 0.55, -r * 0.5);
+		ctx.scale(-1, 1);
+		ctx.fillText('🔥', -r * 0.55, -r * 0.5);
+		ctx.globalAlpha = 1;
+		ctx.restore();
+	};
+	// Keep backward compat alias
+	var _drawFireEmoji = _drawBurningDevil;
+
+	// Fire canvas: a separate layer on top of laser for animated fire
+	var _ensureFireCanvas = function() {
+		if (_fireCtx) return;
+		var fc = document.createElement('canvas');
+		fc.className = GAME_OPTS.canvasClass + 'fire';
+		fc.setAttribute('width', _canvasW);
+		fc.setAttribute('height', _canvasH);
+		fc.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;';
+		_canvasParent.appendChild(fc);
+		_fireCtx = fc.getContext('2d');
+		// Keep size in sync when game reloads
+		window._fireCanvas = fc;
+	};
+
+	// Called by animation loop to redraw fire targets each frame
+	var _animateFireTargets = function() {
+		if (_fireTargets.length === 0) {
+			if (_fireCtx) _fireCtx.clearRect(0, 0, _canvasW, _canvasH);
+			return;
+		}
+		_ensureFireCanvas();
+		// Resize if needed
+		if (window._fireCanvas && (window._fireCanvas.width !== _canvasW || window._fireCanvas.height !== _canvasH)) {
+			window._fireCanvas.setAttribute('width', _canvasW);
+			window._fireCanvas.setAttribute('height', _canvasH);
+		}
+		var ctx = _fireCtx;
+		ctx.clearRect(0, 0, _canvasW, _canvasH);
+		_fireTargets.forEach(function(ft) {
+			ft.frame++;
+			var r = _targetRadius;
+			// Glow halo
+			ctx.save();
+			var grd = ctx.createRadialGradient(ft.x, ft.y, 0, ft.x, ft.y, r*4);
+			grd.addColorStop(0, 'rgba(255,200,0,0.45)');
+			grd.addColorStop(0.5, 'rgba(255,80,0,0.2)');
+			grd.addColorStop(1, 'transparent');
+			ctx.fillStyle = grd;
+			ctx.beginPath(); ctx.arc(ft.x, ft.y, r*4, 0, Math.PI*2); ctx.fill();
+			ctx.shadowColor = '#ff8800'; ctx.shadowBlur = 16;
+			ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 2;
+			ctx.beginPath(); ctx.arc(ft.x, ft.y, r*1.6, 0, Math.PI*2); ctx.stroke();
+			ctx.restore();
+			_drawBurningDevil(ctx, ft.x, ft.y, r, ft.frame);
+		});
 	};
 
 
@@ -1809,30 +2222,61 @@ var LaserGame = function() {
 		var target = calcCoordinate(cell, side);
 		var x = target.x, y = target.y, r = _targetRadius;
 		ctx.save();
-		// Pulsing ring (drawn once statically)
-		var grd = ctx.createRadialGradient(x, y, 0, x, y, r*2);
-		grd.addColorStop(0, 'rgba(255,200,0,0.15)');
+		// Glow halo
+		var grd = ctx.createRadialGradient(x, y, 0, x, y, r*2.5);
+		grd.addColorStop(0, 'rgba(255,160,0,0.18)');
 		grd.addColorStop(1, 'transparent');
 		ctx.fillStyle = grd;
-		ctx.beginPath(); ctx.arc(x, y, r*2, 0, Math.PI*2); ctx.fill();
-		// Outer ring
-		ctx.strokeStyle = 'rgba(255,180,0,0.6)';
-		ctx.lineWidth = 1.5;
-		ctx.beginPath(); ctx.arc(x, y, r*1.5, 0, Math.PI*2); ctx.stroke();
-		// Inner target
-		ctx.strokeStyle = 'rgba(255,200,50,0.8)';
-		ctx.lineWidth = 1;
+		ctx.beginPath(); ctx.arc(x, y, r*2.5, 0, Math.PI*2); ctx.fill();
+		// Rings
+		ctx.strokeStyle = 'rgba(255,160,0,0.55)'; ctx.lineWidth = 1.5;
+		ctx.beginPath(); ctx.arc(x, y, r*1.8, 0, Math.PI*2); ctx.stroke();
+		ctx.strokeStyle = 'rgba(255,200,50,0.7)'; ctx.lineWidth = 1;
 		ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke();
-		// Crosshair
-		ctx.strokeStyle = 'rgba(255,200,0,0.5)';
-		ctx.lineWidth = 0.8;
-		var cr = r * 0.7;
-		ctx.beginPath(); ctx.moveTo(x-cr, y); ctx.lineTo(x+cr, y); ctx.stroke();
-		ctx.beginPath(); ctx.moveTo(x, y-cr); ctx.lineTo(x, y+cr); ctx.stroke();
-		// Center dot
-		ctx.fillStyle = 'rgba(255,200,0,0.4)';
-		ctx.beginPath(); ctx.arc(x, y, r*0.3, 0, Math.PI*2); ctx.fill();
+		// Crosshair dashes
+		ctx.strokeStyle = 'rgba(255,200,0,0.45)'; ctx.lineWidth = 0.8;
+		ctx.setLineDash([2,2]);
+		var cr = r * 0.8;
+		ctx.beginPath(); ctx.moveTo(x-cr,y); ctx.lineTo(x+cr,y); ctx.stroke();
+		ctx.beginPath(); ctx.moveTo(x,y-cr); ctx.lineTo(x,y+cr); ctx.stroke();
+		ctx.setLineDash([]);
+		// Unlit center: small dim circle
+		ctx.fillStyle = 'rgba(255,140,0,0.25)';
+		ctx.beginPath(); ctx.arc(x, y, r*0.55, 0, Math.PI*2); ctx.fill();
+		// Evil emoji target - OPAQUE + animated float/wobble
+		// Use a per-target unique seed based on position for async animation
+		var seed = (Math.round(x) * 31 + Math.round(y) * 17) % 100;
+		var animT = (typeof _sheenFrame !== 'undefined' ? _sheenFrame : 0) + seed * 2.5;
+		// Each devil gets its own random animation style (float, spin, wobble)
+		var animStyle = seed % 3; // 0=float, 1=wobble, 2=spin
+		var floatY = 0, rotAngle = 0, scaleV = 1;
+		if (animStyle === 0) {
+			// Float up and down
+			floatY = Math.sin(animT * 0.04) * r * 0.25;
+			scaleV = 1 + Math.sin(animT * 0.06) * 0.06;
+		} else if (animStyle === 1) {
+			// Wobble side to side
+			var wobble = Math.sin(animT * 0.05) * 0.18;
+			rotAngle = wobble;
+			scaleV = 1 + Math.abs(Math.sin(animT * 0.05)) * 0.05;
+		} else {
+			// Slow spin + breathe
+			rotAngle = animT * 0.012;
+			scaleV = 1 + Math.sin(animT * 0.07) * 0.08;
+		}
+		ctx.font = Math.floor(r * 1.7 * scaleV) + 'px serif';
+		ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+		ctx.globalAlpha = 1;
+		ctx.save();
+		ctx.translate(x, y + floatY);
+		ctx.rotate(rotAngle);
+		// Shadow glow so it pops on any background
+		ctx.shadowColor = 'rgba(120,0,200,0.4)';
+		ctx.shadowBlur = r * 0.8;
+		ctx.fillText('😈', 0, 0);
+		ctx.shadowBlur = 0;
 		ctx.restore();
+		ctx.restore(); // outer save
 	};
 
 
@@ -2287,6 +2731,7 @@ var LaserGame = function() {
 	var checkPoint = function(x, y) {
 		if (isTargetPoint(x, y)) {
 			drawTargetHit(x, y);
+			playSound('target_hit');
 
 			var index = _victory.indexOf(x + '_' + y);
 			if (index != -1) {
@@ -2408,6 +2853,11 @@ var LaserGame = function() {
 			// draw laser
 			_ctxs['laser'].strokeStyle = COLORS.laser;
 			drawLine(_ctxs['laser'], startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+			// Draw bend flash at the start point if it's a reflection point
+			if (_cells[cell] && (_cells[cell].type === 'mirror' || _cells[cell].type === 'mirror_stuck' ||
+			    _cells[cell].type === 'glass' || _cells[cell].type === 'glass_stuck')) {
+				drawBendFlash(_ctxs['laser'], startPoint.x, startPoint.y);
+			};
 		}
 
 		// calc next cell, side, dir
@@ -2472,12 +2922,16 @@ function isLevelUnlocked(gl1idx, gl2idx) {
 
 // First group is always fully unlocked
 function isLevelAccessible(gl1idx, gl2idx) {
-  if (gl1idx === 0) return true; // entire first group unlocked
-  // A level is accessible if the previous one has been completed
+  // First level of first group always accessible
+  if (gl1idx === 0 && gl2idx === 0) return true;
+  // In first group: each level needs previous one completed
+  if (gl1idx === 0) {
+    return isCompleted(1, gl2idx); // gl2idx is 0-based, so completed(1, gl2idx) means gl2idx-1+1
+  }
+  // For other groups: need previous level completed
   var prevL1 = gl1idx, prevL2 = gl2idx - 1;
   if (prevL2 < 0) {
     prevL1 = gl1idx - 1;
-    if (prevL1 < 0) return true;
     prevL2 = levels[prevL1].length - 1;
   }
   return isCompleted(prevL1+1, prevL2+1);
@@ -2586,6 +3040,8 @@ function buildLevelSelect() {
 
 // ===== GAME LOGIC =====
 function loadLevel() {
+  // Clear leftover particles from previous level
+  particles = [];
   var opt = levels[l1][l2];
   if (!game) { game = new LaserGame(); }
   game.init(opt);
@@ -2718,7 +3174,8 @@ $toggleResize.addEventListener('change', function() {
 // Audio
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 if (window.AudioContext) {
-  if (localStorage.lazr_audio === 'true') $toggleAudio.checked = true;
+  if (!localStorage.lazr_audio) localStorage.lazr_audio = 'true';
+if (localStorage.lazr_audio === 'true') $toggleAudio.checked = true;
   $toggleAudio.addEventListener('change', function() {
     localStorage.lazr_audio = this.checked;
   });
@@ -2981,21 +3438,27 @@ function createTransitionOverlay() {
 function doLevelTransition(callback) {
   if (!transitionOverlay) createTransitionOverlay();
   
-  // Flash + slide out
+  // Cover immediately, then animate label
   var panel = document.createElement('div');
   panel.style.cssText = [
     'position:absolute;inset:0;',
-    'background:linear-gradient(135deg,rgba(0,20,40,0.95),rgba(0,5,20,0.98));',
-    'display:flex;flex-direction:column;align-items:center;justify-content:center;',
-    'transform:translateY(100%);',
-    'transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);',
+    'background:linear-gradient(145deg,#d4eeff 0%,#ede4ff 40%,#ffd4ec 70%,#fffbd4 100%);',
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;',
+    'opacity:0;',
+    'transition:opacity 0.12s ease;',
   ].join('');
   
+  var levelEmojis = ['🚀','⭐','🌟','💫','🎯','🔥','⚡','🎮','🏆','🎪'];
+  var levelEmoji = levelEmojis[(l2) % levelEmojis.length];
+  var emojiEl = document.createElement('div');
+  emojiEl.style.cssText = 'font-size:48px;opacity:0;transition:opacity 0.15s;animation:icon-bounce 1s ease-in-out infinite;';
+  emojiEl.textContent = levelEmoji;
+  panel.appendChild(emojiEl);
   var label = document.createElement('div');
-  label.style.cssText = 'font-family:Orbitron,monospace;font-size:24px;font-weight:900;color:#00e5ff;letter-spacing:0.2em;text-shadow:0 0 30px rgba(0,229,255,0.8);opacity:0;transition:opacity 0.2s 0.15s;';
-  label.textContent = 'LEVEL ' + (l2 + 1);
+  label.style.cssText = 'font-family:Nunito,sans-serif;font-size:22px;font-weight:900;color:#2979ff;letter-spacing:0.05em;opacity:0;transition:opacity 0.15s;';
+  label.textContent = 'Level ' + (l2 + 1);
   var sublabel = document.createElement('div');
-  sublabel.style.cssText = 'font-family:Orbitron,monospace;font-size:12px;color:rgba(0,229,255,0.6);letter-spacing:0.3em;margin-top:8px;opacity:0;transition:opacity 0.2s 0.2s;';
+  sublabel.style.cssText = 'font-family:Orbitron,monospace;font-size:12px;color:#7c4dff;letter-spacing:0.3em;margin-top:8px;opacity:0;transition:opacity 0.15s;';
   sublabel.textContent = levelsName[l1] ? levelsName[l1].a.toUpperCase() : '';
   
   // Scan line animation
@@ -3015,30 +3478,27 @@ function doLevelTransition(callback) {
     document.head.appendChild(sty);
   }
   
-  // Slide in
+  // Fade in instantly to cover old level
   requestAnimationFrame(function() {
+    panel.style.opacity = '1';
     setTimeout(function() {
-      panel.style.transform = 'translateY(0)';
+      if (typeof emojiEl !== 'undefined') emojiEl.style.opacity = '1';
+      label.style.opacity = '1';
+      sublabel.style.opacity = '1';
+      // Load new level while covered
+      callback();
+      label.textContent = 'LEVEL ' + (l2 + 1);
+      sublabel.textContent = levelsName[l1] ? levelsName[l1].a.toUpperCase() : '';
+      // Fade out after brief display
       setTimeout(function() {
-        label.style.opacity = '1';
-        sublabel.style.opacity = '1';
-      }, 50);
-    }, 10);
+        panel.style.transition = 'opacity 0.35s ease';
+        panel.style.opacity = '0';
+        setTimeout(function() {
+          if (transitionOverlay.contains(panel)) transitionOverlay.removeChild(panel);
+        }, 380);
+      }, 480);
+    }, 60);
   });
-  
-  // Hold, then slide out
-  setTimeout(function() {
-    callback();
-    label.textContent = 'LEVEL ' + (l2 + 1);
-    sublabel.textContent = levelsName[l1] ? levelsName[l1].a.toUpperCase() : '';
-    setTimeout(function() {
-      panel.style.transition = 'transform 0.3s cubic-bezier(0.7,0,0.84,0)';
-      panel.style.transform = 'translateY(-100%)';
-      setTimeout(function() {
-        transitionOverlay.removeChild(panel);
-      }, 350);
-    }, 300);
-  }, 500);
 }
 
 // ===== HOOK VICTORY BURST =====
