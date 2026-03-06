@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triple Triad — Chronicle of Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09091a;--panel:#12182a;--card:#0e1420;--border:#1e2d4a;
+  --gold:#c9a84c;--gold-l:#f0d080;--gold-d:#7a5e20;
+  --silver:#a0b0c8;--red:#c23a3a;--red-g:#ff5555;--blue:#2a6fbb;
+  --blue-g:#5599ff;--green:#2a9a5a;--green-g:#44ee88;--purple:#7a44cc;
+  --text:#d4c8b0;--dim:#5a6a84;--bright:#f0e8d0;
+  --sh:0 16px 48px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:'Crimson Pro',Georgia,serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ─── CANVAS BACKGROUND ─── */
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ─── SCREENS ─── */
+.screen{position:relative;z-index:10;display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ─── PARTICLES LAYER ─── */
+#fx-layer{position:fixed;inset:0;z-index:800;pointer-events:none;overflow:hidden}
+
+/* ─── MENU ─── */
+#screen-menu{align-items:center;justify-content:center;padding:40px 20px;gap:0}
+.crest{font-size:4.5rem;filter:drop-shadow(0 0 28px rgba(201,168,76,.8));animation:bob 4s ease-in-out infinite;margin-bottom:6px}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-14px) rotate(2deg)}}
+.m-title{font-family:'Cinzel';font-size:clamp(2rem,6vw,3.8rem);font-weight:900;color:var(--gold);
+  text-shadow:0 0 60px rgba(201,168,76,.6),0 0 20px rgba(201,168,76,.3),0 3px 0 rgba(0,0,0,.9);
+  letter-spacing:5px;text-align:center;line-height:1;animation:titlePulse 3s ease-in-out infinite}
+@keyframes titlePulse{0%,100%{text-shadow:0 0 60px rgba(201,168,76,.6),0 3px 0 rgba(0,0,0,.9)} 50%{text-shadow:0 0 80px rgba(201,168,76,.9),0 0 40px rgba(201,168,76,.4),0 3px 0 rgba(0,0,0,.9)}}
+.m-sub{font-size:.95rem;color:var(--dim);letter-spacing:7px;text-transform:uppercase;margin-bottom:44px;text-align:center}
+.m-div{width:220px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-d),transparent);margin:12px auto}
+.m-btn{display:flex;align-items:center;gap:16px;width:330px;max-width:90vw;
+  background:linear-gradient(135deg,rgba(26,34,52,.9),rgba(14,20,32,.95));
+  border:1px solid var(--border);border-radius:3px;padding:17px 26px;cursor:pointer;
+  color:var(--text);font-family:'Cinzel';font-size:.95rem;letter-spacing:2px;
+  transition:all .22s;margin:5px auto;position:relative;overflow:hidden;text-align:left}
+.m-btn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold-d);transition:all .22s}
+.m-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(201,168,76,.04),transparent);opacity:0;transition:opacity .22s}
+.m-btn:hover{border-color:var(--gold);color:var(--gold-l);transform:translateX(5px);box-shadow:-5px 0 24px rgba(201,168,76,.18)}
+.m-btn:hover::before{background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.m-btn:hover::after{opacity:1}
+.m-btn .bi{font-size:1.5rem;flex-shrink:0}.m-btn .bt{flex:1}
+.m-btn .bs{font-family:'Crimson Pro';font-size:.78rem;color:var(--dim);letter-spacing:1px;display:block;margin-top:2px}
+.m-recs{margin-top:30px;display:flex;gap:24px;justify-content:center;flex-wrap:wrap}
+.rec{text-align:center;color:var(--dim);font-size:.82rem;letter-spacing:1px}
+.rec strong{display:block;font-family:'Cinzel';font-size:1.5rem;color:var(--gold);text-shadow:0 0 12px rgba(201,168,76,.4)}
+
+/* ─── SHARED HEADER ─── */
+.s-header{display:flex;align-items:center;gap:12px;width:100%;max-width:800px;margin-bottom:18px;padding:0 4px}
+.back-btn{background:none;border:1px solid var(--border);border-radius:3px;color:var(--dim);
+  padding:7px 14px;cursor:pointer;font-family:'Cinzel';font-size:.75rem;letter-spacing:1px;transition:all .2s}
+.back-btn:hover{border-color:var(--gold);color:var(--gold)}
+.s-title{font-family:'Cinzel';font-size:1.25rem;color:var(--gold);letter-spacing:3px;flex:1}
+.icon-btn{background:none;border:1px solid var(--border);border-radius:3px;color:var(--dim);
+  padding:6px 10px;cursor:pointer;font-family:'Cinzel';font-size:.75rem;letter-spacing:1px;transition:all .2s}
+.icon-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ─── CAMPAIGN ─── */
+#screen-campaign{padding:18px 14px;align-items:center}
+.c-prog{width:100%;max-width:800px;background:var(--card);border:1px solid var(--border);
+  border-radius:3px;padding:9px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.prog-lbl{font-family:'Cinzel';font-size:.65rem;color:var(--dim);letter-spacing:2px;flex-shrink:0}
+.prog-bar{flex:1;height:4px;background:rgba(0,0,0,.4);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));border-radius:2px;transition:width .7s ease}
+.c-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:9px;width:100%;max-width:800px;padding-bottom:20px}
+.l-node{background:var(--panel);border:1px solid var(--border);border-radius:5px;
+  padding:12px 8px;text-align:center;cursor:pointer;transition:all .22s;position:relative;overflow:hidden}
+.l-node::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,.0),rgba(201,168,76,.05));opacity:0;transition:opacity .2s}
+.l-node.locked{opacity:.3;cursor:not-allowed;filter:grayscale(.8)}
+.l-node.unlocked:hover{border-color:rgba(201,168,76,.6);transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 16px rgba(201,168,76,.12)}
+.l-node.unlocked:hover::before{opacity:1}
+.l-node.beaten{border-color:rgba(42,154,90,.5)}
+.l-node.beaten.perfect{border-color:rgba(201,168,76,.6);box-shadow:0 0 10px rgba(201,168,76,.1)}
+.l-ico{font-size:1.5rem;display:block;margin-bottom:2px;line-height:1.2}
+.l-name{font-size:.65rem;color:var(--dim);display:block;margin-bottom:6px;line-height:1.3;letter-spacing:.3px}
+.l-stars{font-size:.85rem;letter-spacing:2px;min-height:16px}
+.l-badge{position:absolute;top:5px;right:5px;font-size:.5rem;font-family:'Cinzel';padding:2px 4px;border-radius:2px;letter-spacing:.5px}
+.b-boss{background:var(--purple);color:#fff}
+.b-elite{background:#9a4400;color:#fff}
+.b-legend{background:linear-gradient(135deg,#8b0000,#4a0080);color:#ffd700}
+.l-num{font-family:'Cinzel';font-size:.6rem;color:var(--dim);letter-spacing:1px;margin-top:3px;display:block}
+
+/* ─── DIFFICULTY ─── */
+#screen-difficulty{align-items:center;justify-content:center;padding:40px 20px;gap:9px}
+.d-title{font-family:'Cinzel';font-size:1.5rem;color:var(--gold);letter-spacing:3px;margin-bottom:6px;text-align:center}
+.d-sub{color:var(--dim);font-size:.88rem;letter-spacing:2px;margin-bottom:26px}
+.d-card{width:330px;max-width:90vw;background:var(--panel);border:1px solid var(--border);
+  border-radius:5px;padding:16px 20px;cursor:pointer;transition:all .22s;display:flex;align-items:center;gap:14px}
+.d-card:hover{transform:translateX(7px)}
+.d-card.easy:hover{border-color:var(--green-g);box-shadow:-4px 0 18px rgba(68,238,136,.12)}
+.d-card.medium:hover{border-color:var(--gold);box-shadow:-4px 0 18px rgba(201,168,76,.14)}
+.d-card.hard:hover{border-color:var(--red-g);box-shadow:-4px 0 18px rgba(255,85,85,.14)}
+.d-icon{font-size:2rem;flex-shrink:0}
+.d-name{font-family:'Cinzel';font-size:.9rem;letter-spacing:2px;margin-bottom:3px}
+.d-desc{font-size:.78rem;color:var(--dim);line-height:1.4}
+.d-card.easy .d-name{color:var(--green-g)}.d-card.medium .d-name{color:var(--gold)}.d-card.hard .d-name{color:var(--red-g)}
+
+/* ─── GAME ─── */
+#screen-game{flex-direction:column;align-items:center;padding:12px;gap:9px;min-height:100vh}
+.g-top{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:640px;gap:10px}
+.g-info{flex:1}
+.g-mode{font-family:'Cinzel';font-size:.6rem;color:var(--dim);letter-spacing:3px;text-transform:uppercase}
+.g-name{font-family:'Cinzel';font-size:.9rem;color:var(--gold);letter-spacing:2px}
+.t-rune{background:var(--panel);border:1px solid var(--border);border-radius:3px;
+  padding:7px 14px;font-family:'Cinzel';font-size:.72rem;letter-spacing:2px;color:var(--dim);
+  transition:all .35s;text-align:center;min-width:116px}
+.t-rune.pt{border-color:var(--blue-g);color:var(--blue-g);box-shadow:0 0 10px rgba(85,153,255,.18)}
+.t-rune.et{border-color:var(--red-g);color:var(--red-g);box-shadow:0 0 10px rgba(255,85,85,.18)}
+
+.score-row{display:flex;align-items:stretch;gap:8px;width:100%;max-width:640px}
+.cb{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:5px;
+  padding:7px 12px;display:flex;align-items:center;gap:9px;transition:all .4s}
+.cb.ps{border-left:3px solid var(--blue-g)}
+.cb.es{border-right:3px solid var(--red-g);flex-direction:row-reverse;text-align:right}
+.cb.winning{box-shadow:0 0 18px rgba(201,168,76,.15)}
+.c-av{font-size:1.6rem;line-height:1}
+.c-name{font-family:'Cinzel';font-size:.65rem;color:var(--dim);letter-spacing:2px}
+.c-score{font-family:'Cinzel';font-size:1.65rem;font-weight:700;line-height:1;transition:all .3s}
+.ps .c-score{color:var(--blue-g)}.es .c-score{color:var(--red-g)}
+.vs-b{background:var(--card);border:1px solid var(--border);border-radius:50%;
+  width:30px;height:30px;display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel';font-size:.6rem;color:var(--dim);flex-shrink:0;align-self:center}
+
+.think{display:flex;gap:5px;justify-content:center;padding:3px;min-height:20px}
+.td{width:5px;height:5px;border-radius:50%;background:var(--red-g);opacity:.6;animation:tdot .8s ease infinite}
+.td:nth-child(2){animation-delay:.15s}.td:nth-child(3){animation-delay:.3s}
+@keyframes tdot{0%,80%,100%{transform:scale(.5);opacity:.3} 40%{transform:scale(1.2);opacity:1}}
+
+.arena{display:flex;align-items:flex-start;gap:11px;width:100%;max-width:640px}
+.hand-col{display:flex;flex-direction:column;gap:6px;width:80px;flex-shrink:0}
+.h-lbl{font-family:'Cinzel';font-size:.56rem;color:var(--dim);letter-spacing:2px;text-align:center;margin-bottom:1px}
+
+/* ─── BOARD ─── */
+#board{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+  gap:6px;background:var(--card);border:1px solid var(--border);border-radius:7px;
+  padding:8px;box-shadow:var(--sh),inset 0 0 50px rgba(0,0,0,.4);aspect-ratio:1;max-width:345px;
+  transition:transform .1s}
+#board.shake{animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:translate(0,0)} 15%{transform:translate(-5px,3px)} 30%{transform:translate(5px,-3px)} 45%{transform:translate(-4px,4px)} 60%{transform:translate(4px,-2px)} 75%{transform:translate(-2px,2px)}}
+.cell{background:linear-gradient(135deg,rgba(20,28,48,.85),rgba(12,17,32,.9));
+  border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;
+  cursor:default;transition:all .18s;position:relative;overflow:hidden;min-height:82px}
+.cell.cdrop{border-color:rgba(201,168,76,.45);background:radial-gradient(circle,rgba(201,168,76,.06),transparent 70%)}
+.cell.cdrop:hover,.cell.dover{border-color:var(--gold);box-shadow:inset 0 0 16px rgba(201,168,76,.1),0 0 12px rgba(201,168,76,.12)}
+.cell.flash-capture{animation:flashCap .4s ease}
+@keyframes flashCap{0%{box-shadow:inset 0 0 0 rgba(255,100,50,0)} 40%{box-shadow:inset 0 0 30px rgba(255,100,50,.6)} 100%{box-shadow:inset 0 0 0 rgba(255,100,50,0)}}
+.cell.flash-place{animation:flashPlace .3s ease}
+@keyframes flashPlace{0%{box-shadow:inset 0 0 0 rgba(85,153,255,0)} 50%{box-shadow:inset 0 0 24px rgba(85,153,255,.5)} 100%{box-shadow:inset 0 0 0 rgba(85,153,255,0)}}
+
+/* ─── CARDS ─── */
+.card{border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;border:1px solid rgba(255,255,255,.06);user-select:none;font-family:'Cinzel';
+  transition:transform .14s,box-shadow .14s,filter .14s}
+.hc{width:74px;height:74px;cursor:grab}.hc:active{cursor:grabbing}
+.hc.drag-ghost-src{opacity:.35;transform:scale(.92)}
+.hc.sel{transform:translateX(9px) scale(1.04)}
+.hc:not(.sel):not(.drag-ghost-src):hover{transform:translateX(4px) scale(1.02)}
+.bc{width:100%;height:100%}
+
+/* owner colours */
+.op{background:linear-gradient(145deg,#0a2240,#163558,#0a2240);border-color:rgba(85,153,255,.3);box-shadow:0 0 8px rgba(42,111,187,.2)}
+.oe{background:linear-gradient(145deg,#350a0a,#521414,#350a0a);border-color:rgba(255,85,85,.3);box-shadow:0 0 8px rgba(194,58,58,.2)}
+.on{background:linear-gradient(145deg,#16182a,#1e2238,#16182a);border-color:rgba(150,160,190,.15)}
+.op.just-placed{animation:placeP .4s cubic-bezier(.175,.885,.32,1.275)}
+.oe.just-placed{animation:placeE .4s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes placeP{from{transform:scale(.3) translateY(-20px);opacity:0;filter:brightness(2)} to{transform:scale(1);opacity:1;filter:brightness(1)}}
+@keyframes placeE{from{transform:scale(.3) translateY(-20px);opacity:0;filter:brightness(2)} to{transform:scale(1);opacity:1;filter:brightness(1)}}
+.card.capturing{animation:capFlip .42s ease}
+@keyframes capFlip{0%{transform:rotateY(0) scale(1)} 40%{transform:rotateY(90deg) scale(1.12);filter:brightness(2)} 100%{transform:rotateY(0) scale(1);filter:brightness(1)}}
+
+/* rarities */
+.rare{border-color:rgba(201,168,76,.45)!important;box-shadow:0 0 12px rgba(201,168,76,.15)!important}
+.epic{border-color:rgba(122,68,204,.55)!important;box-shadow:0 0 14px rgba(122,68,204,.2)!important}
+.legend{border-color:rgba(255,80,30,.65)!important;box-shadow:0 0 18px rgba(255,80,30,.25)!important;animation:legendGlow 2s ease-in-out infinite}
+@keyframes legendGlow{0%,100%{box-shadow:0 0 14px rgba(255,80,30,.2)} 50%{box-shadow:0 0 28px rgba(255,80,30,.45)}}
+
+.cem{font-size:1.65rem;line-height:1;filter:drop-shadow(0 2px 5px rgba(0,0,0,.7))}.hc .cem{font-size:1.35rem}
+.cvals{position:absolute;inset:0;pointer-events:none}
+.cv{position:absolute;font-size:.68rem;font-weight:700;line-height:1}
+.op .cv{color:rgba(170,205,255,.9);text-shadow:0 0 5px rgba(85,153,255,.9)}
+.oe .cv{color:rgba(255,175,175,.9);text-shadow:0 0 5px rgba(255,85,85,.9)}
+.on .cv{color:rgba(195,185,165,.8)}
+.cv.t{top:3px;left:50%;transform:translateX(-50%)}
+.cv.b{bottom:3px;left:50%;transform:translateX(-50%)}
+.cv.l{left:4px;top:50%;transform:translateY(-50%)}
+.cv.r{right:4px;top:50%;transform:translateY(-50%)}
+.hc .cv{font-size:.57rem}
+
+/* hidden */
+.hid{background:linear-gradient(145deg,#160808,#200f0f);border-color:rgba(194,58,58,.18)!important;cursor:default!important}
+.hid .cem{filter:blur(4px) brightness(.3)}
+.hid .cv{opacity:0}
+.hid::before{content:'⚔';position:absolute;font-size:1.2rem;top:50%;left:50%;transform:translate(-50%,-50%);opacity:.25;color:var(--red-g)}
+
+/* ─── RESULT OVERLAY ─── */
+#res-ov{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;
+  background:rgba(4,6,14,.85);backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;transition:opacity .55s}
+#res-ov.show{opacity:1;pointer-events:all}
+.r-panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  padding:36px 44px;text-align:center;max-width:420px;width:90%;
+  box-shadow:var(--sh);position:relative;
+  transform:scale(.82) translateY(22px);transition:transform .55s cubic-bezier(.175,.885,.32,1.275)}
+#res-ov.show .r-panel{transform:scale(1) translateY(0)}
+.r-panel::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:55%;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.r-icon{font-size:3.5rem;display:block;margin-bottom:9px;animation:iconPop .5s ease .28s both}
+@keyframes iconPop{from{transform:scale(0) rotate(-20deg)} to{transform:scale(1) rotate(0)}}
+.r-title{font-family:'Cinzel';font-size:1.9rem;font-weight:700;margin-bottom:5px}
+.r-title.win{color:var(--gold-l)}.r-title.lose{color:var(--red-g)}.r-title.draw{color:var(--silver)}
+.r-flav{font-size:.88rem;color:var(--dim);margin-bottom:18px;font-style:italic}
+.r-scores{display:flex;gap:12px;justify-content:center;margin-bottom:15px}
+.rsb{flex:1;background:var(--card);border:1px solid var(--border);border-radius:5px;padding:9px 12px}
+.rsb.winner{border-color:var(--gold)}
+.rsn{font-family:'Cinzel';font-size:1.9rem;font-weight:700}
+.psc .rsn{color:var(--blue-g)}.esc .rsn{color:var(--red-g)}
+.rsl{font-size:.6rem;color:var(--dim);letter-spacing:2px;text-transform:uppercase;font-family:'Cinzel'}
+.r-stars{font-size:1.5rem;letter-spacing:4px;margin-bottom:20px}
+.r-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.r-btn{background:var(--card);border:1px solid var(--border);border-radius:3px;
+  padding:10px 18px;font-family:'Cinzel';font-size:.77rem;letter-spacing:2px;
+  color:var(--text);cursor:pointer;transition:all .2s}
+.r-btn.pr{border-color:var(--gold-d);color:var(--gold)}
+.r-btn:hover{border-color:var(--gold);color:var(--gold-l);transform:translateY(-2px)}
+
+/* ─── MODALS ─── */
+.modal{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.75);backdrop-filter:blur(5px);
+  display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .28s}
+.modal.show{opacity:1;pointer-events:all}
+.m-box{background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:26px;
+  max-width:400px;width:90%;transform:scale(.88);transition:transform .28s cubic-bezier(.175,.885,.32,1.275);
+  position:relative;max-height:82vh;overflow-y:auto}
+.modal.show .m-box{transform:scale(1)}
+.m-box::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:50%;height:1px;background:linear-gradient(90deg,transparent,var(--gold-d),transparent)}
+.m-title{font-family:'Cinzel';font-size:1.15rem;color:var(--gold);letter-spacing:2px;margin-bottom:16px;text-align:center}
+.l-opt{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);
+  border-radius:3px;padding:9px 13px;margin-bottom:6px;cursor:pointer;font-family:'Cinzel';
+  font-size:.8rem;letter-spacing:1px;color:var(--text);transition:all .18s}
+.l-opt:hover,.l-opt.active{border-color:var(--gold);color:var(--gold)}
+.m-close{display:block;width:100%;margin-top:12px;background:var(--card);border:1px solid var(--border);
+  border-radius:3px;padding:9px;font-family:'Cinzel';font-size:.78rem;letter-spacing:2px;
+  color:var(--dim);cursor:pointer;transition:all .18s;text-align:center}
+.m-close:hover{border-color:var(--gold);color:var(--gold)}
+.h-rule{display:flex;gap:10px;margin-bottom:11px}
+.h-ico{font-size:1.05rem;flex-shrink:0;margin-top:2px}
+.h-txt{font-size:.85rem;color:var(--dim);line-height:1.55}
+.h-txt strong{color:var(--bright)}
+
+/* ─── TOAST ─── */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(55px);
+  background:var(--panel);border:1px solid var(--border);border-radius:3px;padding:8px 20px;
+  font-family:'Cinzel';font-size:.73rem;letter-spacing:2px;color:var(--text);z-index:3000;
+  transition:transform .28s cubic-bezier(.175,.885,.32,1.275);pointer-events:none;white-space:nowrap;box-shadow:var(--sh)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.gold{border-color:var(--gold-d);color:var(--gold)}
+#toast.red{border-color:var(--red);color:var(--red-g)}
+
+/* ─── DRAG GHOST ─── */
+#dg{position:fixed;pointer-events:none;z-index:9999;opacity:.88;transform:translate(-50%,-50%) scale(1.08) rotate(4deg);display:none}
+
+/* ─── PARTICLE ─── */
+.par{position:absolute;pointer-events:none;font-size:1.1rem;animation:parFly var(--dur,.7s) ease-out forwards}
+@keyframes parFly{0%{transform:translate(0,0) scale(1) rotate(0deg);opacity:1} 100%{transform:translate(var(--dx,0),var(--dy,-60px)) scale(0) rotate(var(--rot,180deg));opacity:0}}
+
+/* ─── SCREEN FLASH ─── */
+#flash{position:fixed;inset:0;z-index:850;pointer-events:none;opacity:0;transition:opacity .08s}
+#flash.go{animation:flashFade .5s ease forwards}
+@keyframes flashFade{0%{opacity:.7} 100%{opacity:0}}
+
+@media(max-width:500px){
+  .hand-col{width:66px}.hc{width:62px;height:62px}
+  .cem{font-size:1.35rem}.hc .cem{font-size:1.1rem}
+  #board{gap:5px;padding:6px}.cell{min-height:68px}
+  .cv,.hc .cv{font-size:.52rem!important}.r-panel{padding:26px 20px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="fx-layer"></div>
+<div id="flash"></div>
+<div id="dg"></div>
+
+<!-- ══════ MENU ══════ -->
+<div id="screen-menu" class="screen active">
+  <div class="crest">⚔️</div>
+  <div class="m-title">TRIPLE TRIAD</div>
+  <div class="m-sub">Chronicle of Cards</div>
+  <div class="m-div"></div>
+  <button class="m-btn" id="btn-camp"><span class="bi">🗺️</span><span class="bt"><span id="t-camp">CAMPAÑA</span><span class="bs" id="t-camp-s">Modo historia · 100 niveles</span></span><span>▶</span></button>
+  <button class="m-btn" id="btn-free"><span class="bi">⚔️</span><span class="bt"><span id="t-free">PARTIDA LIBRE</span><span class="bs" id="t-free-s">Elige dificultad</span></span><span>▶</span></button>
+  <button class="m-btn" id="btn-help-m"><span class="bi">📜</span><span class="bt"><span id="t-rules">REGLAS</span><span class="bs" id="t-rules-s">Cómo se juega</span></span><span>▶</span></button>
+  <button class="m-btn" id="btn-lang-m"><span class="bi">🌐</span><span class="bt"><span id="t-lang">IDIOMA</span><span class="bs" id="t-lang-s">Español</span></span><span>▶</span></button>
+  <div class="m-div"></div>
+  <div class="m-recs">
+    <div class="rec"><strong id="sw">0</strong><span id="t-wins">Victorias</span></div>
+    <div class="rec"><strong id="sl">0</strong><span id="t-losses">Derrotas</span></div>
+    <div class="rec"><strong id="sd">0</strong><span id="t-draws">Empates</span></div>
+    <div class="rec"><strong id="ss">0</strong><span id="t-stars">⭐</span></div>
+  </div>
+</div>
+
+<!-- ══════ DIFFICULTY ══════ -->
+<div id="screen-difficulty" class="screen">
+  <div class="d-title" id="t-diff">DIFICULTAD</div>
+  <div class="d-sub" id="t-diff-s">PARTIDA LIBRE</div>
+  <div class="d-card easy" data-diff="easy"><span class="d-icon">🌿</span><div><div class="d-name" id="t-easy">APRENDIZ</div><div class="d-desc" id="t-easy-d">IA aleatoria. Cartas equilibradas.</div></div></div>
+  <div class="d-card medium" data-diff="medium"><span class="d-icon">⚔️</span><div><div class="d-name" id="t-med">VETERANO</div><div class="d-desc" id="t-med-d">IA greedy. El rival lleva mejores cartas.</div></div></div>
+  <div class="d-card hard" data-diff="hard"><span class="d-icon">💀</span><div><div class="d-name" id="t-hard">MAESTRO</div><div class="d-desc" id="t-hard-d">IA táctica. Cartas superiores.</div></div></div>
+  <button class="back-btn" style="margin-top:14px" id="btn-diff-back">← <span id="t-back">VOLVER</span></button>
+</div>
+
+<!-- ══════ CAMPAIGN ══════ -->
+<div id="screen-campaign" class="screen">
+  <div class="s-header">
+    <button class="back-btn" id="btn-camp-back">←</button>
+    <div class="s-title" id="t-camp-title">CAMPAÑA</div>
+    <button class="icon-btn" id="btn-lang-c">🌐</button>
+  </div>
+  <div class="c-prog">
+    <span class="prog-lbl" id="t-prog">PROGRESO</span>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    <span id="prog-txt" style="font-size:.8rem;letter-spacing:1px;flex-shrink:0"></span>
+  </div>
+  <div class="c-grid" id="camp-grid"></div>
+</div>
+
+<!-- ══════ GAME ══════ -->
+<div id="screen-game" class="screen">
+  <div class="g-top">
+    <button class="back-btn" id="btn-game-back">←</button>
+    <div class="g-info">
+      <div class="g-mode" id="g-mode">CAMPAÑA · NIVEL 1</div>
+      <div class="g-name" id="g-name">El Bosque</div>
+    </div>
+    <div class="t-rune" id="trune">TURNO</div>
+  </div>
+  <div class="score-row">
+    <div class="cb ps"><div class="c-av">🧙</div><div><div class="c-name" id="t-you">VIAJERO</div><div class="c-score" id="sp">5</div></div></div>
+    <div class="vs-b">VS</div>
+    <div class="cb es"><div class="c-av" id="eav">👺</div><div><div class="c-name" id="ename">RIVAL</div><div class="c-score" id="se">5</div></div></div>
+  </div>
+  <div id="think-wrap" style="min-height:18px;display:flex;align-items:center;justify-content:center"></div>
+  <div class="arena">
+    <div class="hand-col" id="ph"><div class="h-lbl" id="t-hand">TU MANO</div></div>
+    <div id="board"></div>
+    <div class="hand-col" id="eh"><div class="h-lbl" id="t-rival">RIVAL</div></div>
+  </div>
+</div>
+
+<!-- ══════ RESULT OVERLAY ══════ -->
+<div id="res-ov">
+  <div class="r-panel">
+    <span class="r-icon" id="ri">⚔️</span>
+    <div class="r-title" id="rt">VICTORIA</div>
+    <div class="r-flav" id="rf">Has demostrado tu maestría</div>
+    <div class="r-scores">
+      <div class="rsb psc" id="rsb-p"><div class="rsn" id="rn-p">5</div><div class="rsl" id="rl-you">TÚ</div></div>
+      <div class="rsb esc" id="rsb-e"><div class="rsn" id="rn-e">4</div><div class="rsl" id="rl-cpu">CPU</div></div>
+    </div>
+    <div class="r-stars" id="r-stars">⭐⭐⭐</div>
+    <div class="r-btns">
+      <button class="r-btn pr" id="btn-rep">↺ <span id="rl-rep">REPETIR</span></button>
+      <button class="r-btn" id="btn-rmenu">⌂ <span id="rl-menu">MENÚ</span></button>
+      <button class="r-btn" id="btn-rnext" style="display:none">→ <span id="rl-next">SIGUIENTE</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODALS ══════ -->
+<div class="modal" id="modal-lang">
+  <div class="m-box">
+    <div class="m-title">🌐 IDIOMA / LANGUAGE</div>
+    <div class="l-opt" data-lang="es">🇪🇸 &nbsp; Español</div>
+    <div class="l-opt" data-lang="en">🇬🇧 &nbsp; English</div>
+    <div class="l-opt" data-lang="fr">🇫🇷 &nbsp; Français</div>
+    <div class="l-opt" data-lang="de">🇩🇪 &nbsp; Deutsch</div>
+    <div class="l-opt" data-lang="pt">🇧🇷 &nbsp; Português</div>
+    <div class="l-opt" data-lang="ja">🇯🇵 &nbsp; 日本語</div>
+    <button class="m-close" id="btn-lc">✕</button>
+  </div>
+</div>
+<div class="modal" id="modal-help">
+  <div class="m-box">
+    <div class="m-title" id="t-help">REGLAS</div>
+    <div class="h-rule"><span class="h-ico">🃏</span><p class="h-txt" id="hr1"></p></div>
+    <div class="h-rule"><span class="h-ico">🖱️</span><p class="h-txt" id="hr2"></p></div>
+    <div class="h-rule"><span class="h-ico">⚔️</span><p class="h-txt" id="hr3"></p></div>
+    <div class="h-rule"><span class="h-ico">🏆</span><p class="h-txt" id="hr4"></p></div>
+    <div class="h-rule"><span class="h-ico">⭐</span><p class="h-txt" id="hr5"></p></div>
+    <button class="m-close" id="btn-hc">✕</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════
+//  ANIMATED CANVAS BACKGROUND
+// ═══════════════════════════════════
+(function(){
+  const cv=document.getElementById('bg-canvas');
+  const ctx=cv.getContext('2d');
+  let W,H,stars=[],runes=[],orbs=[];
+  const STAR_COUNT=160,ORB_COUNT=5;
+  const RUNE_CHARS=['✦','✧','⚔','🜲','⊕','⊗','◈','⬡','⬢','✺','⊛','⋆'];
+
+  function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;init()}
+  function rnd(a,b){return a+Math.random()*(b-a)}
+  function init(){
+    stars=Array.from({length:STAR_COUNT},()=>({
+      x:rnd(0,W),y:rnd(0,H),r:rnd(.3,1.8),
+      a:rnd(0,1),da:rnd(.002,.008)*(Math.random()<.5?1:-1),
+      speed:rnd(.01,.06),
+    }));
+    runes=Array.from({length:18},()=>({
+      x:rnd(0,W),y:rnd(0,H),
+      char:RUNE_CHARS[Math.floor(Math.random()*RUNE_CHARS.length)],
+      a:rnd(.03,.12),size:rnd(12,28),
+      dx:rnd(-.1,.1),dy:rnd(-.08,.08),
+      da:rnd(.0002,.001)*(Math.random()<.5?1:-1),
+    }));
+    orbs=Array.from({length:ORB_COUNT},()=>({
+      x:rnd(0,W),y:rnd(0,H),r:rnd(60,180),
+      vx:rnd(-.12,.12),vy:rnd(-.1,.1),
+      hue:Math.random()<.4?215:Math.random()<.5?0:280,
+      a:rnd(.03,.08),
+    }));
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // deep bg
+    const bg=ctx.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,'#080915');bg.addColorStop(.5,'#09091f');bg.addColorStop(1,'#0c0812');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    // orbs
+    orbs.forEach(o=>{
+      o.x+=o.vx;o.y+=o.vy;
+      if(o.x<-o.r)o.x=W+o.r;if(o.x>W+o.r)o.x=-o.r;
+      if(o.y<-o.r)o.y=H+o.r;if(o.y>H+o.r)o.y=-o.r;
+      const g=ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r);
+      g.addColorStop(0,`hsla(${o.hue},80%,45%,${o.a})`);
+      g.addColorStop(1,`hsla(${o.hue},80%,45%,0)`);
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,Math.PI*2);ctx.fill();
+    });
+    // grid lines subtle
+    ctx.strokeStyle='rgba(50,80,130,.04)';ctx.lineWidth=1;
+    const gs=60;
+    for(let x=0;x<W;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+    for(let y=0;y<H;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+    // stars
+    stars.forEach(s=>{
+      s.a+=s.da;if(s.a>1||s.a<0)s.da*=-1;s.a=Math.max(0,Math.min(1,s.a));
+      s.y-=s.speed;if(s.y<-2)s.y=H+2;
+      ctx.save();ctx.globalAlpha=s.a*.6;ctx.fillStyle='#c0b880';
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();ctx.restore();
+    });
+    // runes
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    runes.forEach(r=>{
+      r.x+=r.dx;r.y+=r.dy;r.a+=r.da;
+      if(r.x<-40)r.x=W+40;if(r.x>W+40)r.x=-40;
+      if(r.y<-40)r.y=H+40;if(r.y>H+40)r.y=-40;
+      if(r.a<.01||r.a>.15)r.da*=-1;r.a=Math.max(.01,Math.min(.15,r.a));
+      ctx.save();ctx.globalAlpha=r.a;ctx.fillStyle='#c9a84c';
+      ctx.font=`${r.size}px serif`;ctx.fillText(r.char,r.x,r.y);ctx.restore();
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',resize);
+  resize();draw();
+})();
+
+// ═══════════════════════════════════
+//  TRANSLATIONS
+// ═══════════════════════════════════
+const TR={
+es:{camp:"CAMPAÑA",camp_s:"100 niveles procedurales",free:"PARTIDA LIBRE",free_s:"Elige dificultad",
+  rules:"REGLAS",rules_s:"Cómo se juega",lang:"IDIOMA",lang_s:"Español",
+  wins:"Victorias",losses:"Derrotas",draws:"Empates",stars:"⭐ Total",
+  diff:"DIFICULTAD",diff_s:"PARTIDA LIBRE",easy:"APRENDIZ",easy_d:"IA aleatoria. Cartas equilibradas.",
+  med:"VETERANO",med_d:"IA greedy. Mejor rival.",hard:"MAESTRO",hard_d:"IA táctica. Cartas superiores.",
+  back:"VOLVER",prog:"PROGRESO",hand:"TU MANO",rival:"RIVAL",you:"TÚ",cpu:"CPU",
+  yturn:"TU TURNO",eturn:"RIVAL",sel:"Selecciona una carta primero",locked:"Nivel bloqueado 🔒",
+  win:["VICTORIA","Magnífico dominio","El reino te pertenece","Tu leyenda crece","Combate impecable"],
+  lose:["DERROTA","Derrota amarga","El rival te superó","Vuelve más fuerte","Las cartas no te acompañaron"],
+  draw:["EMPATE","Equilibrio perfecto","Nadie venció hoy"],
+  rep:"REPETIR",menu:"MENÚ",next:"SIGUIENTE",help:"REGLAS",lv:"NIVEL",unlk:"desbloqueado",
+  hr1:"<strong>5 cartas por jugador</strong> con valores en sus 4 lados (↑↓←→).",
+  hr2:"<strong>Arrastra o haz clic</strong> en una carta de tu mano, luego colócala en una celda vacía.",
+  hr3:"<strong>Captura</strong>: si tu valor supera al borde adyacente del rival, su carta es tuya.",
+  hr4:"<strong>Gana</strong> quien tenga más cartas de su color cuando el tablero esté lleno.",
+  hr5:"Margen: +3→⭐⭐⭐, +2→⭐⭐, +1→⭐. Perfecto=3⭐."},
+en:{camp:"CAMPAIGN",camp_s:"100 procedural levels",free:"FREE PLAY",free_s:"Choose difficulty",
+  rules:"RULES",rules_s:"How to play",lang:"LANGUAGE",lang_s:"English",
+  wins:"Wins",losses:"Losses",draws:"Draws",stars:"⭐ Total",
+  diff:"DIFFICULTY",diff_s:"FREE PLAY",easy:"NOVICE",easy_d:"Random AI. Balanced cards.",
+  med:"VETERAN",med_d:"Greedy AI. Better enemy cards.",hard:"MASTER",hard_d:"Tactical AI. Superior cards.",
+  back:"BACK",prog:"PROGRESS",hand:"YOUR HAND",rival:"RIVAL",you:"YOU",cpu:"CPU",
+  yturn:"YOUR TURN",eturn:"RIVAL",sel:"Select a card first",locked:"Level locked 🔒",
+  win:["VICTORY","Magnificent mastery","The realm is yours","Your legend grows","Flawless battle"],
+  lose:["DEFEAT","Bitter defeat","The rival surpassed you","Come back stronger","The cards betrayed you"],
+  draw:["DRAW","Perfect balance","No victor today"],
+  rep:"REPLAY",menu:"MENU",next:"NEXT",help:"RULES",lv:"LEVEL",unlk:"unlocked",
+  hr1:"<strong>5 cards per player</strong> with values on 4 sides (↑↓←→).",
+  hr2:"<strong>Drag or click</strong> a card from your hand onto an empty cell.",
+  hr3:"<strong>Capture</strong>: if your value beats the adjacent rival edge, that card is yours.",
+  hr4:"<strong>Win</strong> by having the most cards of your colour when the board is full.",
+  hr5:"Margin: +3→⭐⭐⭐, +2→⭐⭐, +1→⭐. Perfect=3⭐."},
+fr:{camp:"CAMPAGNE",camp_s:"100 niveaux procéduraux",free:"PARTIE LIBRE",free_s:"Choisissez",
+  rules:"RÈGLES",rules_s:"Comment jouer",lang:"LANGUE",lang_s:"Français",
+  wins:"Victoires",losses:"Défaites",draws:"Nuls",stars:"⭐ Total",
+  diff:"DIFFICULTÉ",diff_s:"PARTIE LIBRE",easy:"NOVICE",easy_d:"IA aléatoire.",
+  med:"VÉTÉRAN",med_d:"IA greedy.",hard:"MAÎTRE",hard_d:"IA tactique.",
+  back:"RETOUR",prog:"PROGRESSION",hand:"VOTRE MAIN",rival:"RIVAL",you:"VOUS",cpu:"CPU",
+  yturn:"VOTRE TOUR",eturn:"RIVAL",sel:"Choisissez d'abord",locked:"Verrouillé 🔒",
+  win:["VICTOIRE","Maîtrise magnifique","Le royaume est vôtre","Votre légende grandit"],
+  lose:["DÉFAITE","Défaite amère","Le rival vous surpassa","Revenez plus fort"],
+  draw:["ÉGALITÉ","Équilibre parfait"],
+  rep:"REJOUER",menu:"MENU",next:"SUIVANT",help:"RÈGLES",lv:"NIVEAU",unlk:"débloqué",
+  hr1:"<strong>5 cartes par joueur</strong> avec des valeurs sur 4 côtés.",
+  hr2:"<strong>Glissez ou cliquez</strong> une carte sur une case vide.",
+  hr3:"<strong>Capture</strong>: si votre valeur dépasse l'adjacente, la carte est vôtre.",
+  hr4:"<strong>Gagnez</strong> avec le plus de cartes à la fin.",
+  hr5:"+3→⭐⭐⭐, +2→⭐⭐, +1→⭐."},
+pt:{camp:"CAMPANHA",camp_s:"100 níveis procedurais",free:"JOGO LIVRE",free_s:"Escolha",
+  rules:"REGRAS",rules_s:"Como jogar",lang:"IDIOMA",lang_s:"Português",
+  wins:"Vitórias",losses:"Derrotas",draws:"Empates",stars:"⭐ Total",
+  diff:"DIFICULDADE",diff_s:"JOGO LIVRE",easy:"NOVATO",easy_d:"IA aleatória.",
+  med:"VETERANO",med_d:"IA greedy.",hard:"MESTRE",hard_d:"IA tática.",
+  back:"VOLTAR",prog:"PROGRESSO",hand:"SUA MÃO",rival:"RIVAL",you:"VOCÊ",cpu:"CPU",
+  yturn:"SEU TURNO",eturn:"RIVAL",sel:"Selecione uma carta",locked:"Bloqueado 🔒",
+  win:["VITÓRIA","Domínio magnífico","O reino é seu","Sua lenda cresce"],
+  lose:["DERROTA","Derrota amarga","Volte mais forte"],
+  draw:["EMPATE","Equilíbrio perfeito"],
+  rep:"REPETIR",menu:"MENU",next:"PRÓXIMO",help:"REGRAS",lv:"NÍVEL",unlk:"desbloqueado",
+  hr1:"<strong>5 cartas por jogador</strong> com valores nos 4 lados.",
+  hr2:"<strong>Arraste ou clique</strong> em uma carta e coloque-a.",
+  hr3:"<strong>Capture</strong>: valor maior→carta sua.",
+  hr4:"<strong>Vença</strong> com mais cartas no final.",
+  hr5:"+3→⭐⭐⭐, +2→⭐⭐, +1→⭐."},
+ja:{camp:"キャンペーン",camp_s:"100の手続き型レベル",free:"フリープレイ",free_s:"難易度選択",
+  rules:"ルール",rules_s:"遊び方",lang:"言語",lang_s:"日本語",
+  wins:"勝利",losses:"敗北",draws:"引分",stars:"⭐ 合計",
+  diff:"難易度",diff_s:"フリープレイ",easy:"初心者",easy_d:"ランダムAI。",
+  med:"ベテラン",med_d:"GreedyAI。",hard:"マスター",hard_d:"戦術AI。",
+  back:"戻る",prog:"進捗",hand:"あなたの手",rival:"ライバル",you:"あなた",cpu:"CPU",
+  yturn:"あなたのターン",eturn:"ライバル",sel:"カードを選択",locked:"ロック 🔒",
+  win:["勝利","見事な制覇","王国はあなた","伝説が成長"],
+  lose:["敗北","苦い敗北","より強く戻って"],
+  draw:["引き分け","完璧なバランス"],
+  rep:"再戦",menu:"メニュー",next:"次へ",help:"ルール",lv:"レベル",unlk:"解除",
+  hr1:"各プレイヤーは<strong>5枚のカード</strong>、4辺に数値。",
+  hr2:"カードを<strong>ドラッグまたはクリック</strong>して空セルに置く。",
+  hr3:"<strong>キャプチャ</strong>: 隣接値を超えれば取得。",
+  hr4:"ボードが埋まったとき<strong>多い方が勝ち</strong>。",
+  hr5:"+3→⭐⭐⭐, +2→⭐⭐, +1→⭐。"}
+};
+
+// ═══════════════════════════════════
+//  CARD DATABASE  (5 tiers, RPG themed)
+// ═══════════════════════════════════
+const TIERS={
+1:[{id:101,e:"🐀",v:[2,1,3,2]},{id:102,e:"🐸",v:[1,3,2,3]},{id:103,e:"🦟",v:[1,1,2,4]},
+   {id:104,e:"🦔",v:[3,2,1,3]},{id:105,e:"🐢",v:[2,2,3,2]},{id:106,e:"🐇",v:[3,1,2,3]},
+   {id:107,e:"🐛",v:[2,3,1,3]},{id:108,e:"🦗",v:[3,2,3,1]},{id:109,e:"🦎",v:[2,2,2,3]},
+   {id:110,e:"🐞",v:[1,3,3,2]},{id:111,e:"🕷️",v:[2,2,4,1]},{id:112,e:"🐾",v:[3,1,1,4]}],
+2:[{id:201,e:"🐺",v:[5,3,3,4]},{id:202,e:"🦊",v:[4,4,5,3]},{id:203,e:"🗡️",v:[4,3,5,4]},
+   {id:204,e:"🛡️",v:[3,5,4,4]},{id:205,e:"🏹",v:[5,3,3,5]},{id:206,e:"🪄",v:[3,5,5,3]},
+   {id:207,e:"🦅",v:[5,4,3,4]},{id:208,e:"🐗",v:[4,4,4,4]},{id:209,e:"🦂",v:[4,3,4,5]},
+   {id:210,e:"🐍",v:[3,5,4,4]},{id:211,e:"⚔️",v:[5,3,5,3]},{id:212,e:"🪖",v:[3,4,5,4]},
+   {id:213,e:"🧪",v:[4,5,3,4]},{id:214,e:"🔱",v:[3,3,5,5]}],
+3:[{id:301,e:"🐯",v:[6,5,5,4]},{id:302,e:"🦁",v:[7,4,5,4]},{id:303,e:"🧟",v:[5,6,6,4]},
+   {id:304,e:"💀",v:[6,5,4,6]},{id:305,e:"🧛",v:[5,7,4,5]},{id:306,e:"🧙",v:[4,6,7,5]},
+   {id:307,e:"🦷",v:[6,6,5,4]},{id:308,e:"👁️",v:[4,6,7,5]},{id:309,e:"🦈",v:[5,7,5,5]},
+   {id:310,e:"🐊",v:[6,6,4,5]},{id:311,e:"🦀",v:[5,5,6,6]},{id:312,e:"🧿",v:[4,7,5,6]},
+   {id:313,e:"🔮",v:[5,6,6,5]},{id:314,e:"🗡️",v:[7,4,4,6]},{id:315,e:"☠️",v:[6,6,6,3]}],
+4:[{id:401,e:"🐲",v:[7,7,5,5],r:"rare"},{id:402,e:"🦖",v:[8,5,5,6],r:"rare"},
+   {id:403,e:"🦄",v:[6,6,8,5],r:"rare"},{id:404,e:"🌑",v:[5,8,6,6],r:"rare"},
+   {id:405,e:"⚡",v:[8,5,7,5],r:"rare"},{id:406,e:"🔥",v:[7,6,6,7],r:"rare"},
+   {id:407,e:"🩸",v:[8,6,5,6],r:"rare"},{id:408,e:"🌊",v:[5,9,5,6],r:"rare"},
+   {id:409,e:"🌪️",v:[7,7,6,5],r:"rare"},{id:410,e:"🗡️",v:[6,8,7,5],r:"rare"},
+   {id:411,e:"⛧",v:[7,6,7,6],r:"rare"},{id:412,e:"💎",v:[6,7,8,5],r:"rare"}],
+5:[{id:501,e:"🐉",v:[9,8,6,6],r:"epic"},{id:502,e:"🔥",v:[8,9,7,6],r:"epic"},
+   {id:503,e:"🌊",v:[7,8,8,8],r:"epic"},{id:504,e:"⚡",v:[10,7,7,7],r:"epic"},
+   {id:505,e:"💀",v:[8,8,9,6],r:"epic"},{id:506,e:"🌑",v:[7,9,7,9],r:"epic"},
+   {id:507,e:"🩸",v:[9,7,8,7],r:"legend"},{id:508,e:"👑",v:[8,9,8,8],r:"legend"},
+   {id:509,e:"😈",v:[9,9,7,7],r:"legend"},{id:510,e:"🌌",v:[8,8,9,8],r:"legend"}]
+};
+
+// ═══════════════════════════════════
+//  PROCEDURAL LEVEL GENERATOR (100 levels, deterministic)
+// ═══════════════════════════════════
+// Level archetypes
+const ARCS=[
+  // [nameEs, nameEn, emoji, avatar]
+  ["Bosque Sombrío","Dark Forest","🌲","🐺"],
+  ["Cueva del Troll","Troll Cave","🪨","👹"],
+  ["La Taberna","The Tavern","🍺","🧝"],
+  ["Guardia del Camino","Road Warden","🛡️","⚔️"],
+  ["Ruinas del Templo","Temple Ruins","🏛️","🧟"],
+  ["Cripta Maldita","Cursed Crypt","🪦","💀"],
+  ["Bosque Encantado","Enchanted Woods","🍃","🧙"],
+  ["Río de las Almas","River of Souls","🌊","🌊"],
+  ["Colinas de Niebla","Misty Hills","🌫️","🐗"],
+  ["El Herbólogo","The Herbalist","🌿","🧪"],
+  ["Minas Oscuras","Dark Mines","⛏️","🤖"],
+  ["El Vampiro","The Vampire","🧛","🩸"],
+  ["Fortaleza Norte","Northern Fort","🏰","🛡️"],
+  ["El Cazador","Beast Hunter","🏹","🦅"],
+  ["El Alquimista","The Alchemist","⚗️","🧪"],
+  ["Torre Maldita","Cursed Tower","🗼","👁️"],
+  ["Fosa de Arenas","Sand Pit","⏳","🦂"],
+  ["El Hechicero","The Sorcerer","🔮","🌑"],
+  ["Abismo Oscuro","Dark Abyss","🕳️","😈"],
+  ["El Lich","The Lich","💀","☠️"],
+  ["Sanctum del Caos","Chaos Sanctum","🌀","🌀"],
+  ["El Espectro","The Spectre","👻","👻"],
+  ["Mar de Sombras","Shadow Sea","🌑","🌊"],
+  ["El Necromante","Necromancer","☠️","🧛"],
+  ["Isla Maldita","Cursed Isle","🏝️","☠️"],
+  ["Laberinto Infernal","Infernal Maze","🔥","😈"],
+  ["Tumba Antigua","Ancient Tomb","⚰️","💀"],
+  ["El Dios Menor","Lesser God","✨","👑"],
+  ["Fosa del Caos","Chaos Pit","🌪️","🌪️"],
+  ["El Wyvern","The Wyvern","🦖","🐉"],
+  ["Forja de Dioses","God's Forge","🔨","⚡"],
+  ["El Espejo Oscuro","Dark Mirror","🪞","👁️"],
+  ["Mar de Almas","Sea of Souls","🌊","🌊"],
+  ["El Demonio","The Demon","👺","😈"],
+  ["Cámara Final","Final Chamber","🚪","💀"],
+  ["El Primordial","The Primordial","🌌","🐉"],
+  ["Vacío Eterno","Eternal Void","🕳️","🌑"],
+  ["Dragón Ancestral","Ancient Dragon","🐉","🔥"],
+  ["El Archimago","The Archmage","⭐","🧙"],
+  ["El Archidemon","The Archdemon","👑","😈"],
+];
+
+// Deterministic seeded RNG (mulberry32)
+function seededRng(seed){
+  return function(){
+    seed|=0;seed=seed+0x6D2B79F5|0;
+    let t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return((t^t>>>14)>>>0)/4294967296;
+  }
+}
+
+function generateLevels(count=100){
+  const levels=[];
+  for(let i=0;i<count;i++){
+    const lv=i+1;
+    // Difficulty curve: 0..1 over all levels
+    const t=i/(count-1);
+    // Smooth S-curve
+    const s=t*t*(3-2*t);
+
+    // AI tier: 1→5 over the course
+    const aiTier=Math.min(5,1+Math.floor(s*4.99));
+    // Imbalance (how many extra tiers enemy gets): 0→5
+    const imbalance=Math.floor(s*5);
+    // AI smarts: 0 random → 1 greedy → 2 tactical → 3 lookahead
+    const smarts=Math.min(3,Math.floor(s*3.5));
+
+    // Use seeded RNG so levels are deterministic
+    const rng=seededRng(lv*1337+42);
+    const arcIdx=Math.floor(rng()*ARCS.length);
+    const [ne,en,em,av]=ARCS[arcIdx];
+
+    // Special level types
+    const isBoss=(lv%10===0);
+    const isElite=(lv%5===0&&!isBoss);
+    const isLegend=(lv===50||lv===100);
+
+    levels.push({level:lv,nameEs:ne,nameEn:en,emoji:em,avatar:av,
+      aiTier,imbalance,smarts,isBoss,isElite,isLegend});
+  }
+  return levels;
+}
+const LEVELS=generateLevels(100);
+
+// ═══════════════════════════════════
+//  STATE
+// ═══════════════════════════════════
+let lang='es';
+let stats={wins:0,losses:0,draws:0,totalStars:0};
+let campaign={unlocked:1,stars:{}};  // stars: {1:3, 2:1, ...}
+let mode='campaign',curLevel=null,curDiff='medium';
+let gs=null;
+
+function save(){try{localStorage.setItem('tt4_lang',lang);localStorage.setItem('tt4_stats',JSON.stringify(stats));localStorage.setItem('tt4_camp',JSON.stringify(campaign))}catch(e){}}
+function load(){
+  try{
+    const l=localStorage.getItem('tt4_lang');
+    if(l&&TR[l])lang=l;
+    else{const n=(navigator.language||'en').slice(0,2).toLowerCase();lang=TR[n]?n:'en'}
+    const s=localStorage.getItem('tt4_stats');if(s)Object.assign(stats,JSON.parse(s));
+    const c=localStorage.getItem('tt4_camp');if(c)Object.assign(campaign,JSON.parse(c));
+  }catch(e){}
+}
+
+// ═══════════════════════════════════
+//  SCREENS
+// ═══════════════════════════════════
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+id).classList.add('active')}
+
+// ═══════════════════════════════════
+//  LANG
+// ═══════════════════════════════════
+function L(){return TR[lang]}
+function tx(id,v){const e=document.getElementById(id);if(e)e.innerHTML=v}
+function applyLang(){
+  const l=L();
+  tx('t-camp',l.camp);tx('t-camp-s',l.camp_s);tx('t-free',l.free);tx('t-free-s',l.free_s);
+  tx('t-rules',l.rules);tx('t-rules-s',l.rules_s);tx('t-lang',l.lang);tx('t-lang-s',l.lang_s);
+  tx('t-wins',l.wins);tx('t-losses',l.losses);tx('t-draws',l.draws);tx('t-stars',l.stars);
+  tx('t-diff',l.diff);tx('t-diff-s',l.diff_s);tx('t-easy',l.easy);tx('t-easy-d',l.easy_d);
+  tx('t-med',l.med);tx('t-med-d',l.med_d);tx('t-hard',l.hard);tx('t-hard-d',l.hard_d);
+  tx('t-back',l.back);tx('t-camp-title',l.camp);tx('t-prog',l.prog);
+  tx('t-hand',l.hand);tx('t-rival',l.rival);
+  tx('t-you',l.you);tx('t-help',l.help);
+  tx('hr1',l.hr1);tx('hr2',l.hr2);tx('hr3',l.hr3);tx('hr4',l.hr4);tx('hr5',l.hr5);
+  document.querySelectorAll('.l-opt').forEach(e=>e.classList.toggle('active',e.dataset.lang===lang));
+  renderStats();renderGrid();
+}
+function renderStats(){
+  tx('sw',stats.wins);tx('sl',stats.losses);tx('sd',stats.draws);tx('ss',stats.totalStars);
+}
+
+// ═══════════════════════════════════
+//  CAMPAIGN GRID
+// ═══════════════════════════════════
+function starsHtml(n){return '⭐'.repeat(n)+'☆'.repeat(3-n)}
+function calcStars(p,e){const d=p-e;return d>=3?3:d===2?2:d===1?1:0}
+
+function renderGrid(){
+  const grid=document.getElementById('camp-grid');if(!grid)return;
+  const l=L();grid.innerHTML='';
+  LEVELS.forEach(lv=>{
+    const unlocked=lv.level<=campaign.unlocked;
+    const s=campaign.stars[lv.level]||0;
+    const beaten=s>0;
+    const d=document.createElement('div');
+    d.className='l-node'+(unlocked?' unlocked':' locked')+(beaten?' beaten':'')+(s===3&&beaten?' perfect':'');
+    d.innerHTML=`
+      ${lv.isLegend?'<span class="l-badge b-legend">✦</span>':lv.isBoss?'<span class="l-badge b-boss">BOSS</span>':lv.isElite?'<span class="l-badge b-elite">ELITE</span>':''}
+      <span class="l-ico">${lv.emoji}</span>
+      <span class="l-name">${lang==='es'?lv.nameEs:lv.nameEn}</span>
+      <div class="l-stars">${beaten?starsHtml(s):'☆☆☆'}</div>
+      <span class="l-num">${l.lv} ${lv.level}</span>`;
+    if(unlocked)d.addEventListener('click',()=>{SFX.click();startLevel(lv)});
+    else d.addEventListener('click',()=>{SFX.locked();toast(l.locked,'red')});
+    grid.appendChild(d);
+  });
+  const beaten=Object.keys(campaign.stars).length;
+  const fill=document.getElementById('prog-fill');if(fill)fill.style.width=(beaten/100*100)+'%';
+  const total=Object.values(campaign.stars).reduce((a,b)=>a+b,0);
+  tx('prog-txt',total?`⭐ ${total}`:'');
+}
+
+// ═══════════════════════════════════
+//  SOUND ENGINE
+// ═══════════════════════════════════
+let _ac=null;
+function AC(){if(!_ac){try{_ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}};return _ac}
+function note(freq,type,dur,vol=0.25,delay=0){
+  try{
+    const c=AC();if(!c)return;
+    const o=c.createOscillator(),g=c.createGain(),now=c.currentTime;
+    o.connect(g);g.connect(c.destination);
+    o.type=type;o.frequency.setValueAtTime(freq,now+delay);
+    g.gain.setValueAtTime(0,now+delay);
+    g.gain.linearRampToValueAtTime(vol,now+delay+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,now+delay+dur);
+    o.start(now+delay);o.stop(now+delay+dur+0.05);
+  }catch(e){}
+}
+function chord(freqs,type,dur,vol,delay=0){freqs.forEach((f,i)=>note(f,type,dur,vol,delay+i*.001))}
+// White noise burst
+function noiseBlip(dur=0.05,vol=0.1){
+  try{
+    const c=AC();if(!c)return;
+    const buf=c.createBuffer(1,c.sampleRate*dur,c.sampleRate);
+    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);
+    const src=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();
+    f.type='bandpass';f.frequency.value=1200;
+    src.buffer=buf;src.connect(f);f.connect(g);g.connect(c.destination);
+    g.gain.setValueAtTime(vol,c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
+    src.start();src.stop(c.currentTime+dur+0.01);
+  }catch(e){}
+}
+
+const SFX={
+  click(){note(560,'sine',.06,.12)},
+  select(){note(520,'sine',.09,.18);note(650,'sine',.06,.08,.04)},
+  place(){note(380,'triangle',.12,.22);note(500,'sine',.08,.14,.07);noiseBlip(.04,.08)},
+  capture(){
+    note(260,'sawtooth',.04,.2);note(180,'sawtooth',.04,.12,.04);
+    note(440,'sine',.12,.22,.1);note(550,'sine',.08,.15,.18);
+    noiseBlip(.06,.15);
+  },
+  win(){
+    chord([523,659,784],'sine',.3,.22);
+    note(1047,'sine',.5,.28,.28);note(1318,'sine',.4,.22,.42);
+    setTimeout(()=>chord([523,659,784,1047],'sine',.4,.18),600);
+  },
+  lose(){
+    [400,340,270,210].forEach((f,i)=>note(f,'triangle',.3,.18,i*.14));
+    noiseBlip(.2,.12);
+  },
+  draw(){note(440,'sine',.2,.2);note(440,'sine',.2,.2,.3)},
+  unlock(){[440,550,660,880,1100].forEach((f,i)=>note(f,'sine',.15,.22,i*.07))},
+  locked(){note(200,'square',.08,.15);noiseBlip(.03,.08)},
+  hover(){note(600,'sine',.04,.08)},
+};
+
+// ═══════════════════════════════════
+//  VISUAL FX
+// ═══════════════════════════════════
+const FX=document.getElementById('fx-layer');
+const FLASHEL=document.getElementById('flash');
+
+function screenFlash(color='rgba(255,200,100,.5)'){
+  FLASHEL.style.background=color;
+  FLASHEL.className='go';
+  setTimeout(()=>{FLASHEL.className=''},500);
+}
+
+// Spawn emoji particles at element position
+function spawnParticles(el,emojis,count=6){
+  const r=el.getBoundingClientRect();
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  for(let i=0;i<count;i++){
+    const p=document.createElement('div');
+    p.className='par';
+    p.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    const angle=Math.random()*Math.PI*2;
+    const dist=40+Math.random()*70;
+    const dx=Math.cos(angle)*dist,dy=Math.sin(angle)*dist-40;
+    const rot=(Math.random()*360)+'deg';
+    const dur=(.5+Math.random()*.4)+'s';
+    p.style.cssText=`left:${cx}px;top:${cy}px;--dx:${dx}px;--dy:${dy}px;--rot:${rot};--dur:${dur}`;
+    FX.appendChild(p);
+    setTimeout(()=>p.remove(),900);
+  }
+}
+
+function boardShake(){
+  const b=document.getElementById('board');
+  b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');
+  setTimeout(()=>b.classList.remove('shake'),400);
+}
+
+// Highlight cell flash
+function flashCell(idx,type){
+  const cells=document.getElementById('board').children;
+  if(cells[idx]){
+    cells[idx].classList.add(type==='cap'?'flash-capture':'flash-place');
+    setTimeout(()=>cells[idx].classList.remove('flash-capture','flash-place'),600);
+  }
+}
+
+// ═══════════════════════════════════
+//  CARDS
+// ═══════════════════════════════════
+function shuffle(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=0|Math.random()*(i+1);[r[i],r[j]]=[r[j],r[i]]};return r}
+function pickCards(tier,count,minTier=1){
+  let pool=[];
+  for(let t=minTier;t<=tier;t++){for(let w=0;w<t*2;w++)pool.push(...TIERS[t])}
+  pool=shuffle(pool);
+  const out=[],used=new Set();
+  for(const c of pool){if(!used.has(c.id)){used.add(c.id);out.push({...c})}if(out.length===count)break}
+  while(out.length<count)out.push({...TIERS[1][0]});
+  return out;
+}
+
+// ═══════════════════════════════════
+//  GAME INIT
+// ═══════════════════════════════════
+function startLevel(lv){
+  mode='campaign';curLevel=lv;
+  const pt=Math.max(1,lv.aiTier-lv.imbalance),et=Math.min(5,lv.aiTier);
+  const ph=pickCards(pt,5,1),eh=pickCards(et,5,Math.max(1,et-1));
+  const l=L();
+  tx('g-mode',`${l.camp} · ${l.lv} ${lv.level}`);
+  tx('g-name',lang==='es'?lv.nameEs:lv.nameEn);
+  document.getElementById('eav').textContent=lv.avatar;
+  document.getElementById('ename').textContent=lang==='es'?lv.nameEs:lv.nameEn;
+  showScreen('game');initGame(ph,eh,lv.smarts);
+}
+function startFree(diff){
+  mode='classic';curLevel=null;curDiff=diff;
+  const tier={easy:2,medium:3,hard:4}[diff];
+  const imb={easy:0,medium:1,hard:2}[diff];
+  const sm={easy:0,medium:1,hard:2}[diff];
+  const pt=Math.max(1,tier-imb),et=Math.min(5,tier);
+  const ph=pickCards(pt,5,1),eh=pickCards(et,5,Math.max(1,et-1));
+  const l=L(),dl={easy:l.easy,medium:l.med,hard:l.hard};
+  tx('g-mode',l.free);tx('g-name',dl[diff]);
+  document.getElementById('eav').textContent={easy:'🧝',medium:'🧙',hard:'💀'}[diff];
+  document.getElementById('ename').textContent=dl[diff];
+  showScreen('game');initGame(ph,eh,sm);
+}
+function initGame(ph,eh,smarts){
+  gs={board:Array(9).fill(null),ph:[...ph],eh:[...eh],sel:null,turn:'player',over:false,smarts};
+  document.getElementById('res-ov').classList.remove('show');
+  render();
+}
+
+// ═══════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════
+function render(){renderPH();renderEH();renderBoard();updateScores();updateRune()}
+
+function cardEl(c,owner,opts={}){
+  const d=document.createElement('div');d.className='card';
+  if(opts.hand)d.classList.add('hc');else d.classList.add('bc');
+  if(opts.hidden){d.classList.add('hid');return d}
+  d.classList.add(owner==='player'?'op':owner==='enemy'?'oe':'on');
+  if(c.r)d.classList.add(c.r);
+  if(opts.sel)d.classList.add('sel');
+  if(opts.place)d.classList.add('just-placed');
+  const em=document.createElement('div');em.className='cem';em.textContent=c.e;d.appendChild(em);
+  const cv=document.createElement('div');cv.className='cvals';
+  [{cls:'t',i:0},{cls:'b',i:1},{cls:'l',i:2},{cls:'r',i:3}].forEach(({cls,i})=>{
+    const v=document.createElement('div');v.className='cv '+cls;
+    v.textContent=c.v[i]===10?'A':c.v[i];cv.appendChild(v)});
+  d.appendChild(cv);return d;
+}
+
+function renderPH(){
+  const con=document.getElementById('ph');
+  const lbl=con.querySelector('.h-lbl');con.innerHTML='';if(lbl)con.appendChild(lbl);
+  gs.ph.forEach((c,i)=>{
+    const el=cardEl(c,'player',{hand:true,sel:gs.sel===i});
+    el.addEventListener('click',()=>selectCard(i));
+    el.addEventListener('mouseenter',()=>{ if(gs.turn==='player'&&!gs.over)SFX.hover(); });
+    setupDrag(el,i);con.appendChild(el);
+  });
+}
+function renderEH(){
+  const con=document.getElementById('eh');
+  const lbl=con.querySelector('.h-lbl');con.innerHTML='';if(lbl)con.appendChild(lbl);
+  gs.eh.forEach(()=>{const el=document.createElement('div');el.className='card hc hid';con.appendChild(el)});
+}
+function renderBoard(){
+  const board=document.getElementById('board');board.innerHTML='';
+  const canDrop=gs.turn==='player'&&!gs.over;
+  gs.board.forEach((cell,i)=>{
+    const c=document.createElement('div');c.className='cell'+(cell?' occupied':'');
+    if(!cell&&canDrop)c.classList.add('cdrop');
+    if(cell)c.appendChild(cardEl(cell.card,cell.owner));
+    if(!cell){c.addEventListener('click',()=>clickCell(i));setupDropTarget(c,i)}
+    board.appendChild(c);
+  });
+}
+function updateScores(){
+  const sc=calcScores();tx('sp',sc.p);tx('se',sc.e);
+  document.querySelector('.cb.ps').classList.toggle('winning',sc.p>sc.e);
+  document.querySelector('.cb.es').classList.toggle('winning',sc.e>sc.p);
+}
+function updateRune(){
+  const r=document.getElementById('trune'),l=L();
+  if(gs.turn==='player'){r.textContent=l.yturn;r.className='t-rune pt'}
+  else{r.innerHTML='<div class="think"><div class="td"></div><div class="td"></div><div class="td"></div></div>';r.className='t-rune et'}
+}
+function calcScores(){
+  let p=gs.ph.length,e=gs.eh.length;
+  gs.board.forEach(c=>{if(c){c.owner==='player'?p++:e++}});return{p,e}
+}
+
+// ═══════════════════════════════════
+//  DRAG & DROP
+// ═══════════════════════════════════
+let dragIdx=null;
+const GHOST=document.getElementById('dg');
+
+function setupDrag(el,idx){
+  el.addEventListener('mousedown',ev=>{if(gs.turn!=='player'||gs.over)return;ev.preventDefault();startDrag(idx,el,ev.clientX,ev.clientY)});
+  el.addEventListener('touchstart',ev=>{if(gs.turn!=='player'||gs.over)return;ev.preventDefault();const t=ev.touches[0];startDrag(idx,el,t.clientX,t.clientY)},{passive:false});
+}
+function startDrag(idx,el,cx,cy){
+  SFX.select();dragIdx=idx;gs.sel=idx;
+  GHOST.innerHTML='';
+  const cl=el.cloneNode(true);cl.style.cssText='width:74px;height:74px';
+  GHOST.appendChild(cl);GHOST.style.display='block';moveGhost(cx,cy);
+  el.classList.add('drag-ghost-src');
+  renderBoard();
+  const mm=ev=>{const x=ev.touches?ev.touches[0].clientX:ev.clientX,y=ev.touches?ev.touches[0].clientY:ev.clientY;moveGhost(x,y);hlCell(x,y)};
+  const mu=ev=>{const x=ev.changedTouches?ev.changedTouches[0].clientX:ev.clientX,y=ev.changedTouches?ev.changedTouches[0].clientY:ev.clientY;endDrag(x,y);window.removeEventListener('mousemove',mm);window.removeEventListener('mouseup',mu);window.removeEventListener('touchmove',mm);window.removeEventListener('touchend',mu)};
+  window.addEventListener('mousemove',mm);window.addEventListener('mouseup',mu);
+  window.addEventListener('touchmove',mm,{passive:false});window.addEventListener('touchend',mu);
+}
+function moveGhost(x,y){GHOST.style.left=x+'px';GHOST.style.top=y+'px'}
+function hlCell(x,y){
+  document.querySelectorAll('.cell').forEach(c=>{
+    c.classList.remove('dover');
+    const r=c.getBoundingClientRect();
+    if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom&&c.classList.contains('cdrop'))c.classList.add('dover');
+  });
+}
+function endDrag(x,y){
+  GHOST.style.display='none';
+  document.querySelectorAll('.drag-ghost-src').forEach(c=>c.classList.remove('drag-ghost-src'));
+  document.querySelectorAll('.dover').forEach(c=>c.classList.remove('dover'));
+  const cells=document.querySelectorAll('.cell');
+  let ti=-1;
+  cells.forEach((c,i)=>{const r=c.getBoundingClientRect();if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom&&c.classList.contains('cdrop'))ti=i});
+  if(ti>=0&&dragIdx!==null)placeCard(ti);
+  else{renderPH();renderBoard()}
+  dragIdx=null;
+}
+function setupDropTarget(){}
+
+// ═══════════════════════════════════
+//  GAME LOGIC
+// ═══════════════════════════════════
+function selectCard(i){if(gs.turn!=='player'||gs.over)return;gs.sel=gs.sel===i?null:i;SFX.select();renderPH();renderBoard()}
+function clickCell(i){if(gs.over||gs.turn!=='player'||gs.board[i])return;if(gs.sel===null){toast(L().sel);return}placeCard(i)}
+
+const DIRS=[
+  {o:-3,mv:0,tv:1,edge:p=>p<3},
+  {o:+3,mv:1,tv:0,edge:p=>p>=6},
+  {o:-1,mv:2,tv:3,edge:p=>p%3===0},
+  {o:+1,mv:3,tv:2,edge:p=>p%3===2},
+];
+function captures(pos,owner,card,board=gs.board){
+  return DIRS.reduce((caps,d)=>{
+    if(d.edge(pos))return caps;const np=pos+d.o;if(np<0||np>8)return caps;
+    const nb=board[np];if(!nb||nb.owner===owner)return caps;
+    if(card.v[d.mv]>nb.card.v[d.tv])caps.push(np);return caps;
+  },[]);
+}
+
+async function placeCard(ci){
+  if(gs.over||gs.turn!=='player'||gs.board[ci]||gs.sel===null)return;
+  const card=gs.ph[gs.sel];gs.ph.splice(gs.sel,1);gs.sel=null;
+  gs.board[ci]={card,owner:'player'};
+  SFX.place();flashCell(ci,'place');render();await sleep(60);
+
+  const caps=captures(ci,'player',card);
+  if(caps.length){
+    // Flash & particles for each capture
+    for(const c of caps){
+      gs.board[c].owner='player';
+      flashCell(c,'cap');
+      const cells=document.getElementById('board').children;
+      if(cells[c])spawnParticles(cells[c],['⚔️','💥','✨','🔱'],5);
+    }
+    SFX.capture();
+    if(caps.length>=2)screenFlash('rgba(255,150,50,.25)');
+    await sleep(420);render();
+  }
+  if(isFull()){endGame();return}
+  gs.turn='enemy';updateRune();
+  await sleep(700+Math.random()*500);await enemyTurn();
+}
+
+async function enemyTurn(){
+  if(gs.over)return;
+  const empty=gs.board.map((c,i)=>c?-1:i).filter(i=>i>=0);
+  const mv=aiMove(empty,gs.smarts);
+  const card=gs.eh[mv.ci];gs.eh.splice(mv.ci,1);
+  gs.board[mv.pos]={card,owner:'enemy'};
+  SFX.place();flashCell(mv.pos,'place');render();await sleep(60);
+
+  const caps=captures(mv.pos,'enemy',card);
+  if(caps.length){
+    for(const c of caps){
+      gs.board[c].owner='enemy';flashCell(c,'cap');
+      const cells=document.getElementById('board').children;
+      if(cells[c])spawnParticles(cells[c],['💀','🩸','☠️','👹'],5);
+    }
+    SFX.capture();
+    if(caps.length>=2){screenFlash('rgba(220,50,50,.22)');boardShake()}
+    await sleep(420);render();
+  }
+  if(isFull()){endGame();return}
+  gs.turn='player';render();
+}
+
+function aiMove(empty,smarts){
+  if(smarts===0)return{ci:rnd(gs.eh.length),pos:empty[rnd(empty.length)]};
+  let best=null,bs=-9999;
+  gs.eh.forEach((card,ci)=>{
+    empty.forEach(pos=>{
+      let score=captures(pos,'enemy',card).length*10;
+      if(smarts>=2){
+        DIRS.forEach(d=>{if(!d.edge(pos)){const np=pos+d.o;if(np>=0&&np<=8&&!gs.board[np]&&card.v[d.tv]<5)score-=2}});
+        if([0,2,6,8].includes(pos))score+=2;
+      }
+      if(smarts>=3){
+        const tb={...gs.board};tb[pos]={card,owner:'enemy'};
+        let pb=0;
+        gs.ph.forEach(pc=>empty.filter(pp=>pp!==pos).forEach(pp=>{
+          const n=captures(pp,'player',pc,tb);if(n.length>pb)pb=n.length}));
+        score-=pb*8;
+      }
+      if(score>bs){bs=score;best={ci,pos}}
+    });
+  });
+  return best||{ci:0,pos:empty[0]};
+}
+
+function isFull(){return gs.board.every(c=>c!==null)}
+function rnd(n){return 0|Math.random()*n}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// ═══════════════════════════════════
+//  GAME OVER
+// ═══════════════════════════════════
+function endGame(){
+  gs.over=true;
+  const sc=calcScores(),diff=sc.p-sc.e,l=L();
+  let outcome,arr,flashCol;
+  if(diff>0){outcome='win';arr=l.win;flashCol='rgba(201,168,76,.22)';stats.wins++;SFX.win();
+    setTimeout(()=>{spawnParticles(document.getElementById('board'),['⭐','✨','🏆','⚔️','💫'],14);screenFlash(flashCol)},200)}
+  else if(diff<0){outcome='lose';arr=l.lose;flashCol='rgba(200,40,40,.2)';stats.losses++;SFX.lose();
+    setTimeout(()=>{screenFlash(flashCol);boardShake()},200)}
+  else{outcome='draw';arr=l.draw;stats.draws++;SFX.draw()}
+
+  const stars=calcStars(sc.p,sc.e);
+  if(mode==='campaign'&&curLevel){
+    const lv=curLevel.level;
+    const prev=campaign.stars[lv]||0;
+    if(stars>prev)campaign.stars[lv]=stars;
+    if(outcome==='win'&&lv>=campaign.unlocked){
+      campaign.unlocked=lv+1;
+      if(lv<100)setTimeout(()=>{SFX.unlock();toast(`⚔️ ${l.lv} ${lv+1} ${l.unlk}`,'gold')},2200);
+    }
+  }
+  stats.totalStars=Object.values(campaign.stars).reduce((a,b)=>a+b,0);
+  save();renderStats();
+
+  const icons={win:'⚔️',lose:'💀',draw:'⚖️'};
+  tx('ri',icons[outcome]);
+  document.getElementById('rt').textContent=arr[0];
+  document.getElementById('rt').className='r-title '+outcome;
+  tx('rf',arr[1+rnd(arr.length-1)]);
+  tx('rn-p',sc.p);tx('rn-e',sc.e);
+  document.getElementById('rsb-p').classList.toggle('winner',diff>0);
+  document.getElementById('rsb-e').classList.toggle('winner',diff<0);
+  document.getElementById('r-stars').textContent=starsHtml(stars);
+  tx('rl-you',l.you);tx('rl-cpu',l.cpu);tx('rl-rep',l.rep);tx('rl-menu',l.menu);tx('rl-next',l.next);
+  const nb=document.getElementById('btn-rnext');
+  nb.style.display=(mode==='campaign'&&curLevel&&curLevel.level<100&&curLevel.level<campaign.unlocked)?'inline-flex':'none';
+
+  setTimeout(()=>document.getElementById('res-ov').classList.add('show'),1900);
+}
+
+// ═══════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════
+let toastT;
+function toast(msg,type=''){
+  const el=document.getElementById('toast');el.textContent=msg;
+  el.className='show'+(type?' '+type:'');
+  clearTimeout(toastT);toastT=setTimeout(()=>el.className='',2500);
+}
+
+// ═══════════════════════════════════
+//  EVENTS
+// ═══════════════════════════════════
+document.getElementById('btn-camp').addEventListener('click',()=>{SFX.click();showScreen('campaign');renderGrid()});
+document.getElementById('btn-free').addEventListener('click',()=>{SFX.click();showScreen('difficulty')});
+document.getElementById('btn-help-m').addEventListener('click',()=>{SFX.click();document.getElementById('modal-help').classList.add('show')});
+document.getElementById('btn-lang-m').addEventListener('click',()=>{SFX.click();document.getElementById('modal-lang').classList.add('show')});
+document.getElementById('btn-camp-back').addEventListener('click',()=>{SFX.click();showScreen('menu')});
+document.getElementById('btn-lang-c').addEventListener('click',()=>{SFX.click();document.getElementById('modal-lang').classList.add('show')});
+document.querySelectorAll('.d-card').forEach(b=>b.addEventListener('click',()=>{SFX.click();startFree(b.dataset.diff)}));
+document.getElementById('btn-diff-back').addEventListener('click',()=>{SFX.click();showScreen('menu')});
+document.getElementById('btn-game-back').addEventListener('click',()=>{SFX.click();showScreen('menu');applyLang()});
+document.getElementById('btn-rep').addEventListener('click',()=>{SFX.click();document.getElementById('res-ov').classList.remove('show');if(mode==='campaign'&&curLevel)startLevel(curLevel);else startFree(curDiff)});
+document.getElementById('btn-rmenu').addEventListener('click',()=>{SFX.click();document.getElementById('res-ov').classList.remove('show');showScreen('menu');applyLang()});
+document.getElementById('btn-rnext').addEventListener('click',()=>{SFX.click();document.getElementById('res-ov').classList.remove('show');if(curLevel&&curLevel.level<100)startLevel(LEVELS[curLevel.level])});
+document.querySelectorAll('.l-opt').forEach(o=>o.addEventListener('click',()=>{lang=o.dataset.lang;SFX.click();save();applyLang();document.getElementById('modal-lang').classList.remove('show')}));
+document.getElementById('btn-lc').addEventListener('click',()=>{SFX.click();document.getElementById('modal-lang').classList.remove('show')});
+document.getElementById('btn-hc').addEventListener('click',()=>{SFX.click();document.getElementById('modal-help').classList.remove('show')});
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m){SFX.click();m.classList.remove('show')}}));
+
+// ═══════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════
+load();applyLang();showScreen('menu');
+</script>
+</body>
+</html>
