@@ -114,20 +114,43 @@ body {
 #gameArea { flex:1; display:flex; align-items:center; justify-content:center; width:100%; overflow:hidden; }
 #cv { display:block; }
 
-/* ════════════ MOBILE DPAD ════════════ */
-#dpad {
-  display:none; position:fixed; bottom:0; left:0; right:0; height:144px;
-  background:linear-gradient(0deg,#fff3cd,#fffde7);
-  border-top:3px solid #ffd93d;
-  z-index:200; justify-content:center; align-items:center;
+/* ════════════ OVERLAY D-PAD (touch devices without physical keyboard) ════════════ */
+/* Two separate pads: left side and right side, both semi-transparent */
+#dpadL, #dpadR {
+  display:none;
+  position:fixed; bottom:clamp(16px,5vh,40px); z-index:200;
+  opacity:0.38; transition:opacity .18s;
+  pointer-events:auto;
 }
-.dp { display:grid; grid-template-columns:52px 52px 52px; grid-template-rows:52px 52px 52px; gap:5px; }
+#dpadL { left:clamp(6px,2vw,18px); }
+#dpadR { right:clamp(6px,2vw,18px); }
+#dpadL:active, #dpadR:active,
+#dpadL.touched, #dpadR.touched { opacity:0.82; }
+
+.dp {
+  display:grid;
+  grid-template-columns:52px 52px 52px;
+  grid-template-rows:52px 52px 52px;
+  gap:5px;
+}
 .dpb {
-  background:#fff; border:3px solid #ffd93d; border-radius:14px;
+  background:rgba(255,255,255,0.7);
+  border:2.5px solid rgba(255,217,61,0.75);
+  border-radius:14px;
   font-size:22px; display:flex; align-items:center; justify-content:center;
-  cursor:pointer; box-shadow:0 4px 0 #f9a825; transition:all .1s;
+  cursor:pointer;
+  box-shadow:0 3px 0 rgba(249,168,37,0.5);
+  backdrop-filter:blur(4px);
+  transition:all .1s;
+  -webkit-backdrop-filter:blur(4px);
 }
-.dpb:active { box-shadow:none; transform:translateY(4px); }
+.dpb:active { box-shadow:none; transform:translateY(3px); background:rgba(255,217,61,0.6); }
+.dp-center {
+  background:rgba(255,253,231,0.5);
+  border:2px dashed rgba(255,217,61,0.5);
+  border-radius:14px;
+  font-size:18px; display:flex; align-items:center; justify-content:center;
+}
 
 /* ════════════ OVERLAYS ════════════ */
 .ov {
@@ -216,8 +239,7 @@ body {
 .langBtn.active { outline: 3px solid #ff6b6b; outline-offset: 2px; transform: scale(1.08); }
 
 @media (max-width:600px),(hover:none) {
-  #dpad { display:flex; }
-  #sGame { padding-bottom:144px; }
+  /* dpad visibility now controlled by JS based on touch-only detection */
 }
 </style>
 </head>
@@ -279,12 +301,20 @@ body {
   <div id="gameArea"><canvas id="cv"></canvas></div>
 </div>
 
-<!-- DPAD -->
-<div id="dpad">
+<!-- LEFT D-PAD: Up + Left + Down -->
+<div id="dpadL">
   <div class="dp">
-    <div></div><div class="dpb" id="bU">⬆️</div><div></div>
-    <div class="dpb" id="bL">⬅️</div><div class="dpb" style="background:#fffde7;border-color:#ffd93d">😶</div><div class="dpb" id="bR">➡️</div>
-    <div></div><div class="dpb" id="bD">⬇️</div><div></div>
+    <div></div>          <div class="dpb" id="bU">⬆️</div> <div></div>
+    <div class="dpb" id="bL">⬅️</div> <div class="dp-center">😶</div> <div></div>
+    <div></div>          <div class="dpb" id="bD">⬇️</div> <div></div>
+  </div>
+</div>
+<!-- RIGHT D-PAD: Up + Right + Down -->
+<div id="dpadR">
+  <div class="dp">
+    <div></div> <div class="dpb" id="bU2">⬆️</div> <div></div>
+    <div></div> <div class="dp-center">😶</div> <div class="dpb" id="bR">➡️</div>
+    <div></div> <div class="dpb" id="bD2">⬇️</div> <div></div>
   </div>
 </div>
 
@@ -563,10 +593,16 @@ let G = null;
 function buildGameGrid(cfg){
   const {cols,rows} = cfg;
   const GW = cols*4+1, GH = rows*4+1;
-  // mark tomb cells
-  const tomb = (gx,gy) => gx>=1 && gy>=1 && (gx-1)%4<3 && (gy-1)%4<3;
-  // walkable = NOT tomb interior
-  const walkable = (gx,gy) => gx>=0&&gx<GW&&gy>=0&&gy<GH && !tomb(gx,gy);
+  // tomb interior: gx in [tc*4+1 .. tc*4+3], gy in [tr*4+1 .. tr*4+3]
+  const isTombCell = (gx,gy) => gx>=1 && gy>=1 && (gx-1)%4<3 && (gy-1)%4<3;
+  // Set of revealed tomb top-left corners (gx,gy) — cells become unwalkable after reveal
+  const revealedTombCells = new Set(); // "gx,gy" of each interior cell when revealed
+  // walkable = in bounds AND not an unrevealed tomb interior AND not a revealed tomb interior
+  const walkable = (gx,gy) => {
+    if(gx<0||gx>=GW||gy<0||gy>=GH) return false;
+    if(isTombCell(gx,gy)) return false; // tomb interior always unwalkable (corridor only)
+    return true; // corridors always walkable (revealed tombs don't open corridors)
+  };
 
   // Build tomb list with contents
   const tombs = [];
@@ -605,9 +641,8 @@ function tombSideCells(t){
 
 // ── CALC CELL SIZE ──
 function calcCS(GW,GH){
-  const isMob = isMobile();
   const aW = window.innerWidth;
-  const aH = window.innerHeight - 42 - (isMob?144:0);
+  const aH = window.innerHeight - 44; // just HUD
   return Math.max(10, Math.floor(Math.min(aW/GW, aH/GH)));
 }
 
@@ -1042,13 +1077,34 @@ function drawTomb(t,cs,now){
       if(sides[s]){ctx.strokeStyle='#15803d';ctx.lineWidth=1.5;ctx.stroke();}
     });
   } else {
-    const age=Math.min(1,(now-revealT)/300);
-    ctx.globalAlpha=0.4*age;
-    ctx.fillStyle='#f8fafc';
+    const age=Math.min(1,(now-revealT)/350);
+    // Dark pit background — makes it visually clear it's a hole, not walkable
+    ctx.fillStyle='#1c1917';
     rrect(px+1,py+1,tw-3,th-3,r); ctx.fill();
-    ctx.globalAlpha=age;
-    if(cs>=12) drawEmoji(content.emoji,cx,cy,cs*0.72,false,age,null);
-    ctx.globalAlpha=1;
+    // Inner pit gradient — darker center
+    const grd=ctx.createRadialGradient(cx,cy,2,cx,cy,tw*0.55);
+    grd.addColorStop(0,'rgba(0,0,0,0.7)');
+    grd.addColorStop(1,'rgba(41,37,36,0.0)');
+    ctx.fillStyle=grd; rrect(px+1,py+1,tw-3,th-3,r); ctx.fill();
+    // Subtle crack/edge highlight
+    ctx.strokeStyle='rgba(120,113,108,0.4)'; ctx.lineWidth=1.5;
+    rrect(px+1,py+1,tw-3,th-3,r); ctx.stroke();
+    // Treasure floating above the pit
+    if(cs>=12){
+      ctx.globalAlpha=age;
+      // small shadow under treasure
+      ctx.fillStyle='rgba(0,0,0,0.25)';
+      ctx.beginPath();ctx.ellipse(cx,cy+cs*0.18,cs*0.28,cs*0.1,0,0,Math.PI*2);ctx.fill();
+      drawEmoji(content.emoji,cx,cy-cs*0.04,cs*0.68,false,age,null);
+      ctx.globalAlpha=1;
+    }
+    // "NO ENTRY" subtle X pattern to signal impassable
+    if(cs>=16){
+      ctx.strokeStyle='rgba(220,38,38,0.22)'; ctx.lineWidth=Math.max(1,cs*0.08);
+      ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(px+cs*0.45,py+cs*0.45);ctx.lineTo(px+tw-cs*0.45,py+th-cs*0.45);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(px+tw-cs*0.45,py+cs*0.45);ctx.lineTo(px+cs*0.45,py+th-cs*0.45);ctx.stroke();
+    }
   }
 }
 
@@ -1170,11 +1226,40 @@ function togglePause(){
   if(G.paused) document.getElementById('ovPause').classList.add('on');
   else resumeGame();
 }
-['bU','bD','bL','bR'].forEach((id,i)=>{
+// ── TOUCH-ONLY DETECTION (no physical keyboard → show overlay dpads) ──
+// We detect absence of a real keyboard: pointer:coarse + no keyboard events yet
+let _hasKeyboard = false;
+document.addEventListener('keydown', ()=>{ _hasKeyboard=true; updateDpadVisibility(); }, {once:true});
+
+function hasTouchInput(){ return ('ontouchstart' in window) || navigator.maxTouchPoints>0; }
+function updateDpadVisibility(){
+  const show = hasTouchInput() && !_hasKeyboard;
+  document.getElementById('dpadL').style.display = show ? 'block' : 'none';
+  document.getElementById('dpadR').style.display = show ? 'block' : 'none';
+}
+// Run on load + after a short delay to catch tablets that report touch
+updateDpadVisibility();
+setTimeout(updateDpadVisibility, 300);
+
+// ── DPAD BUTTON BINDINGS ──
+// Map: buttonId → direction
+const dpadMap = [
+  ['bU','UP'],['bD','DOWN'],['bL','LEFT'],['bR','RIGHT'],
+  ['bU2','UP'],['bD2','DOWN'],
+];
+dpadMap.forEach(([id,d])=>{
   const btn=document.getElementById(id); if(!btn) return;
-  const d=['UP','DOWN','LEFT','RIGHT'][i];
-  const press=e=>{ e.preventDefault(); if(G?.state==='playing'){ G.player.activeDir=d; G.player.queueDir=d; } };
-  const rel=e=>{ e.preventDefault(); if(G?.player&&G.player.activeDir===d) G.player.activeDir=null; };
+  const pad = btn.closest('#dpadL,#dpadR');
+  const press=e=>{
+    e.preventDefault();
+    if(pad) pad.classList.add('touched');
+    if(G?.state==='playing'){ G.player.activeDir=d; G.player.queueDir=d; }
+  };
+  const rel=e=>{
+    e.preventDefault();
+    if(pad) pad.classList.remove('touched');
+    if(G?.player&&G.player.activeDir===d) G.player.activeDir=null;
+  };
   btn.addEventListener('touchstart',press,{passive:false});
   btn.addEventListener('touchend',rel,{passive:false});
   btn.addEventListener('touchcancel',rel,{passive:false});
@@ -1194,6 +1279,7 @@ cv.addEventListener('touchend',e=>{
 
 // ── RESIZE ──
 window.addEventListener('resize',()=>{
+  updateDpadVisibility();
   if(!G||G.state==='gameover') return;
   const cs=calcCS(G.GW,G.GH);
   if(cs===G.cs) return;
