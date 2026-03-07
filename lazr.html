@@ -316,6 +316,8 @@ html, body {
 }
 .game-canvas-layer {
   position: absolute; top: 0; left: 0; pointer-events: none;
+  filter: none;
+  box-shadow: none;
 }
 
 /* ===== OVERLAY PANELS ===== */
@@ -693,11 +695,18 @@ canvas { image-rendering: crisp-edges; }
 <script>
 // ===== STARS =====
 (function() {
+  var sparkleEmojis = ['✨','⭐','💫','🌟','🔆'];
   var s = document.getElementById('stars');
   for (var i = 0; i < 120; i++) {
-    var el = document.createElement('div');
-    if (i % 5 === 0) { el.textContent = sparkleEmojis[Math.floor(Math.random()*sparkleEmojis.length)]; el.style.background='none'; el.style.borderRadius='0'; el.style.fontSize=(sz+4)+'px'; } else { el.className = 'star'; }
     var sz = Math.random() * 2 + 0.5;
+    var el = document.createElement('div');
+    if (i % 5 === 0) {
+      el.textContent = sparkleEmojis[Math.floor(Math.random()*sparkleEmojis.length)];
+      el.style.cssText = 'position:absolute;font-size:'+(sz*3+6)+'px;opacity:0.5;animation:twinkle var(--dur,3s) var(--delay,0s) ease-in-out infinite;--dur:'+(Math.random()*4+2)+'s;--delay:'+(-Math.random()*6)+'s;left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;pointer-events:none;';
+      s.appendChild(el);
+      continue;
+    }
+    el.className = 'star';
     var starColors = ['#fbbf24','#f472b6','#a78bfa','#34d399','#60a5fa','#fb7185','#facc15'];
     el.style.cssText = [
       'width:' + sz + 'px',
@@ -1101,7 +1110,7 @@ var LaserGame = function() {
 			if (brightness < 0.05) continue;
 
 			ctx.save();
-			// Clip to cell shape
+			// Clip to cell shape — inset to avoid AA border
 			drawRoundRect(ctx, cell.x+1, cell.y+1, _cellW-2, _cellH-2, _cellR-1);
 			ctx.clip();
 			// Moving sheen band
@@ -1122,7 +1131,8 @@ var LaserGame = function() {
 				grad.addColorStop(1, 'transparent');
 			}
 			ctx.fillStyle = grad;
-			ctx.fillRect(cell.x, cell.y, _cellW, _cellH);
+			drawRoundRect(ctx, cell.x+0.5, cell.y+0.5, _cellW-1, _cellH-1, _cellR-1);
+			ctx.fill();
 			ctx.restore();
 		}
 	};
@@ -1132,10 +1142,6 @@ var LaserGame = function() {
 	var _laserPulseFrame = 0;
 	var getLaserPulse = function() {
 		_laserPulseFrame++;
-		// Combine two frequencies for organic flicker
-		var slow = Math.sin(_laserPulseFrame * 0.07);
-		var fast = Math.sin(_laserPulseFrame * 0.23) * 0.4;
-		_laserPulse = 0.72 + 0.2 * slow + 0.08 * fast;
 		return _laserPulse;
 	};
 
@@ -1413,6 +1419,12 @@ var LaserGame = function() {
 	/* Score victory point by removing the target from the stack
 	 * @returns {boolean} true if won, false otherwise
 	 */
+	this._triggerAutoWin = function() {
+		// Force win all remaining victory targets
+		_victory = [];
+		checkVictory();
+	};
+
 	var checkVictory = function() {
 		if (_victory.length === 0) {
 			// Delay victory screen so the laser settling is visible
@@ -1522,61 +1534,44 @@ var LaserGame = function() {
 		var cx = x + _cellW/2, cy = y + _cellH/2;
 		var r = _cellR;
 		ctx.save();
+		ctx.shadowBlur = 0;
 
 		if (type === 'mirror' || type === 'mirror_stuck') {
 			var stuck = type === 'mirror_stuck';
-			// Blue base
+			// Clip to rounded rect — 0.5px inset to hide AA edge
+			ctx.save();
+			drawRoundRect(ctx, x+0.5, y+0.5, _cellW-1, _cellH-1, r-0.5);
+			ctx.clip();
+			// Blue gradient fill — fill the path, not fillRect, to avoid AA border
 			var bg = ctx.createLinearGradient(x, y, x+_cellW, y+_cellH);
 			if (stuck) {
 				bg.addColorStop(0, '#3a6a9e'); bg.addColorStop(0.5, '#4a7aae'); bg.addColorStop(1, '#2a5a8e');
 			} else {
 				bg.addColorStop(0, '#2878e8'); bg.addColorStop(0.3, '#50a8ff'); bg.addColorStop(0.6, '#2888ff'); bg.addColorStop(1, '#1868dd');
 			}
-			ctx.shadowColor = stuck ? 'rgba(80,140,230,0.6)' : 'rgba(80,180,255,1)';
-			ctx.shadowBlur = stuck ? 10 : 28;
-			ctx.fillStyle = bg;
-			ctx.strokeStyle = stuck ? 'rgba(80,140,220,0.7)' : 'rgba(100,200,255,0.9)';
-			ctx.lineWidth = 2;
-			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
-			ctx.fill(); ctx.stroke();
-			// 🟦 emoji as base
 			ctx.shadowBlur = 0;
-			ctx.font = Math.floor(_cellW * 0.72) + 'px serif';
-			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-			ctx.globalAlpha = stuck ? 0.55 : 0.75;
-			ctx.fillText('🟦', cx, cy);
-			ctx.globalAlpha = 1;
-			// Mirror sheen: diagonal bright band to simulate reflection
-			ctx.save();
-			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
-			ctx.clip();
+			ctx.fillStyle = bg;
+			drawRoundRect(ctx, x+0.5, y+0.5, _cellW-1, _cellH-1, r-0.5);
+			ctx.fill();
+			// Sheen band 1
+			ctx.shadowBlur = 0;
 			var sheen = ctx.createLinearGradient(x, y+_cellH, x+_cellW, y);
 			sheen.addColorStop(0, 'transparent');
 			sheen.addColorStop(0.35, 'transparent');
-			sheen.addColorStop(0.48, 'rgba(255,255,255,0.55)');
-			sheen.addColorStop(0.52, 'rgba(200,235,255,0.7)');
+			sheen.addColorStop(0.48, 'rgba(255,255,255,0.6)');
+			sheen.addColorStop(0.52, 'rgba(220,240,255,0.75)');
 			sheen.addColorStop(0.65, 'transparent');
 			sheen.addColorStop(1, 'transparent');
 			ctx.fillStyle = sheen;
-			ctx.fillRect(x, y, _cellW, _cellH);
-			// Second thinner streak
+			drawRoundRect(ctx, x+0.5, y+0.5, _cellW-1, _cellH-1, r-0.5); ctx.fill();
+			// Sheen band 2 (thinner)
 			var sheen2 = ctx.createLinearGradient(x, y+_cellH, x+_cellW, y);
-			sheen2.addColorStop(0, 'transparent');
-			sheen2.addColorStop(0.6, 'transparent');
-			sheen2.addColorStop(0.68, 'rgba(255,255,255,0.3)');
+			sheen2.addColorStop(0.62, 'transparent');
+			sheen2.addColorStop(0.68, 'rgba(255,255,255,0.28)');
 			sheen2.addColorStop(0.72, 'transparent');
-			sheen2.addColorStop(1, 'transparent');
 			ctx.fillStyle = sheen2;
-			ctx.fillRect(x, y, _cellW, _cellH);
+			drawRoundRect(ctx, x+0.5, y+0.5, _cellW-1, _cellH-1, r-0.5); ctx.fill();
 			ctx.restore();
-			// Border glow inner
-			if (!stuck) {
-				ctx.shadowColor = 'rgba(100,200,255,0.6)'; ctx.shadowBlur = 8;
-				ctx.strokeStyle = 'rgba(180,230,255,0.5)'; ctx.lineWidth = 1;
-				drawRoundRect(ctx, x+3, y+3, _cellW-6, _cellH-6, r-2);
-				ctx.stroke();
-				ctx.shadowBlur = 0;
-			}
 			if (stuck) drawLockIcon(ctx, x, y);
 		}
 
@@ -1587,13 +1582,12 @@ var LaserGame = function() {
 			bg.addColorStop(0, stuck ? '#1a0840' : '#0d0530');
 			bg.addColorStop(0.5, stuck ? '#2a1060' : '#180848');
 			bg.addColorStop(1, stuck ? '#3a1880' : '#250c60');
-			ctx.shadowColor = stuck ? 'rgba(120,0,220,0.7)' : 'rgba(160,60,255,0.9)';
-			ctx.shadowBlur = stuck ? 6 : 16;
+			ctx.shadowBlur = 0;
+			ctx.save();
+			drawRoundRect(ctx, x+0.5, y+0.5, _cellW-1, _cellH-1, r-0.5);
+			ctx.clip();
 			ctx.fillStyle = bg;
-			ctx.strokeStyle = stuck ? 'rgba(140,60,220,0.8)' : 'rgba(180,80,255,0.9)';
-			ctx.lineWidth = 1.5;
-			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
-			ctx.fill(); ctx.stroke();
+			drawRoundRect(ctx, x+0.5, y+0.5, _cellW-1, _cellH-1, r-0.5); ctx.fill();
 			// Swirl rings
 			ctx.shadowBlur = 0;
 			for (var ring = 0; ring < 3; ring++) {
@@ -1606,52 +1600,59 @@ var LaserGame = function() {
 			}
 			// Center void
 			var voidG = ctx.createRadialGradient(cx, cy, 0, cx, cy, _cellW*0.18);
-			voidG.addColorStop(0, 'rgba(200,0,255,0.8)');
+			voidG.addColorStop(0, 'rgba(180,0,220,0.7)');
 			voidG.addColorStop(1, 'transparent');
 			ctx.fillStyle = voidG;
 			ctx.beginPath(); ctx.arc(cx, cy, _cellW*0.18, 0, Math.PI*2); ctx.fill();
-			ctx.font = Math.floor(_cellW * 0.42) + 'px serif';
+			ctx.font = Math.floor(_cellW * 0.55) + 'px serif';
 			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-			ctx.globalAlpha = 0.8;
+			ctx.globalAlpha = 0.9;
 			ctx.fillStyle = '#fff';
 			ctx.fillText('🕳️', cx, cy);
 			ctx.globalAlpha = 1;
+			ctx.restore();
 			if (stuck) drawLockIcon(ctx, x, y);
 		}
 
 		else if (type === 'glass' || type === 'glass_stuck') {
 			var stuck = type === 'glass_stuck';
-			// Glass: transparent teal crystal look
+			// Clip first — 0.5px inset to hide AA edge
+			ctx.save();
+			drawRoundRect(ctx, x+0.5, y+0.5, _cellW-1, _cellH-1, r-0.5);
+			ctx.clip();
 			var bg = ctx.createLinearGradient(x, y, x+_cellW, y+_cellH);
-			bg.addColorStop(0, stuck ? 'rgba(80,190,230,0.88)' : 'rgba(160,235,255,0.9)');
-			bg.addColorStop(0.5, stuck ? 'rgba(100,210,245,0.92)' : 'rgba(200,248,255,0.96)');
-			bg.addColorStop(1, stuck ? 'rgba(60,170,215,0.88)' : 'rgba(140,220,255,0.9)');
-			ctx.shadowColor = stuck ? 'rgba(60,180,200,0.6)' : 'rgba(0,220,255,1)';
-			ctx.shadowBlur = stuck ? 10 : 26;
-			ctx.fillStyle = bg;
-			ctx.strokeStyle = stuck ? 'rgba(80,200,230,0.9)' : 'rgba(0,220,255,1)';
-			ctx.lineWidth = 1.5;
-			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
-			ctx.fill(); ctx.stroke();
-			// Crystal facets
+			bg.addColorStop(0, stuck ? 'rgba(80,190,230,0.9)' : 'rgba(160,235,255,0.92)');
+			bg.addColorStop(0.5, stuck ? 'rgba(100,210,245,0.94)' : 'rgba(200,248,255,0.98)');
+			bg.addColorStop(1, stuck ? 'rgba(60,170,215,0.9)' : 'rgba(140,220,255,0.92)');
 			ctx.shadowBlur = 0;
-			ctx.strokeStyle = stuck ? 'rgba(100,220,240,0.65)' : 'rgba(180,248,255,0.9)';
-			ctx.lineWidth = 1;
-			ctx.beginPath(); ctx.moveTo(x+_cellW*0.2, y+_cellH*0.15); ctx.lineTo(x+_cellW*0.8, y+_cellH*0.15); ctx.stroke();
-			ctx.beginPath(); ctx.moveTo(x+_cellW*0.15, y+_cellH*0.15); ctx.lineTo(x+_cellW*0.5, y+_cellH*0.85); ctx.stroke();
-			ctx.beginPath(); ctx.moveTo(x+_cellW*0.85, y+_cellH*0.15); ctx.lineTo(x+_cellW*0.5, y+_cellH*0.85); ctx.stroke();
+			ctx.fillStyle = bg;
+			drawRoundRect(ctx, x+0.5, y+0.5, _cellW-1, _cellH-1, r-0.5); ctx.fill();
+			// Crystal sheen
+			var sheen = ctx.createLinearGradient(x, y+_cellH, x+_cellW, y);
+			sheen.addColorStop(0, 'transparent');
+			sheen.addColorStop(0.38, 'transparent');
+			sheen.addColorStop(0.48, 'rgba(255,255,255,0.5)');
+			sheen.addColorStop(0.52, 'rgba(220,250,255,0.65)');
+			sheen.addColorStop(0.62, 'transparent');
+			sheen.addColorStop(1, 'transparent');
+			ctx.fillStyle = sheen;
+			drawRoundRect(ctx, x+0.5, y+0.5, _cellW-1, _cellH-1, r-0.5); ctx.fill();
+			ctx.restore();
+			// Emoji on top
 			ctx.font = Math.floor(_cellW * 0.45) + 'px serif';
 			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-			ctx.globalAlpha = stuck ? 0.75 : 1.0;
-			ctx.shadowColor = 'rgba(0,220,255,0.6)'; ctx.shadowBlur = 8;
-			ctx.fillText('💎', cx, cy);
+			ctx.globalAlpha = stuck ? 0.8 : 1.0;
 			ctx.shadowBlur = 0;
+			ctx.fillText('💎', cx, cy);
 			ctx.globalAlpha = 1;
 			if (stuck) drawLockIcon(ctx, x, y);
 		}
 
 		else if (type === 'prism') {
-			// Prism: rainbow crystal with gradient fill
+			// Prism: rainbow crystal — clip first, 0.5px inset
+			ctx.save();
+			drawRoundRect(ctx, x+0.5, y+0.5, _cellW-1, _cellH-1, r-0.5);
+			ctx.clip();
 			var bg = ctx.createLinearGradient(x, y, x+_cellW, y+_cellH);
 			bg.addColorStop(0,   'rgba(255,80,80,0.9)');
 			bg.addColorStop(0.2, 'rgba(255,180,0,0.9)');
@@ -1659,22 +1660,19 @@ var LaserGame = function() {
 			bg.addColorStop(0.6, 'rgba(0,200,255,0.9)');
 			bg.addColorStop(0.8, 'rgba(120,80,255,0.9)');
 			bg.addColorStop(1,   'rgba(255,80,180,0.9)');
-			ctx.shadowColor = 'rgba(200,150,255,0.8)';
-			ctx.shadowBlur = 20;
+			ctx.shadowBlur = 0;
 			ctx.fillStyle = bg;
-			ctx.strokeStyle = 'rgba(220,180,255,0.9)';
-			ctx.lineWidth = 1.5;
-			drawRoundRect(ctx, x, y, _cellW, _cellH, r);
-			ctx.fill(); ctx.stroke();
+			drawRoundRect(ctx, x+0.5, y+0.5, _cellW-1, _cellH-1, r-0.5); ctx.fill();
 			// Rainbow streaks
 			ctx.shadowBlur = 0;
-			var colors7 = ['rgba(255,60,60,0.6)','rgba(255,160,0,0.6)','rgba(200,255,60,0.6)','rgba(0,220,100,0.6)','rgba(0,180,255,0.6)','rgba(100,60,255,0.6)','rgba(255,60,200,0.6)'];
+			var colors7 = ['rgba(255,60,60,0.5)','rgba(255,160,0,0.5)','rgba(200,255,60,0.5)','rgba(0,220,100,0.5)','rgba(0,180,255,0.5)','rgba(100,60,255,0.5)','rgba(255,60,200,0.5)'];
 			for (var ci = 0; ci < colors7.length; ci++) {
 				ctx.strokeStyle = colors7[ci];
 				ctx.lineWidth = 1.5;
 				var oy = _cellH * 0.1 + ci * _cellH * 0.12;
 				ctx.beginPath(); ctx.moveTo(x+2, y+oy); ctx.lineTo(x+_cellW-2, y+oy); ctx.stroke();
 			}
+			ctx.restore();
 			ctx.font = Math.floor(_cellW * 0.42) + 'px serif';
 			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 			ctx.globalAlpha = 0.9;
@@ -1711,15 +1709,15 @@ var LaserGame = function() {
 		ctx.fillStyle = grd;
 		ctx.strokeStyle = 'rgba(41,121,255,0.35)';
 		ctx.lineWidth = 1;
-		ctx.shadowColor = 'rgba(41,121,255,0.12)';
-		ctx.shadowBlur = 4;
+		ctx.shadowBlur = 0;
 		drawRoundRect(ctx, x, y, w, h, r);
 		ctx.fill(); ctx.stroke();
 		ctx.shadowBlur = 0;
 		// Corner accent dots
 		var dotR = Math.max(1.2, _cellW * 0.045);
 		var dotOff = _cellW * 0.2;
-		ctx.fillStyle = 'rgba(41,121,255,0.4)';
+		ctx.shadowBlur = 0;
+		ctx.fillStyle = 'rgba(41,121,255,0.35)';
 		[[x+dotOff,y+dotOff],[x+w-dotOff,y+dotOff],[x+dotOff,y+h-dotOff],[x+w-dotOff,y+h-dotOff]].forEach(function(p){
 			ctx.beginPath(); ctx.arc(p[0],p[1],dotR,0,Math.PI*2); ctx.fill();
 		});
@@ -1762,11 +1760,7 @@ var LaserGame = function() {
 	 * @param {number} r - Border radius
 	 */
 	var drawRoundRect = function(ctx, x, y, w, h, r) {
-		x = x + 1;
-		y = y + 1;
-		w = w - 2;
-		h = h - 2;
-		r = r - 1;
+		// no inset — fill flush to cell bounds
 		var r1_x = r4_x = x + r,
 			r1_y = r2_y = y + r,
 			r2_x = r3_x = x + w - r,
@@ -1788,7 +1782,7 @@ var LaserGame = function() {
 		ctx.arc(r3_x, r3_y, r, 0, 0.5 * Math.PI);
 		ctx.lineTo(c_x, c_y);
 		ctx.arc(r4_x, r4_y, r, 0.5 * Math.PI, Math.PI);
-		ctx.lineTo(d_x, d_y);
+		ctx.closePath();
 	};
 
 
@@ -1817,38 +1811,20 @@ var LaserGame = function() {
 	 * @param {number} y2 - Ending point y coordinate
 	 */
 	var drawLine = function(ctx, x1, y1, x2, y2) {
-		var p = (typeof getLaserPulse === 'function') ? getLaserPulse() : 1;
-		// Second faster oscillation for shimmer
-		var shimmer = 0.5 + 0.5 * Math.sin((typeof _laserPulseFrame !== 'undefined' ? _laserPulseFrame * 0.35 : 0));
-		// Occasional bright flash (every ~90 frames)
-		var flash = (typeof _laserPulseFrame !== 'undefined' && _laserPulseFrame % 90 < 8)
-			? (_laserPulseFrame % 90) / 8 : 0;
-		var glowBoost = 1 + flash * 1.8;
+		var t = (typeof _laserPulseFrame !== 'undefined') ? _laserPulseFrame : 0;
+		var blink = 0.5 + 0.5 * Math.sin(t * 0.10);
+		var gb = Math.round(blink * 255);
 		ctx.save();
 		ctx.lineCap = 'round';
-		// Outermost soft halo (very wide, low opacity)
-		ctx.shadowColor = '#ff6600';
-		ctx.shadowBlur = (18 + 12 * p) * glowBoost;
-		ctx.strokeStyle = 'rgba(255,140,0,' + (0.15 + 0.1 * shimmer) * glowBoost + ')';
-		ctx.lineWidth = (10 + 4 * p) * glowBoost;
+		ctx.shadowBlur = 0;
+		ctx.shadowColor = 'transparent';
+		// Halo semitransparente
+		ctx.lineWidth = 8;
+		ctx.strokeStyle = 'rgba(255,' + gb + ',' + gb + ',0.3)';
 		ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-		// Outer glow
-		ctx.shadowBlur = (10 + 8 * p) * glowBoost;
-		ctx.strokeStyle = 'rgba(255,80,0,' + (0.35 + 0.2 * p) * glowBoost + ')';
-		ctx.lineWidth = (4 + 2 * p) * glowBoost;
-		ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-		// Mid beam — color shifts with shimmer
-		ctx.shadowBlur = 4;
-		var r_ = Math.round(255);
-		var g_ = Math.round(60 + 60 * shimmer);
-		ctx.strokeStyle = 'rgba(' + r_ + ',' + g_ + ',0,' + (0.7 + 0.2 * p) + ')';
-		ctx.lineWidth = 2.2;
-		ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-		// Core bright
-		ctx.shadowColor = '#ffffff';
-		ctx.shadowBlur = (3 + 3 * flash) * glowBoost;
-		ctx.strokeStyle = flash > 0.5 ? '#ffffff' : (p > 0.88 ? '#fffaf0' : '#fff0e0');
-		ctx.lineWidth = 1.2 + 0.4 * flash;
+		// Núcleo sólido
+		ctx.lineWidth = 4.5;
+		ctx.strokeStyle = 'rgb(255,' + gb + ',' + gb + ')';
 		ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
 		ctx.restore();
 	};
@@ -1866,7 +1842,7 @@ var LaserGame = function() {
 		// 4 short rays
 		ctx.strokeStyle = 'rgba(255,240,120,0.9)';
 		ctx.lineWidth = 1.5;
-		ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 6;
+		// ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 0;
 		for (var a = 0; a < Math.PI*2; a += Math.PI/2) {
 			ctx.beginPath();
 			ctx.moveTo(x + Math.cos(a)*r*0.5, y + Math.sin(a)*r*0.5);
@@ -2018,23 +1994,7 @@ var LaserGame = function() {
 	};
 
 	var _drawTargetRings = function(ctx, x, y) {
-		var r = _targetRadius;
-		ctx.save();
-		var grd = ctx.createRadialGradient(x, y, 0, x, y, r*2.5);
-		grd.addColorStop(0, 'rgba(255,60,200,0.12)');
-		grd.addColorStop(1, 'transparent');
-		ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(x, y, r*2.5, 0, Math.PI*2); ctx.fill();
-		ctx.strokeStyle = 'rgba(180,0,220,0.4)'; ctx.lineWidth = 1.5;
-		ctx.beginPath(); ctx.arc(x, y, r*1.8, 0, Math.PI*2); ctx.stroke();
-		ctx.strokeStyle = 'rgba(200,80,255,0.5)'; ctx.lineWidth = 1;
-		ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke();
-		ctx.strokeStyle = 'rgba(180,60,220,0.3)'; ctx.lineWidth = 0.8;
-		ctx.setLineDash([2,2]);
-		var cr = r * 0.8;
-		ctx.beginPath(); ctx.moveTo(x-cr,y); ctx.lineTo(x+cr,y); ctx.stroke();
-		ctx.beginPath(); ctx.moveTo(x,y-cr); ctx.lineTo(x,y+cr); ctx.stroke();
-		ctx.setLineDash([]);
-		ctx.restore();
+		// No rings — just an empty marker (emoji drawn on animated canvas)
 	};
 
 	// Animated target emoji canvas
@@ -2087,7 +2047,7 @@ var LaserGame = function() {
 			ctx.save();
 			ctx.translate(td.x, td.y + floatY);
 			ctx.rotate(rotAngle);
-			ctx.font = Math.floor(r * 1.8 * scaleV) + 'px serif';
+			ctx.font = Math.floor(r * 1.6 * scaleV) + 'px serif';
 			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 			ctx.globalAlpha = 1;
 			ctx.shadowColor = 'rgba(140,0,240,0.5)';
@@ -2289,32 +2249,12 @@ var LaserGame = function() {
 		var ctx = _ctxs['laser'];
 		var r = _starterRadius * 2.2;
 		ctx.save();
-		// Outer aura
-		var grd = ctx.createRadialGradient(x, y, 0, x, y, r*2.5);
-		grd.addColorStop(0, 'rgba(255,80,0,0.5)');
-		grd.addColorStop(1, 'transparent');
-		ctx.fillStyle = grd;
-		ctx.beginPath(); ctx.arc(x, y, r*2.5, 0, Math.PI*2); ctx.fill();
-		// Glow ring
-		ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 10;
-		ctx.strokeStyle = 'rgba(255,100,0,0.8)';
-		ctx.lineWidth = 1.5;
-		ctx.beginPath(); ctx.arc(x, y, r*1.5, 0, Math.PI*2); ctx.stroke();
-		// Core
-		var cg = ctx.createRadialGradient(x, y, 0, x, y, r);
-		cg.addColorStop(0, '#ffffff');
-		cg.addColorStop(0.4, '#ff8800');
-		cg.addColorStop(1, '#ff3300');
-		ctx.fillStyle = cg;
-		ctx.shadowBlur = 8;
-		ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
-		// Emoji label
 		ctx.shadowBlur = 0;
-		ctx.font = Math.floor(r * 2.2) + 'px serif';
+		// Just the 🔴 emoji, no rings or aura
+		ctx.font = Math.floor(r * 2.4) + 'px serif';
 		ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-		ctx.globalAlpha = 0.9;
-		ctx.fillText('🔴', x, y);
 		ctx.globalAlpha = 1;
+		ctx.fillText('🔴', x, y);
 		ctx.restore();
 	};
 
